@@ -85,9 +85,6 @@ export class AdaptiveLogicService {
     }
 
     // Evaluate each rule in priority order (highest first)
-<<<<<<< HEAD
-    for (const rule of question.visibilityRules) {
-=======
     const sortedRules = [...question.visibilityRules].sort(
       (left, right) => (right.priority ?? 0) - (left.priority ?? 0),
     );
@@ -95,7 +92,6 @@ export class AdaptiveLogicService {
     let requiredResolved = false;
 
     for (const rule of sortedRules) {
->>>>>>> e46303241e8636a5588c710b98de13ba1758d04c
       const condition = rule.condition as Condition;
       const ruleResult = this.evaluateCondition(condition, responses);
 
@@ -103,20 +99,6 @@ export class AdaptiveLogicService {
         // Apply the rule's action
         switch (rule.action) {
           case VisibilityAction.SHOW:
-<<<<<<< HEAD
-            state.visible = true;
-            break;
-          case VisibilityAction.HIDE:
-            state.visible = false;
-            break;
-          case VisibilityAction.REQUIRE:
-            state.required = true;
-            break;
-          case VisibilityAction.UNREQUIRE:
-            state.required = false;
-            break;
-        }
-=======
             if (!visibilityResolved) {
               state.visible = true;
               visibilityResolved = true;
@@ -145,7 +127,6 @@ export class AdaptiveLogicService {
         if (visibilityResolved && requiredResolved) {
           break;
         }
->>>>>>> e46303241e8636a5588c710b98de13ba1758d04c
       }
     }
 
