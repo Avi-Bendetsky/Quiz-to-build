@@ -56,6 +56,11 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY libs/database/package*.json ./libs/database/
+COPY libs/redis/package*.json ./libs/redis/
+COPY libs/shared/package*.json ./libs/shared/
+
 RUN npm ci
 
 # Copy source files
