@@ -185,7 +185,7 @@ model Questionnaire {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   publishedAt   DateTime? @map("published_at")
 
-  createdBy Questionnaire? @relation("QuestionnaireCreator", fields: [createdById], references: [id])
+  createdBy User? @relation("QuestionnaireCreator", fields: [createdById], references: [id])
   sections  Section[]
   sessions  Session[]
 
