@@ -16,9 +16,11 @@ import {
   SessionResponse,
   NextQuestionResponse,
   SubmitResponseResult,
+  ContinueSessionResponse,
 } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitResponseDto } from './dto/submit-response.dto';
+import { ContinueSessionDto } from './dto/continue-session.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../auth/auth.service';
@@ -74,6 +76,32 @@ export class SessionController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<SessionResponse> {
     return this.sessionService.findById(id, user.id);
+  }
+
+  @Get(':id/continue')
+  @ApiOperation({ 
+    summary: 'Continue questionnaire session',
+    description: 'Retrieves the current session state, applies adaptive logic rules, and returns the next question(s) along with progress information. Use this endpoint to resume a questionnaire session.',
+  })
+  @ApiQuery({ 
+    name: 'questionCount', 
+    required: false, 
+    type: Number, 
+    description: 'Number of questions to fetch (default: 1, max: 5)' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Session state with next question(s) and progress information',
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 403, description: 'Access denied to this session' })
+  async continueSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() dto: ContinueSessionDto,
+  ): Promise<ContinueSessionResponse> {
+    const questionCount = Math.min(Math.max(dto.questionCount || 1, 1), 5);
+    return this.sessionService.continueSession(id, user.id, questionCount);
   }
 
   @Get(':id/questions/next')

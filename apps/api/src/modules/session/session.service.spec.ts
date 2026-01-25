@@ -574,4 +574,143 @@ describe('SessionService', () => {
       });
     });
   });
+
+  describe('continueSession', () => {
+    const mockSessionWithQuestionnaire = {
+      ...mockSession,
+      questionnaire: {
+        ...mockQuestionnaire,
+        sections: [
+          {
+            id: 'section-1',
+            name: 'Section 1',
+            orderIndex: 0,
+          },
+        ],
+      },
+    };
+
+    beforeEach(() => {
+      prismaService.session.findUnique.mockResolvedValue(mockSessionWithQuestionnaire as any);
+      prismaService.response.findMany.mockResolvedValue([]);
+      adaptiveLogicService.getVisibleQuestions.mockResolvedValue([
+        { ...mockQuestion, id: 'q1', isRequired: true },
+        { ...mockQuestion, id: 'q2', isRequired: false },
+      ] as any);
+      questionnaireService.getTotalQuestionCount.mockResolvedValue(10);
+      prismaService.session.update.mockResolvedValue(mockSession as any);
+    });
+
+    it('should return session state with next questions', async () => {
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.session.id).toBe(mockSessionId);
+      expect(result.nextQuestions).toHaveLength(1);
+      expect(result.overallProgress).toBeDefined();
+      expect(result.isComplete).toBe(false);
+    });
+
+    it('should return multiple questions when requested', async () => {
+      const result = await service.continueSession(mockSessionId, mockUserId, 3);
+
+      // Should return up to 2 questions (all unanswered visible questions)
+      expect(result.nextQuestions.length).toBeLessThanOrEqual(3);
+    });
+
+    it('should calculate canComplete correctly when required questions unanswered', async () => {
+      prismaService.response.findMany.mockResolvedValue([]);
+
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.canComplete).toBe(false);
+    });
+
+    it('should calculate canComplete correctly when all required questions answered', async () => {
+      prismaService.response.findMany.mockResolvedValue([
+        { questionId: 'q1', value: 'answer' },
+      ] as any);
+      adaptiveLogicService.getVisibleQuestions.mockResolvedValue([
+        { ...mockQuestion, id: 'q1', isRequired: true },
+        { ...mockQuestion, id: 'q2', isRequired: false },
+      ] as any);
+
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.canComplete).toBe(true);
+    });
+
+    it('should return isComplete true for completed sessions', async () => {
+      prismaService.session.findUnique.mockResolvedValue({
+        ...mockSessionWithQuestionnaire,
+        status: SessionStatus.COMPLETED,
+      } as any);
+
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.isComplete).toBe(true);
+      expect(result.nextQuestions).toHaveLength(0);
+    });
+
+    it('should throw NotFoundException for non-existent session', async () => {
+      prismaService.session.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.continueSession('non-existent', mockUserId, 1),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException for unauthorized access', async () => {
+      await expect(
+        service.continueSession(mockSessionId, 'different-user', 1),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should include adaptive state information', async () => {
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.adaptiveState).toBeDefined();
+      expect(result.adaptiveState.visibleQuestionCount).toBe(2);
+      expect(result.adaptiveState.skippedQuestionCount).toBe(8); // 10 total - 2 visible
+    });
+
+    it('should include section progress information', async () => {
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.currentSection).toBeDefined();
+      expect(result.currentSection.id).toBe('section-1');
+      expect(result.currentSection.progress).toBeDefined();
+    });
+
+    it('should update lastActivityAt for active sessions', async () => {
+      await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(prismaService.session.update).toHaveBeenCalledWith({
+        where: { id: mockSessionId },
+        data: { lastActivityAt: expect.any(Date) },
+      });
+    });
+
+    it('should not update lastActivityAt for completed sessions', async () => {
+      prismaService.session.findUnique.mockResolvedValue({
+        ...mockSessionWithQuestionnaire,
+        status: SessionStatus.COMPLETED,
+      } as any);
+
+      await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(prismaService.session.update).not.toHaveBeenCalled();
+    });
+
+    it('should skip already answered questions', async () => {
+      prismaService.response.findMany.mockResolvedValue([
+        { questionId: 'q1', value: 'answer' },
+      ] as any);
+
+      const result = await service.continueSession(mockSessionId, mockUserId, 2);
+
+      // q1 is answered, so only q2 should be returned
+      const questionIds = result.nextQuestions.map(q => q.id);
+      expect(questionIds).not.toContain('q1');
+    });
+  });
 });

@@ -63,6 +63,27 @@ export interface SubmitResponseResult {
   createdAt: Date;
 }
 
+export interface ContinueSessionResponse {
+  session: SessionResponse;
+  nextQuestions: QuestionResponse[];
+  currentSection: {
+    id: string;
+    name: string;
+    description?: string;
+    progress: number;
+    questionsInSection: number;
+    answeredInSection: number;
+  };
+  overallProgress: ProgressInfo;
+  adaptiveState: {
+    visibleQuestionCount: number;
+    skippedQuestionCount: number;
+    appliedRules: string[];
+  };
+  isComplete: boolean;
+  canComplete: boolean;
+}
+
 @Injectable()
 export class SessionService {
   constructor(
@@ -362,6 +383,166 @@ export class SessionService {
     );
 
     return this.mapToSessionResponse(updatedSession, totalQuestions);
+  }
+
+  async continueSession(
+    sessionId: string,
+    userId: string,
+    questionCount: number = 1,
+  ): Promise<ContinueSessionResponse> {
+    // Get session with full context
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        currentSection: true,
+        questionnaire: {
+          include: {
+            sections: {
+              orderBy: { orderIndex: 'asc' },
+            },
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.userId !== userId) {
+      throw new ForbiddenException('Access denied to this session');
+    }
+
+    // Check if already completed
+    const isComplete = session.status === SessionStatus.COMPLETED;
+
+    // Get all responses for this session
+    const responses = await this.prisma.response.findMany({
+      where: { sessionId },
+      orderBy: { answeredAt: 'desc' },
+    });
+
+    const responseMap = new Map(responses.map((r) => [r.questionId, r.value]));
+
+    // Evaluate adaptive logic to get visible questions
+    const visibleQuestions = await this.adaptiveLogicService.getVisibleQuestions(
+      session.questionnaireId,
+      responseMap,
+    );
+
+    // Get adaptive state info
+    const adaptiveState = session.adaptiveState as {
+      skippedQuestionIds?: string[];
+      branchHistory?: string[];
+    };
+
+    // Calculate total questions and skipped
+    const totalQuestionsInQuestionnaire = await this.questionnaireService.getTotalQuestionCount(
+      session.questionnaireId,
+    );
+    const skippedCount = totalQuestionsInQuestionnaire - visibleQuestions.length;
+
+    // Find next unanswered questions
+    const nextQuestions: QuestionResponse[] = [];
+    
+    if (!isComplete && session.currentQuestionId) {
+      const currentIndex = visibleQuestions.findIndex(
+        (q) => q.id === session.currentQuestionId,
+      );
+
+      // Start from current question and find unanswered ones
+      for (let i = Math.max(0, currentIndex); i < visibleQuestions.length && nextQuestions.length < questionCount; i++) {
+        const question = visibleQuestions[i];
+        if (!responseMap.has(question.id)) {
+          nextQuestions.push(this.mapQuestionToResponse(question));
+        }
+      }
+
+      // If we didn't find enough, check from the beginning
+      if (nextQuestions.length < questionCount) {
+        for (let i = 0; i < currentIndex && nextQuestions.length < questionCount; i++) {
+          const question = visibleQuestions[i];
+          if (!responseMap.has(question.id)) {
+            nextQuestions.push(this.mapQuestionToResponse(question));
+          }
+        }
+      }
+    }
+
+    // Calculate progress
+    const answeredCount = responses.length;
+    const progress = this.calculateProgress(answeredCount, visibleQuestions.length);
+
+    // Get current section details
+    let currentSectionInfo = {
+      id: '',
+      name: '',
+      description: undefined as string | undefined,
+      progress: 0,
+      questionsInSection: 0,
+      answeredInSection: 0,
+    };
+
+    if (session.currentSection) {
+      const sectionQuestions = visibleQuestions.filter(
+        (q) => q.sectionId === session.currentSection!.id,
+      );
+      const sectionAnswered = sectionQuestions.filter((q) => responseMap.has(q.id)).length;
+
+      currentSectionInfo = {
+        id: session.currentSection.id,
+        name: session.currentSection.name,
+        description: (session.currentSection as any).description ?? undefined,
+        progress: sectionQuestions.length > 0
+          ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
+          : 0,
+        questionsInSection: sectionQuestions.length,
+        answeredInSection: sectionAnswered,
+      };
+    }
+
+    // Determine if session can be completed (all required questions answered)
+    const unansweredRequired = visibleQuestions.filter(
+      (q) => q.isRequired && !responseMap.has(q.id),
+    );
+    const canComplete = unansweredRequired.length === 0 && answeredCount > 0;
+
+    // Build session response
+    const sessionResponse: SessionResponse = {
+      id: session.id,
+      questionnaireId: session.questionnaireId,
+      userId: session.userId,
+      status: session.status,
+      industry: session.industry ?? undefined,
+      progress,
+      currentSection: session.currentSection
+        ? { id: session.currentSection.id, name: session.currentSection.name }
+        : undefined,
+      createdAt: session.startedAt,
+      lastActivityAt: session.lastActivityAt,
+    };
+
+    // Update last activity timestamp
+    if (!isComplete) {
+      await this.prisma.session.update({
+        where: { id: sessionId },
+        data: { lastActivityAt: new Date() },
+      });
+    }
+
+    return {
+      session: sessionResponse,
+      nextQuestions,
+      currentSection: currentSectionInfo,
+      overallProgress: progress,
+      adaptiveState: {
+        visibleQuestionCount: visibleQuestions.length,
+        skippedQuestionCount: skippedCount,
+        appliedRules: adaptiveState.branchHistory || [],
+      },
+      isComplete,
+      canComplete,
+    };
   }
 
   private async getSessionWithValidation(
