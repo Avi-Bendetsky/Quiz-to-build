@@ -85,7 +85,17 @@ export class AdaptiveLogicService {
     }
 
     // Evaluate each rule in priority order (highest first)
+<<<<<<< HEAD
     for (const rule of question.visibilityRules) {
+=======
+    const sortedRules = [...question.visibilityRules].sort(
+      (left, right) => (right.priority ?? 0) - (left.priority ?? 0),
+    );
+    let visibilityResolved = false;
+    let requiredResolved = false;
+
+    for (const rule of sortedRules) {
+>>>>>>> e46303241e8636a5588c710b98de13ba1758d04c
       const condition = rule.condition as Condition;
       const ruleResult = this.evaluateCondition(condition, responses);
 
@@ -93,6 +103,7 @@ export class AdaptiveLogicService {
         // Apply the rule's action
         switch (rule.action) {
           case VisibilityAction.SHOW:
+<<<<<<< HEAD
             state.visible = true;
             break;
           case VisibilityAction.HIDE:
@@ -105,6 +116,36 @@ export class AdaptiveLogicService {
             state.required = false;
             break;
         }
+=======
+            if (!visibilityResolved) {
+              state.visible = true;
+              visibilityResolved = true;
+            }
+            break;
+          case VisibilityAction.HIDE:
+            if (!visibilityResolved) {
+              state.visible = false;
+              visibilityResolved = true;
+            }
+            break;
+          case VisibilityAction.REQUIRE:
+            if (!requiredResolved) {
+              state.required = true;
+              requiredResolved = true;
+            }
+            break;
+          case VisibilityAction.UNREQUIRE:
+            if (!requiredResolved) {
+              state.required = false;
+              requiredResolved = true;
+            }
+            break;
+        }
+
+        if (visibilityResolved && requiredResolved) {
+          break;
+        }
+>>>>>>> e46303241e8636a5588c710b98de13ba1758d04c
       }
     }
 
