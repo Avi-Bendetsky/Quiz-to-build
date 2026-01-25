@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 import { StandardCategory } from '@prisma/client';
 
 export class StandardResponseDto {

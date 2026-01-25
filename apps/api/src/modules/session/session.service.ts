@@ -7,7 +7,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import { Session, SessionStatus, Question, Response as PrismaResponse } from '@prisma/client';
+import { Session, SessionStatus, Question, Prisma } from '@prisma/client';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitResponseDto } from './dto/submit-response.dto';
 import { QuestionnaireService, QuestionResponse } from '../questionnaire/questionnaire.service';
@@ -91,7 +91,7 @@ export class SessionService {
     private readonly questionnaireService: QuestionnaireService,
     @Inject(forwardRef(() => AdaptiveLogicService))
     private readonly adaptiveLogicService: AdaptiveLogicService,
-  ) {}
+  ) { }
 
   async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
     // Get questionnaire
@@ -298,15 +298,15 @@ export class SessionService {
       create: {
         sessionId,
         questionId: dto.questionId,
-        value: dto.value,
+        value: dto.value as Prisma.InputJsonValue,
         isValid: validation.isValid,
-        validationErrors: validation.errors ? { errors: validation.errors } : null,
+        validationErrors: validation.errors ? { errors: validation.errors } : Prisma.JsonNull,
         timeSpentSeconds: dto.timeSpentSeconds,
       },
       update: {
-        value: dto.value,
+        value: dto.value as Prisma.InputJsonValue,
         isValid: validation.isValid,
-        validationErrors: validation.errors ? { errors: validation.errors } : null,
+        validationErrors: validation.errors ? { errors: validation.errors } : Prisma.JsonNull,
         timeSpentSeconds: dto.timeSpentSeconds,
         revision: { increment: 1 },
       },
@@ -444,7 +444,7 @@ export class SessionService {
 
     // Find next unanswered questions
     const nextQuestions: QuestionResponse[] = [];
-    
+
     if (!isComplete && session.currentQuestionId) {
       const currentIndex = visibleQuestions.findIndex(
         (q) => q.id === session.currentQuestionId,

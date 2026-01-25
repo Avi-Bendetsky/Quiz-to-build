@@ -12,9 +12,9 @@ import { SessionStatus, QuestionType } from '@prisma/client';
 
 describe('SessionService', () => {
   let service: SessionService;
-  let prismaService: jest.Mocked<PrismaService>;
-  let questionnaireService: jest.Mocked<QuestionnaireService>;
-  let adaptiveLogicService: jest.Mocked<AdaptiveLogicService>;
+  let prismaService: any;
+  let questionnaireService: any;
+  let adaptiveLogicService: any;
 
   const mockUserId = 'user-123';
   const mockQuestionnaireId = 'questionnaire-456';
