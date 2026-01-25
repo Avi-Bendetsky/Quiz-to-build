@@ -23,6 +23,9 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
+
+  # Skip auto-registration of deprecated providers
+  skip_provider_registration = true
 }
 
 provider "random" {}

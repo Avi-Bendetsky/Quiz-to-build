@@ -1,7 +1,10 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Build stage - Using Debian slim for better Prisma/OpenSSL compatibility
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
+
+# Install OpenSSL (required by Prisma)
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY package*.json ./
@@ -20,17 +23,21 @@ RUN npx prisma generate
 
 # Build only the API for production
 RUN cd apps/api && npx nest build
+
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-bookworm-slim AS production
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+# Install OpenSSL (required by Prisma)
+RUN apt-get update && apt-get install -y openssl wget && rm -rf /var/lib/apt/lists/*
 
-# Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+# Create non-root user for security
+RUN groupadd -g 1001 nodejs && \
+    useradd -m -u 1001 -g nodejs nestjs
+
+# Copy built application (preserves nested path structure from TypeScript compilation)
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
@@ -43,15 +50,18 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/health || exit 1
 
-# Start the application
-CMD ["node", "dist/apps/api/apps/api/src/main.js"]
+# Start the application (path matches TypeScript outDir structure)
+CMD ["node", "dist/apps/api/src/main.js"]
 
 # Development stage
-FROM node:20-alpine AS development
+FROM node:20-bookworm-slim AS development
 
 WORKDIR /app
+
+# Install OpenSSL (required by Prisma)
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY package*.json ./
@@ -62,7 +72,7 @@ COPY libs/shared/package*.json ./libs/shared/
 
 RUN npm ci
 
-# Copy source files (excluding any dist folder)
+# Copy source files
 COPY . .
 
 # Generate Prisma client
@@ -72,5 +82,4 @@ RUN npx prisma generate
 EXPOSE 3000
 
 # Start in development mode
-RUN rm -rf dist || true
 CMD ["npm", "run", "start:dev"]

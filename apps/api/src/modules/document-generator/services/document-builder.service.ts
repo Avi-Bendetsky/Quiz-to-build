@@ -77,8 +77,8 @@ export class DocumentBuilderService {
   private buildSections(
     templateData: TemplateData,
     documentType: DocumentTypeInfo,
-  ): Paragraph[] {
-    const sections: Paragraph[] = [];
+  ): (Paragraph | Table)[] {
+    const sections: (Paragraph | Table)[] = [];
 
     // Title
     sections.push(this.buildTitle(documentType.name));
@@ -128,7 +128,7 @@ export class DocumentBuilderService {
   /**
    * Build document control section
    */
-  private buildDocumentControl(templateData: TemplateData): Paragraph[] {
+  private buildDocumentControl(templateData: TemplateData): (Paragraph | Table)[] {
     return [
       this.buildHeading('Document Control', HeadingLevel.HEADING_1),
       this.buildTable([
@@ -363,8 +363,8 @@ export class DocumentBuilderService {
   /**
    * Build a simple two-column table
    */
-  private buildTable(rows: string[][]): Paragraph {
-    const table = new Table({
+  private buildTable(rows: string[][]): Table {
+    return new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: rows.map(
         (row) =>
@@ -393,12 +393,6 @@ export class DocumentBuilderService {
             ),
           }),
       ),
-    });
-
-    // Return as paragraph containing table reference
-    return new Paragraph({
-      children: [],
-      spacing: { after: 200 },
     });
   }
 
