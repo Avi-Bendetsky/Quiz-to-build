@@ -136,15 +136,25 @@ describe('AdaptiveLogicService', () => {
           {
             id: 'vr-001',
             condition: { field: 'q-000', operator: 'equals', value: 'test' },
+<<<<<<< HEAD
             action: VisibilityAction.HIDE,
             priority: 5,
+=======
+            action: VisibilityAction.SHOW,
+            priority: 10,
+>>>>>>> e46303241e8636a5588c710b98de13ba1758d04c
             isActive: true,
           },
           {
             id: 'vr-002',
             condition: { field: 'q-000', operator: 'equals', value: 'test' },
+<<<<<<< HEAD
             action: VisibilityAction.SHOW,
             priority: 10,
+=======
+            action: VisibilityAction.HIDE,
+            priority: 5,
+>>>>>>> e46303241e8636a5588c710b98de13ba1758d04c
             isActive: true,
           },
         ],
