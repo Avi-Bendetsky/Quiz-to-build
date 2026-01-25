@@ -6,7 +6,7 @@ import { StandardCategory } from '@prisma/client';
 
 describe('StandardsService', () => {
   let service: StandardsService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any;
 
   const mockStandard = {
     id: 'standard-1',

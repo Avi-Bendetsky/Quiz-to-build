@@ -2,17 +2,34 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/apps/api",
-    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@libs/database": ["../../libs/database/src"],
-      "@libs/database/*": ["../../libs/database/src/*"],
-      "@libs/redis": ["../../libs/redis/src"],
-      "@libs/redis/*": ["../../libs/redis/src/*"],
-      "@libs/shared": ["../../libs/shared/src"],
-      "@libs/shared/*": ["../../libs/shared/src/*"]
+      "@libs/database": [
+        "../../libs/database/src"
+      ],
+      "@libs/database/*": [
+        "../../libs/database/src/*"
+      ],
+      "@libs/redis": [
+        "../../libs/redis/src"
+      ],
+      "@libs/redis/*": [
+        "../../libs/redis/src/*"
+      ],
+      "@libs/shared": [
+        "../../libs/shared/src"
+      ],
+      "@libs/shared/*": [
+        "../../libs/shared/src/*"
+      ]
     }
   },
-  "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "test/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
