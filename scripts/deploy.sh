@@ -124,7 +124,8 @@ for i in {1..12}; do
 done
 
 if [ "$HTTP_CODE" != "200" ]; then
-    echo -e "${YELLOW}Warning: Health check did not return 200. Check the logs.${NC}"
+    echo -e "${RED}Error: Health check failed after 12 attempts. Check the logs.${NC}"
+    exit 1
 fi
 
 # Print summary
