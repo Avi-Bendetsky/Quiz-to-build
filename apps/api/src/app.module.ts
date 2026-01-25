@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { QuestionnaireModule } from './modules/questionnaire/questionnaire.module';
 import { SessionModule } from './modules/session/session.module';
 import { AdaptiveLogicModule } from './modules/adaptive-logic/adaptive-logic.module';
+import { StandardsModule } from './modules/standards/standards.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -52,6 +53,7 @@ import configuration from './config/configuration';
     QuestionnaireModule,
     SessionModule,
     AdaptiveLogicModule,
+    StandardsModule,
   ],
   controllers: [HealthController],
   providers: [

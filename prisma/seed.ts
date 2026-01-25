@@ -1,4 +1,5 @@
 import { PrismaClient, QuestionType, VisibilityAction, UserRole } from '@prisma/client';
+import { seedStandards } from './seeds/standards.seed';
 
 const prisma = new PrismaClient();
 
@@ -476,6 +477,9 @@ async function main(): Promise<void> {
     });
   }
   console.log('Created', visibilityRules.length, 'visibility rules');
+
+  // Seed engineering standards
+  await seedStandards();
 
   console.log('Database seed completed successfully!');
 }
