@@ -139,7 +139,7 @@ export class StandardsService {
     const standards = documentType.standardMappings.map((mapping) => ({
       category: mapping.standard.category,
       title: mapping.sectionTitle || STANDARD_CATEGORY_TITLES[mapping.standard.category],
-      principles: mapping.standard.principles as Principle[],
+      principles: mapping.standard.principles as unknown as Principle[],
     }));
 
     const markdown = this.generateMarkdown(standards);
@@ -188,7 +188,7 @@ export class StandardsService {
       category: standard.category,
       title: standard.title,
       description: standard.description,
-      principles: standard.principles as Principle[],
+      principles: standard.principles as unknown as Principle[],
       version: standard.version,
       isActive: standard.isActive,
     };

@@ -20,9 +20,9 @@ resource "azurerm_postgresql_flexible_server" "main" {
   sku_name               = var.sku_name
   backup_retention_days  = 7
 
-  high_availability {
-    mode = "Disabled" # Enable for production
-  }
+  # high_availability {
+  #   mode = "ZoneRedundant" # Enable for production
+  # }
 
   tags = var.tags
 

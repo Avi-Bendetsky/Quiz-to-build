@@ -1,8 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/apps/api",
-    "rootDir": ".",
+    "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
       "@libs/database": ["../../libs/database/src"],
@@ -12,6 +11,9 @@
       "@libs/shared": ["../../libs/shared/src"],
       "@libs/shared/*": ["../../libs/shared/src/*"]
     },
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
