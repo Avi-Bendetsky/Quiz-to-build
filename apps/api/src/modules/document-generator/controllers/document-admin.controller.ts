@@ -40,7 +40,7 @@ export class DocumentAdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documentGeneratorService: DocumentGeneratorService,
-  ) {}
+  ) { }
 
   // ==========================================================================
   // DOCUMENT TYPE MANAGEMENT
@@ -93,7 +93,7 @@ export class DocumentAdminController {
       throw new Error(`Document type with ID ${id} not found`);
     }
 
-    return documentType;
+    return documentType as unknown as DocumentTypeResponseDto;
   }
 
   @Post('document-types')
@@ -115,7 +115,7 @@ export class DocumentAdminController {
         estimatedPages: dto.estimatedPages,
         isActive: dto.isActive ?? true,
       },
-    });
+    }) as unknown as Promise<DocumentTypeResponseDto>;
   }
 
   @Patch('document-types/:id')
@@ -140,7 +140,7 @@ export class DocumentAdminController {
         estimatedPages: dto.estimatedPages,
         isActive: dto.isActive,
       },
-    });
+    }) as unknown as Promise<DocumentTypeResponseDto>;
   }
 
   // ==========================================================================

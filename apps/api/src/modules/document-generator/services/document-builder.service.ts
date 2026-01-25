@@ -311,7 +311,7 @@ export class DocumentBuilderService {
   /**
    * Build a heading paragraph
    */
-  private buildHeading(text: string, level: HeadingLevel): Paragraph {
+  private buildHeading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
     return new Paragraph({
       children: [new TextRun({ text, bold: true })],
       heading: level,

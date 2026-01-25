@@ -33,7 +33,7 @@ import {
 export class DocumentController {
   constructor(
     private readonly documentGeneratorService: DocumentGeneratorService,
-  ) {}
+  ) { }
 
   @Post('generate')
   @ApiOperation({ summary: 'Request document generation for a session' })
@@ -57,7 +57,7 @@ export class DocumentController {
   @ApiOperation({ summary: 'List available document types' })
   @ApiResponse({ status: 200, description: 'List of document types', type: [DocumentTypeResponseDto] })
   async listDocumentTypes(): Promise<DocumentTypeResponseDto[]> {
-    return this.documentGeneratorService.listDocumentTypes();
+    return this.documentGeneratorService.listDocumentTypes() as unknown as Promise<DocumentTypeResponseDto[]>;
   }
 
   @Get('session/:sessionId')
@@ -148,14 +148,14 @@ export class DocumentController {
       updatedAt: document.updatedAt,
       documentType: document.documentType
         ? {
-            id: document.documentType.id,
-            name: document.documentType.name,
-            slug: document.documentType.slug,
-            description: document.documentType.description ?? undefined,
-            category: document.documentType.category as DocumentTypeResponseDto['category'],
-            estimatedPages: document.documentType.estimatedPages ?? undefined,
-            isActive: document.documentType.isActive,
-          }
+          id: document.documentType.id,
+          name: document.documentType.name,
+          slug: document.documentType.slug,
+          description: document.documentType.description ?? undefined,
+          category: document.documentType.category as DocumentTypeResponseDto['category'],
+          estimatedPages: document.documentType.estimatedPages ?? undefined,
+          isActive: document.documentType.isActive,
+        }
         : undefined,
     };
   }

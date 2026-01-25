@@ -9,6 +9,7 @@ import {
   Section,
   Question,
   VisibilityRule,
+  Prisma,
 } from '@prisma/client';
 import { PaginationDto } from '@libs/shared';
 import { AdminAuditService } from './admin-audit.service';
@@ -46,7 +47,7 @@ export class AdminQuestionnaireService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AdminAuditService,
-  ) {}
+  ) { }
 
   // ============================================================================
   // QUESTIONNAIRE CRUD
@@ -113,7 +114,7 @@ export class AdminQuestionnaireService {
         industry: dto.industry,
         isDefault: dto.isDefault ?? false,
         estimatedTime: dto.estimatedTime,
-        metadata: dto.metadata ?? {},
+        metadata: (dto.metadata ?? {}) as Prisma.InputJsonValue,
         createdById: userId,
       },
     });
@@ -151,7 +152,7 @@ export class AdminQuestionnaireService {
         isDefault: dto.isDefault,
         isActive: dto.isActive,
         estimatedTime: dto.estimatedTime,
-        metadata: dto.metadata,
+        metadata: dto.metadata as Prisma.InputJsonValue,
       },
     });
 
@@ -226,7 +227,7 @@ export class AdminQuestionnaireService {
         icon: dto.icon,
         estimatedTime: dto.estimatedTime,
         orderIndex,
-        metadata: dto.metadata ?? {},
+        metadata: (dto.metadata ?? {}) as Prisma.InputJsonValue,
       },
     });
 
@@ -260,7 +261,7 @@ export class AdminQuestionnaireService {
         icon: dto.icon,
         estimatedTime: dto.estimatedTime,
         orderIndex: dto.orderIndex,
-        metadata: dto.metadata,
+        metadata: dto.metadata as Prisma.InputJsonValue,
       },
     });
 
@@ -371,14 +372,14 @@ export class AdminQuestionnaireService {
         explanation: dto.explanation,
         placeholder: dto.placeholder,
         isRequired: dto.isRequired ?? false,
-        options: dto.options,
-        validationRules: dto.validationRules,
-        defaultValue: dto.defaultValue,
-        suggestedAnswer: dto.suggestedAnswer,
+        options: dto.options as unknown as Prisma.InputJsonValue,
+        validationRules: dto.validationRules as Prisma.InputJsonValue,
+        defaultValue: dto.defaultValue as Prisma.InputJsonValue,
+        suggestedAnswer: dto.suggestedAnswer as Prisma.InputJsonValue,
         industryTags: dto.industryTags ?? [],
-        documentMappings: dto.documentMappings,
+        documentMappings: dto.documentMappings as Prisma.InputJsonValue,
         orderIndex,
-        metadata: dto.metadata ?? {},
+        metadata: (dto.metadata ?? {}) as Prisma.InputJsonValue,
       },
     });
 
@@ -413,14 +414,14 @@ export class AdminQuestionnaireService {
         explanation: dto.explanation,
         placeholder: dto.placeholder,
         isRequired: dto.isRequired,
-        options: dto.options,
-        validationRules: dto.validationRules,
-        defaultValue: dto.defaultValue,
-        suggestedAnswer: dto.suggestedAnswer,
+        options: dto.options as unknown as Prisma.InputJsonValue,
+        validationRules: dto.validationRules as Prisma.InputJsonValue,
+        defaultValue: dto.defaultValue as Prisma.InputJsonValue,
+        suggestedAnswer: dto.suggestedAnswer as Prisma.InputJsonValue,
         industryTags: dto.industryTags,
-        documentMappings: dto.documentMappings,
+        documentMappings: dto.documentMappings as Prisma.InputJsonValue,
         orderIndex: dto.orderIndex,
-        metadata: dto.metadata,
+        metadata: dto.metadata as Prisma.InputJsonValue,
       },
     });
 
@@ -530,7 +531,7 @@ export class AdminQuestionnaireService {
     const rule = await this.prisma.visibilityRule.create({
       data: {
         questionId,
-        condition: dto.condition,
+        condition: dto.condition as Prisma.InputJsonValue,
         action: dto.action,
         targetQuestionIds: dto.targetQuestionIds,
         priority: dto.priority ?? 0,
@@ -565,7 +566,7 @@ export class AdminQuestionnaireService {
     const rule = await this.prisma.visibilityRule.update({
       where: { id },
       data: {
-        condition: dto.condition,
+        condition: dto.condition as Prisma.InputJsonValue,
         action: dto.action,
         targetQuestionIds: dto.targetQuestionIds,
         priority: dto.priority,

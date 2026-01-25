@@ -18,9 +18,8 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
-RUN npm run build
-
+# Build only the API for production
+RUN cd apps/api && npx nest build
 # Production stage
 FROM node:20-alpine AS production
 
@@ -47,7 +46,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the application
-CMD ["node", "dist/apps/api/src/main.js"]
+CMD ["node", "dist/apps/api/apps/api/src/main.js"]
 
 # Development stage
 FROM node:20-alpine AS development
@@ -63,7 +62,7 @@ COPY libs/shared/package*.json ./libs/shared/
 
 RUN npm ci
 
-# Copy source files
+# Copy source files (excluding any dist folder)
 COPY . .
 
 # Generate Prisma client
@@ -73,4 +72,5 @@ RUN npx prisma generate
 EXPOSE 3000
 
 # Start in development mode
+RUN rm -rf dist || true
 CMD ["npm", "run", "start:dev"]
