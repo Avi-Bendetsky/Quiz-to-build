@@ -2,8 +2,15 @@
 
 data "azurerm_client_config" "current" {}
 
+# Generate a unique suffix to ensure globally unique Key Vault name
+resource "random_string" "kv_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
 resource "azurerm_key_vault" "main" {
-  name                        = "kv-${var.project_name}-${var.environment}"
+  name                        = "kv-quest-${var.environment}-${random_string.kv_suffix.result}"
   location                    = var.location
   resource_group_name         = var.resource_group_name
   enabled_for_disk_encryption = false
