@@ -2,6 +2,7 @@
 
 data "azurerm_client_config" "current" {}
 
+<<<<<<< Local
 # Generate a unique suffix to ensure globally unique Key Vault name
 resource "random_string" "kv_suffix" {
   length  = 6
@@ -9,6 +10,14 @@ resource "random_string" "kv_suffix" {
   upper   = false
 }
 
+=======
+resource "random_string" "kv_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
+>>>>>>> Remote
 resource "azurerm_key_vault" "main" {
   name                        = "kv-quest-${var.environment}-${random_string.kv_suffix.result}"
   location                    = var.location

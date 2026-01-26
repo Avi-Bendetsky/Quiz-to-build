@@ -24,6 +24,7 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
+<<<<<<< Local
       "@app/*": [
         "apps/api/src/*"
       ],
@@ -45,6 +46,15 @@
       "@libs/shared/*": [
         "libs/shared/src/*"
       ]
+=======
+      "@app/*": ["apps/api/src/*"],
+      "@libs/database": ["libs/database/dist"],
+      "@libs/database/*": ["libs/database/dist/*"],
+      "@libs/redis": ["libs/redis/dist"],
+      "@libs/redis/*": ["libs/redis/dist/*"],
+      "@libs/shared": ["libs/shared/dist"],
+      "@libs/shared/*": ["libs/shared/dist/*"]
+>>>>>>> Remote
     },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
