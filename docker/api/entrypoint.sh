@@ -7,4 +7,4 @@ set -e
 # npx prisma migrate deploy
 
 echo "Starting application..."
-exec node -r tsconfig-paths/register apps/api/dist/src/main.js
+exec node -r tsconfig-paths/register apps/api/dist/apps/api/src/main.js

@@ -1,12 +1,17 @@
-# Build stage - Using Debian slim for better Prisma/OpenSSL compatibility
-FROM docker.io/library/node:20-bookworm-slim AS builder
+# Build stage - Using latest LTS with security patches
+FROM docker.io/library/node:20.18.1-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Install OpenSSL (required by Prisma)
+# Install OpenSSL and security updates (required by Prisma)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
+    ca-certificates \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
+
+# Update npm to latest secure version
+RUN npm install -g npm@latest
 
 # Install dependencies
 COPY package*.json ./
@@ -15,7 +20,7 @@ COPY libs/database/package*.json ./libs/database/
 COPY libs/redis/package*.json ./libs/redis/
 COPY libs/shared/package*.json ./libs/shared/
 
-RUN npm ci
+RUN npm ci --audit --production=false
 
 # Copy source files
 COPY . .
@@ -26,17 +31,19 @@ RUN npx prisma generate
 # Build only the API for production
 RUN npm run build --workspace=api
 
-# Production stage
-FROM docker.io/library/node:20-bookworm-slim AS production
+# Production stage - Hardened image
+FROM docker.io/library/node:20.18.1-bookworm-slim AS production
 
 WORKDIR /app
 
-# Install OpenSSL and other required libraries for Prisma
+# Install security updates and minimal runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
+    dumb-init \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Create non-root user for security
 RUN groupadd -g 1001 nodejs && \
@@ -62,20 +69,30 @@ USER nestjs
 # Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/health || exit 1
+# Security: Use dumb-init to handle signals properly
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+# Health check with reduced privileges
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/api/v1/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Start the application
 CMD ["./entrypoint.sh"]
 
 # Development stage
-FROM docker.io/library/node:20-bookworm-slim AS development
+FROM docker.io/library/node:20.18.1-bookworm-slim AS development
 
 WORKDIR /app
 
-# Install OpenSSL (required by Prisma)
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Install OpenSSL and security updates (required by Prisma)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Update npm to latest secure version
+RUN npm install -g npm@latest
 
 # Install dependencies
 COPY package*.json ./
@@ -84,7 +101,7 @@ COPY libs/database/package*.json ./libs/database/
 COPY libs/redis/package*.json ./libs/redis/
 COPY libs/shared/package*.json ./libs/shared/
 
-RUN npm ci
+RUN npm ci --audit
 
 # Copy source files
 COPY . .
