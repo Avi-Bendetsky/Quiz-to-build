@@ -7,12 +7,13 @@ resource "random_password" "postgres" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = "psql-${var.project_name}-westus2"
-  resource_group_name    = var.resource_group_name
-  location               = "westus2"
-  version                = var.postgresql_version
-  delegated_subnet_id    = var.subnet_id
-  private_dns_zone_id    = var.private_dns_zone_id
+  name                = "psql-${var.project_name}-westus2"
+  resource_group_name = var.resource_group_name
+  location            = "westus2"
+  version             = var.postgresql_version
+  # VNet integration disabled - using public access instead
+  # delegated_subnet_id    = var.subnet_id
+  # private_dns_zone_id    = var.private_dns_zone_id
   administrator_login    = "psqladmin"
   administrator_password = random_password.postgres.result
   zone                   = "1"
@@ -41,6 +42,22 @@ resource "azurerm_postgresql_flexible_server_database" "main" {
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
   charset   = "UTF8"
+}
+
+# Firewall rule to allow Azure services and Container Apps
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
+  name             = "AllowAzureServices"
+  server_id        = azurerm_postgresql_flexible_server.main.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
+# Firewall rule to allow all IPs (for dev environment)
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_all" {
+  name             = "AllowAll"
+  server_id        = azurerm_postgresql_flexible_server.main.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "255.255.255.255"
 }
 
 # Configure server parameters for better performance

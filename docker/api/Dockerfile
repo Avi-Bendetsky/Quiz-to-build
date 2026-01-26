@@ -24,7 +24,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build only the API for production
-RUN cd apps/api && npx nest build
+RUN npm run build --workspace=api
 
 # Production stage
 FROM docker.io/library/node:20-bookworm-slim AS production
@@ -42,8 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd -g 1001 nodejs && \
     useradd -m -u 1001 -g nodejs nestjs
 
-# Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
+# Copy built application from correct location
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma

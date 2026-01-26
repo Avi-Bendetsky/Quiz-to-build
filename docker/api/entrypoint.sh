@@ -5,4 +5,4 @@ echo "Running database migrations..."
 npx prisma migrate deploy
 
 echo "Starting application..."
-exec node -r tsconfig-paths/register dist/apps/api/main.js
+exec node -r tsconfig-paths/register apps/api/dist/src/main.js

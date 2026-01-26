@@ -3,7 +3,7 @@
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "main" {
-  name                        = "kv-${var.project_name}-${var.environment}"
+  name                        = "kv-quest-${var.environment}-26"
   location                    = var.location
   resource_group_name         = var.resource_group_name
   enabled_for_disk_encryption = false

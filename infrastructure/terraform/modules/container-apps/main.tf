@@ -45,7 +45,7 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "API_PREFIX"
-        value = "api/v1"
+        value = "/api/v1"
       }
 
       env {
@@ -106,7 +106,7 @@ resource "azurerm_container_app" "api" {
       # Liveness probe
       liveness_probe {
         transport = "HTTP"
-        path      = "/health/live"
+        path      = "/api/v1/health/live"
         port      = 3000
 
         initial_delay           = 10
@@ -118,7 +118,7 @@ resource "azurerm_container_app" "api" {
       # Readiness probe
       readiness_probe {
         transport = "HTTP"
-        path      = "/health/ready"
+        path      = "/api/v1/health/ready"
         port      = 3000
 
         interval_seconds        = 10
@@ -129,7 +129,7 @@ resource "azurerm_container_app" "api" {
       # Startup probe
       startup_probe {
         transport = "HTTP"
-        path      = "/health/live"
+        path      = "/api/v1/health/live"
         port      = 3000
 
         interval_seconds        = 5
