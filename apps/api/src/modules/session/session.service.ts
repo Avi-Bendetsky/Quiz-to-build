@@ -298,15 +298,31 @@ export class SessionService {
       create: {
         sessionId,
         questionId: dto.questionId,
+<<<<<<< Local
         value: dto.value as Prisma.InputJsonValue,
+=======
+        value: dto.value as any,
+>>>>>>> Remote
         isValid: validation.isValid,
+<<<<<<< Local
         validationErrors: validation.errors ? { errors: validation.errors } : Prisma.JsonNull,
+=======
+        validationErrors: validation.errors ? { errors: validation.errors } : undefined,
+>>>>>>> Remote
         timeSpentSeconds: dto.timeSpentSeconds,
       },
       update: {
+<<<<<<< Local
         value: dto.value as Prisma.InputJsonValue,
+=======
+        value: dto.value as any,
+>>>>>>> Remote
         isValid: validation.isValid,
+<<<<<<< Local
         validationErrors: validation.errors ? { errors: validation.errors } : Prisma.JsonNull,
+=======
+        validationErrors: validation.errors ? { errors: validation.errors } : undefined,
+>>>>>>> Remote
         timeSpentSeconds: dto.timeSpentSeconds,
         revision: { increment: 1 },
       },

@@ -13,7 +13,7 @@ variable "environment" {
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "eastus"
+  default     = "australiaeast" # Changed from eastus due to PostgreSQL quota restrictions
 }
 
 variable "tags" {

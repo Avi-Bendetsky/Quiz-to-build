@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
+<<<<<<< Local
       "@libs/database": [
         "../../libs/database/src"
       ],
@@ -23,7 +24,18 @@
         "../../libs/shared/src/*"
       ]
     }
+=======
+      "@libs/database": ["../../libs/database/src"],
+      "@libs/database/*": ["../../libs/database/src/*"],
+      "@libs/redis": ["../../libs/redis/src"],
+      "@libs/redis/*": ["../../libs/redis/src/*"],
+      "@libs/shared": ["../../libs/shared/src"],
+      "@libs/shared/*": ["../../libs/shared/src/*"]
+    },
+    "skipLibCheck": true
+>>>>>>> Remote
   },
+<<<<<<< Local
   "include": [
     "src/**/*",
     "test/**/*"
@@ -34,4 +46,8 @@
     "**/*.spec.ts",
     "**/*.test.ts"
   ]
+=======
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "test/**/*"]
+>>>>>>> Remote
 }
