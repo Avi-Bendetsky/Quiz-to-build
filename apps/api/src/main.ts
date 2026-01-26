@@ -18,13 +18,27 @@ async function bootstrap(): Promise<void> {
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
   // Security middleware
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
+    crossOriginEmbedderPolicy: nodeEnv === 'production',
+  }));
+
+  // HSTS (HTTP Strict Transport Security) - Force HTTPS
+  if (nodeEnv === 'production') {
+    app.use((req, res, next) => {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+      next();
+    });
+  }
 
   // CORS configuration
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', '*');
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN', '*'),
+    origin: corsOrigin === '*' ? '*' : corsOrigin.split(',').map(origin => origin.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: 'Content-Type,Authorization,X-Requested-With',
+    exposedHeaders: 'Content-Range,X-Content-Range',
   });
 
   // Global prefix
@@ -48,8 +62,9 @@ async function bootstrap(): Promise<void> {
   // Global interceptors
   app.useGlobalInterceptors(new TransformInterceptor(), new LoggingInterceptor());
 
-  // Swagger documentation (only in development)
-  if (nodeEnv !== 'production') {
+  // Swagger documentation
+  const enableSwagger = configService.get<string>('ENABLE_SWAGGER', nodeEnv !== 'production' ? 'true' : 'false') === 'true';
+  if (enableSwagger) {
     const config = new DocumentBuilder()
       .setTitle('Adaptive Questionnaire API')
       .setDescription('API documentation for the Adaptive Client Questionnaire System')

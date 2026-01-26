@@ -7,9 +7,9 @@ resource "random_password" "postgres" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = "psql-${var.project_name}-${var.environment}"
+  name                   = "psql-${var.project_name}-westus2"
   resource_group_name    = var.resource_group_name
-  location               = var.location
+  location               = "westus2"
   version                = var.postgresql_version
   delegated_subnet_id    = var.subnet_id
   private_dns_zone_id    = var.private_dns_zone_id
