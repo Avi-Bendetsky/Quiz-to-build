@@ -24,13 +24,27 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@app/*": ["apps/api/src/*"],
-      "@libs/database": ["libs/database/src"],
-      "@libs/database/*": ["libs/database/src/*"],
-      "@libs/redis": ["libs/redis/src"],
-      "@libs/redis/*": ["libs/redis/src/*"],
-      "@libs/shared": ["libs/shared/src"],
-      "@libs/shared/*": ["libs/shared/src/*"]
+      "@app/*": [
+        "apps/api/src/*"
+      ],
+      "@libs/database": [
+        "libs/database/src"
+      ],
+      "@libs/database/*": [
+        "libs/database/src/*"
+      ],
+      "@libs/redis": [
+        "libs/redis/src"
+      ],
+      "@libs/redis/*": [
+        "libs/redis/src/*"
+      ],
+      "@libs/shared": [
+        "libs/shared/src"
+      ],
+      "@libs/shared/*": [
+        "libs/shared/src/*"
+      ]
     },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

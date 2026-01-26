@@ -4,15 +4,34 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@libs/database": ["../../libs/database/src"],
-      "@libs/database/*": ["../../libs/database/src/*"],
-      "@libs/redis": ["../../libs/redis/src"],
-      "@libs/redis/*": ["../../libs/redis/src/*"],
-      "@libs/shared": ["../../libs/shared/src"],
-      "@libs/shared/*": ["../../libs/shared/src/*"]
+      "@libs/database": [
+        "../../libs/database/src"
+      ],
+      "@libs/database/*": [
+        "../../libs/database/src/*"
+      ],
+      "@libs/redis": [
+        "../../libs/redis/src"
+      ],
+      "@libs/redis/*": [
+        "../../libs/redis/src/*"
+      ],
+      "@libs/shared": [
+        "../../libs/shared/src"
+      ],
+      "@libs/shared/*": [
+        "../../libs/shared/src/*"
+      ]
     },
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "test/**/*"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "test/**/*"
+  ]
 }
