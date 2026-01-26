@@ -132,9 +132,9 @@ resource "azurerm_container_app" "api" {
         path      = "/health/live"
         port      = 3000
 
-        interval_seconds = 5
-        timeout          = 3
-        failure_count_threshold = 30
+        interval_seconds        = 5
+        timeout                 = 3
+        failure_count_threshold = 10
       }
     }
   }

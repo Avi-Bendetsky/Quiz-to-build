@@ -5,12 +5,12 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@libs/database": ["../../libs/database/src"],
-      "@libs/database/*": ["../../libs/database/src/*"],
-      "@libs/redis": ["../../libs/redis/src"],
-      "@libs/redis/*": ["../../libs/redis/src/*"],
-      "@libs/shared": ["../../libs/shared/src"],
-      "@libs/shared/*": ["../../libs/shared/src/*"]
+      "@libs/database": ["../../libs/database/dist"],
+      "@libs/database/*": ["../../libs/database/dist/*"],
+      "@libs/redis": ["../../libs/redis/dist"],
+      "@libs/redis/*": ["../../libs/redis/dist/*"],
+      "@libs/shared": ["../../libs/shared/dist"],
+      "@libs/shared/*": ["../../libs/shared/dist/*"]
     }
   },
   "include": ["src/**/*", "test/**/*"],
