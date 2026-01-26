@@ -4,44 +4,15 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-<<<<<<< Local
-      "@libs/database": [
-        "../../libs/database/src"
-      ],
-      "@libs/database/*": [
-        "../../libs/database/src/*"
-      ],
-      "@libs/redis": [
-        "../../libs/redis/src"
-      ],
-      "@libs/redis/*": [
-        "../../libs/redis/src/*"
-      ],
-      "@libs/shared": [
-        "../../libs/shared/src"
-      ],
-      "@libs/shared/*": [
-        "../../libs/shared/src/*"
-      ]
+      "@libs/database": ["../../libs/database/src"],
+      "@libs/database/*": ["../../libs/database/src/*"],
+      "@libs/redis": ["../../libs/redis/src"],
+      "@libs/redis/*": ["../../libs/redis/src/*"],
+      "@libs/shared": ["../../libs/shared/src"],
+      "@libs/shared/*": ["../../libs/shared/src/*"]
     },
     "skipLibCheck": true
-=======
-      "@libs/database": ["../../libs/database/dist"],
-      "@libs/database/*": ["../../libs/database/dist/*"],
-      "@libs/redis": ["../../libs/redis/dist"],
-      "@libs/redis/*": ["../../libs/redis/dist/*"],
-      "@libs/shared": ["../../libs/shared/dist"],
-      "@libs/shared/*": ["../../libs/shared/dist/*"]
-    }
->>>>>>> Remote
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.spec.ts",
-    "test/**/*"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "test/**/*"]
 }
