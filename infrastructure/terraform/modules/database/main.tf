@@ -15,17 +15,46 @@ resource "azurerm_postgresql_flexible_server" "main" {
   private_dns_zone_id    = var.private_dns_zone_id
   administrator_login    = "psqladmin"
   administrator_password = random_password.postgres.result
+  high_availability {
+    mode = "Disabled" # Enable for production
+  }
+>>>>>>> Remote
+
+  tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      zone
+    ]
+  # Note: For production, add high_availability block with mode = "ZoneRedundant"
+
+  tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      zone,
+      high_availability[0].standby_availability_zone
+    ]
+>>>>>>> Remote
+  }
   zone                   = "1"
   storage_mb             = var.storage_mb
   sku_name               = var.sku_name
   backup_retention_days  = 7
 
-<<<<<<< Local
-<<<<<<< Local
-  # High availability disabled for dev - uncomment for production:
+  # High availability disabled for dev/testing
+  # For production, uncomment and set mode = "ZoneRedundant" or "SameZone"
   # high_availability {
   #   mode = "ZoneRedundant"
   # }
+
+  tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      zone
+    ]
+  }
 =======
   high_availability {
     mode = "Disabled" # Enable for production
