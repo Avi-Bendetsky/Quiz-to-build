@@ -1,4 +1,4 @@
-﻿# Key Vault Module - Azure Key Vault for secrets management
+# Key Vault Module - Azure Key Vault for secrets management
 
 data "azurerm_client_config" "current" {}
 
