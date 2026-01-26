@@ -388,3 +388,393 @@ stages:
               echo "API URL: $(apiUrl)"
               echo "Swagger Docs: $(apiUrl)/docs"
             displayName: 'Print deployment info'
+# Azure DevOps Pipeline - Adaptive Questionnaire System
+# CI/CD Pipeline for building, testing, and deploying to Azure
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - '*.md'
+      - 'docs/**'
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  # Azure Configuration
+  azureSubscription: 'Azure-Service-Connection' # Update with your service connection name
+  resourceGroup: 'rg-questionnaire-dev'
+  containerAppName: 'ca-questionnaire-api-dev'
+  acrName: 'acrquestionnairedev'
+  
+  # Build Configuration
+  nodeVersion: '20.x'
+  imageName: 'questionnaire-api'
+  imageTag: '$(Build.BuildId)'
+  
+  # Terraform Configuration
+  terraformVersion: '1.5.7'
+  terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/terraform'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  # =============================================================================
+  # Stage 1: Build and Test
+  # =============================================================================
+  - stage: Build
+    displayName: 'Build & Test'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build, Lint, and Test'
+        steps:
+          # Checkout code
+          - checkout: self
+            fetchDepth: 0
+
+          # Setup Node.js
+          - task: NodeTool@0
+            displayName: 'Setup Node.js'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          # Cache npm dependencies
+          - task: Cache@2
+            displayName: 'Cache npm packages'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: $(System.DefaultWorkingDirectory)/node_modules
+
+          # Install dependencies
+          - script: npm ci
+            displayName: 'Install dependencies'
+
+          # Run linting
+          - script: npm run lint
+            displayName: 'Run ESLint'
+
+          # Run type checking
+          - script: npx tsc --noEmit
+            displayName: 'TypeScript type check'
+
+          # Run unit tests with coverage
+          - script: npm run test:cov
+            displayName: 'Run unit tests'
+
+          # Publish test results
+          - task: PublishTestResults@2
+            displayName: 'Publish test results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/junit.xml'
+              failTaskOnFailedTests: true
+
+          # Publish code coverage
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish code coverage'
+            condition: succeededOrFailed()
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/cobertura-coverage.xml'
+
+          # Build the application
+          - script: npm run build
+            displayName: 'Build application'
+
+          # Build Docker image
+          - task: Docker@2
+            displayName: 'Build Docker image'
+            inputs:
+              command: 'build'
+              Dockerfile: 'docker/api/Dockerfile'
+              buildContext: '$(System.DefaultWorkingDirectory)'
+              tags: |
+                $(imageTag)
+                latest
+              arguments: '--target production'
+
+          # Save Docker image as artifact
+          - script: |
+              docker save $(imageName):$(imageTag) -o $(Build.ArtifactStagingDirectory)/$(imageName)-$(imageTag).tar
+            displayName: 'Save Docker image'
+
+          # Publish Docker image artifact
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Docker image artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'docker-image'
+
+          # Publish Terraform files
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Terraform files'
+            inputs:
+              PathtoPublish: '$(terraformWorkingDirectory)'
+              ArtifactName: 'terraform'
+
+  # =============================================================================
+  # Stage 2: Security Scanning
+  # =============================================================================
+  - stage: Security
+    displayName: 'Security Scan'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: SecurityScan
+        displayName: 'Run security scans'
+        steps:
+          - checkout: self
+
+          # Run npm audit
+          - script: npm audit --audit-level=high
+            displayName: 'NPM Audit'
+            continueOnError: true
+
+          # Run Trivy for container scanning
+          - script: |
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              trivy fs --exit-code 0 --severity HIGH,CRITICAL --no-progress .
+            displayName: 'Trivy filesystem scan'
+            continueOnError: true
+
+  # =============================================================================
+  # Stage 3: Infrastructure (Terraform)
+  # =============================================================================
+  - stage: Infrastructure
+    displayName: 'Infrastructure'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: TerraformPlan
+        displayName: 'Terraform Plan'
+        steps:
+          # Download Terraform files
+          - task: DownloadBuildArtifacts@1
+            displayName: 'Download Terraform files'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'terraform'
+              downloadPath: '$(System.DefaultWorkingDirectory)'
+
+          # Install Terraform
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(terraformVersion)'
+
+          # Terraform Init
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+              backendServiceArm: '$(azureSubscription)'
+              backendAzureRmResourceGroupName: 'rg-terraform-state'
+              backendAzureRmStorageAccountName: 'stterraformstate'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'questionnaire.dev.tfstate'
+
+          # Terraform Plan
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Plan'
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+              environmentServiceNameAzureRM: '$(azureSubscription)'
+              commandOptions: '-out=tfplan'
+
+          # Publish plan for approval
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Terraform plan'
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/terraform'
+              ArtifactName: 'terraform-plan'
+
+      - job: TerraformApply
+        displayName: 'Terraform Apply'
+        dependsOn: TerraformPlan
+        # Manual approval can be added here via environment
+        steps:
+          # Download Terraform plan
+          - task: DownloadBuildArtifacts@1
+            displayName: 'Download Terraform plan'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'terraform-plan'
+              downloadPath: '$(System.DefaultWorkingDirectory)'
+
+          # Install Terraform
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(terraformVersion)'
+
+          # Terraform Init
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-plan'
+              backendServiceArm: '$(azureSubscription)'
+              backendAzureRmResourceGroupName: 'rg-terraform-state'
+              backendAzureRmStorageAccountName: 'stterraformstate'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'questionnaire.dev.tfstate'
+
+          # Terraform Apply
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Apply'
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-plan'
+              environmentServiceNameAzureRM: '$(azureSubscription)'
+              commandOptions: 'tfplan'
+
+  # =============================================================================
+  # Stage 4: Deploy
+  # =============================================================================
+  - stage: Deploy
+    displayName: 'Deploy to Azure'
+    dependsOn: 
+      - Build
+      - Infrastructure
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToAzure
+        displayName: 'Deploy to Azure Container Apps'
+        environment: 'development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Download Docker image
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download Docker image'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'docker-image'
+                    downloadPath: '$(System.DefaultWorkingDirectory)'
+
+                # Load Docker image
+                - script: |
+                    docker load -i $(System.DefaultWorkingDirectory)/docker-image/$(imageName)-$(imageTag).tar
+                  displayName: 'Load Docker image'
+
+                # Login to ACR
+                - task: AzureCLI@2
+                  displayName: 'Login to ACR'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az acr login --name $(acrName)
+
+                # Tag and push to ACR
+                - script: |
+                    docker tag $(imageName):$(imageTag) $(acrName).azurecr.io/$(imageName):$(imageTag)
+                    docker tag $(imageName):$(imageTag) $(acrName).azurecr.io/$(imageName):latest
+                    docker push $(acrName).azurecr.io/$(imageName):$(imageTag)
+                    docker push $(acrName).azurecr.io/$(imageName):latest
+                  displayName: 'Push to ACR'
+
+                # Deploy to Container Apps
+                - task: AzureCLI@2
+                  displayName: 'Deploy to Container Apps'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az containerapp update \
+                        --name $(containerAppName) \
+                        --resource-group $(resourceGroup) \
+                        --image $(acrName).azurecr.io/$(imageName):$(imageTag)
+
+                # Run database migrations
+                - task: AzureCLI@2
+                  displayName: 'Run database migrations'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az containerapp exec \
+                        --name $(containerAppName) \
+                        --resource-group $(resourceGroup) \
+                        --command "npx prisma migrate deploy"
+
+  # =============================================================================
+  # Stage 5: Verification
+  # =============================================================================
+  - stage: Verify
+    displayName: 'Verify Deployment'
+    dependsOn: Deploy
+    condition: succeeded()
+    jobs:
+      - job: HealthCheck
+        displayName: 'Health Check'
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Get API URL'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                API_URL=$(az containerapp show \
+                  --name $(containerAppName) \
+                  --resource-group $(resourceGroup) \
+                  --query "properties.configuration.ingress.fqdn" \
+                  --output tsv)
+                echo "##vso[task.setvariable variable=apiUrl]https://$API_URL"
+
+          - script: |
+              echo "Checking health endpoint..."
+              for i in {1..10}; do
+                response=$(curl -s -o /dev/null -w "%{http_code}" $(apiUrl)/health)
+                if [ "$response" = "200" ]; then
+                  echo "Health check passed!"
+                  exit 0
+                fi
+                echo "Attempt $i: Got response $response, waiting..."
+                sleep 10
+              done
+              echo "Health check failed after 10 attempts"
+              exit 1
+            displayName: 'Verify health endpoint'
+
+          - script: |
+              echo "Checking readiness endpoint..."
+              response=$(curl -s -o /dev/null -w "%{http_code}" $(apiUrl)/health/ready)
+              if [ "$response" = "200" ]; then
+                echo "Readiness check passed!"
+              else
+                echo "Readiness check failed with response: $response"
+                exit 1
+              fi
+            displayName: 'Verify readiness endpoint'
+
+          - script: |
+              echo "Deployment verification complete!"
+              echo "API URL: $(apiUrl)"
+              echo "Swagger Docs: $(apiUrl)/docs"
+            displayName: 'Print deployment info'

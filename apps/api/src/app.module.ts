@@ -10,8 +10,6 @@ import { QuestionnaireModule } from './modules/questionnaire/questionnaire.modul
 import { SessionModule } from './modules/session/session.module';
 import { AdaptiveLogicModule } from './modules/adaptive-logic/adaptive-logic.module';
 import { StandardsModule } from './modules/standards/standards.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { DocumentGeneratorModule } from './modules/document-generator/document-generator.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -56,8 +54,6 @@ import configuration from './config/configuration';
     SessionModule,
     AdaptiveLogicModule,
     StandardsModule,
-    AdminModule,
-    DocumentGeneratorModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -8,12 +8,12 @@
     "moduleResolution": "node",
     "strict": true,
     "strictNullChecks": true,
-    "strictPropertyInitialization": false,
+    "strictPropertyInitialization": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -24,6 +24,7 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
+<<<<<<< Local
       "@app/*": [
         "apps/api/src/*"
       ],
@@ -45,6 +46,15 @@
       "@libs/shared/*": [
         "libs/shared/src/*"
       ]
+=======
+      "@app/*": ["apps/api/src/*"],
+      "@libs/database": ["libs/database/src"],
+      "@libs/database/*": ["libs/database/src/*"],
+      "@libs/redis": ["libs/redis/src"],
+      "@libs/redis/*": ["libs/redis/src/*"],
+      "@libs/shared": ["libs/shared/src"],
+      "@libs/shared/*": ["libs/shared/src/*"]
+>>>>>>> Remote
     },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

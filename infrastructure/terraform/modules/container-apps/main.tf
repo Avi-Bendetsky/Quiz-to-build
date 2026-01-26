@@ -133,6 +133,7 @@ resource "azurerm_container_app" "api" {
         port      = 3000
 
 <<<<<<< Local
+<<<<<<< Local
         interval_seconds = 5
         timeout          = 3
         failure_count_threshold = 10
@@ -140,6 +141,11 @@ resource "azurerm_container_app" "api" {
         interval_seconds        = 5
         timeout                 = 3
         failure_count_threshold = 10
+>>>>>>> Remote
+=======
+        interval_seconds = 5
+        timeout          = 3
+        failure_count_threshold = 30
 >>>>>>> Remote
       }
     }

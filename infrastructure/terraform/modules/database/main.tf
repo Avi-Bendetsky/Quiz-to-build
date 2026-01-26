@@ -21,10 +21,16 @@ resource "azurerm_postgresql_flexible_server" "main" {
   backup_retention_days  = 7
 
 <<<<<<< Local
+<<<<<<< Local
   # High availability disabled for dev - uncomment for production:
   # high_availability {
   #   mode = "ZoneRedundant"
   # }
+=======
+  high_availability {
+    mode = "Disabled" # Enable for production
+  }
+>>>>>>> Remote
 
   tags = var.tags
 

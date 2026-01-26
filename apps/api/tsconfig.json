@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
+<<<<<<< Local
       "@libs/database": [
         "../../libs/database/src"
       ],
@@ -24,6 +25,15 @@
       ]
     },
     "skipLibCheck": true
+=======
+      "@libs/database": ["../../libs/database/src"],
+      "@libs/database/*": ["../../libs/database/src/*"],
+      "@libs/redis": ["../../libs/redis/src"],
+      "@libs/redis/*": ["../../libs/redis/src/*"],
+      "@libs/shared": ["../../libs/shared/src"],
+      "@libs/shared/*": ["../../libs/shared/src/*"]
+    }
+>>>>>>> Remote
   },
   "include": [
     "src/**/*"
