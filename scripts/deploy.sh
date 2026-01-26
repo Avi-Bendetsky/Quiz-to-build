@@ -114,7 +114,7 @@ az containerapp exec \
 # Health check
 echo -e "\n${YELLOW}Step 12: Performing health check...${NC}"
 for i in {1..12}; do
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health" || echo "000")
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/api/v1/health" || echo "000")
     if [ "$HTTP_CODE" = "200" ]; then
         echo -e "${GREEN}Health check passed!${NC}"
         break
@@ -134,7 +134,7 @@ echo -e "${GREEN}  Deployment Complete!                        ${NC}"
 echo -e "${GREEN}=============================================${NC}"
 echo -e "\n${BLUE}Application URLs:${NC}"
 echo -e "  API Base:     ${API_URL}"
-echo -e "  Health Check: ${API_URL}/health"
+echo -e "  Health Check: ${API_URL}/api/v1/health"
 echo -e "  Swagger Docs: ${API_URL}/docs"
 echo -e "  API v1:       ${API_URL}/api/v1"
 echo -e "\n${BLUE}Azure Resources:${NC}"
