@@ -39,4 +39,3 @@ export class RefreshResponseDto {
   @ApiProperty({ example: 900, description: 'Token expiration time in seconds' })
   expiresIn: number;
 }
-import { ApiProperty } from '@nestjs/swagger';

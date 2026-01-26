@@ -250,6 +250,3 @@ export class QuestionnaireService {
     };
   }
 }
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@libs/database';
-import { Questionnaire, Section, Question, QuestionType } from '@prisma/client';

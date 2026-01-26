@@ -14,4 +14,3 @@ export class LoginDto {
   // Populated by controller, not from request body
   ip?: string;
 }
-import { IsEmail, IsString, MinLength } from 'class-validator';

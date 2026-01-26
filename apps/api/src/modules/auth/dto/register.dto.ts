@@ -21,4 +21,3 @@ export class RegisterDto {
   @MaxLength(100)
   name: string;
 }
-import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator';

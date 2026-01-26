@@ -161,18 +161,3 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { SessionStatus } from '@prisma/client';
-import {
-  SessionService,
-  SessionResponse,
-  NextQuestionResponse,
-  SubmitResponseResult,
-  ContinueSessionResponse,
-} from './session.service';
-import { CreateSessionDto } from './dto/create-session.dto';
-import { SubmitResponseDto } from './dto/submit-response.dto';
-import { ContinueSessionDto } from './dto/continue-session.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/user.decorator';
-import { AuthenticatedUser } from '../auth/auth.service';

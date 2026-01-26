@@ -11,5 +11,3 @@ export class ContinueSessionDto {
   @Type(() => Number)
   questionCount?: number;
 }
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsNumber, Min, Max } from 'class-validator';

@@ -9,6 +9,3 @@ import { SessionModule } from '../session/session.module';
   exports: [AdaptiveLogicService],
 })
 export class AdaptiveLogicModule {}
-import { Module, forwardRef } from '@nestjs/common';
-import { AdaptiveLogicService } from './adaptive-logic.service';
-import { ConditionEvaluator } from './evaluators/condition.evaluator';

@@ -33,4 +33,3 @@ export class UpdateUserDto {
     theme?: string;
   };
 }
-import { IsString, IsOptional, MaxLength, IsObject } from 'class-validator';

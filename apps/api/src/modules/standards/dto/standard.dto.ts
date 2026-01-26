@@ -77,5 +77,3 @@ export class StandardWithMappingsDto extends StandardResponseDto {
   @ApiProperty({ description: 'Document types this standard is mapped to', type: [DocumentTypeMappingDto] })
   documentTypes: DocumentTypeMappingDto[];
 }
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsString } from 'class-validator';

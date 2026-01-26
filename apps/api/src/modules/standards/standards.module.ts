@@ -10,6 +10,3 @@ import { PrismaModule } from '@libs/database';
   exports: [StandardsService],
 })
 export class StandardsModule {}
-import { Module } from '@nestjs/common';
-import { StandardsService } from './standards.service';
-import { StandardsController } from './standards.controller';

@@ -282,12 +282,3 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
-import { PrismaService } from '@libs/database';
-import { RedisService } from '@libs/redis';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { TokenResponseDto } from './dto/token.dto';

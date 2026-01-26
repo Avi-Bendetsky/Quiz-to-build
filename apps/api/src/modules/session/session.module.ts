@@ -14,7 +14,3 @@ import { AdaptiveLogicModule } from '../adaptive-logic/adaptive-logic.module';
   exports: [SessionService],
 })
 export class SessionModule {}
-import { Module, forwardRef } from '@nestjs/common';
-import { SessionController } from './session.controller';
-import { SessionService } from './session.service';
-import { QuestionnaireModule } from '../questionnaire/questionnaire.module';

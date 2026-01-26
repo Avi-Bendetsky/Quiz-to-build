@@ -12,4 +12,3 @@ export class CreateSessionDto {
   @MaxLength(100)
   industry?: string;
 }
-import { IsUUID, IsOptional, IsString, MaxLength } from 'class-validator';

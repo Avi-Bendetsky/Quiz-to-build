@@ -19,4 +19,3 @@ export class SubmitResponseDto {
   @Min(0)
   timeSpentSeconds?: number;
 }
-import { IsUUID, IsNotEmpty, IsOptional, IsInt, Min } from 'class-validator';
