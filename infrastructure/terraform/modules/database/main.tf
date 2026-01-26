@@ -20,7 +20,6 @@ resource "azurerm_postgresql_flexible_server" "main" {
   sku_name               = var.sku_name
   backup_retention_days  = 7
 
-<<<<<<< Local
   # High availability disabled for dev - uncomment for production:
   # high_availability {
   #   mode = "ZoneRedundant"
@@ -32,19 +31,6 @@ resource "azurerm_postgresql_flexible_server" "main" {
     ignore_changes = [
       zone
     ]
-=======
-  # high_availability {
-  #   mode = "ZoneRedundant" # Enable for production
-  # }
-
-  tags = var.tags
-
-  lifecycle {
-    ignore_changes = [
-      zone,
-      high_availability[0].standby_availability_zone
-    ]
->>>>>>> Remote
   }
 }
 
