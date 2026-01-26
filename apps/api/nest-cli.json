@@ -5,12 +5,7 @@
   "entryFile": "apps/api/src/main",
   "compilerOptions": {
     "deleteOutDir": true,
-<<<<<<< Local
     "webpack": false,
     "tsConfigPath": "tsconfig.build.json"
-=======
-    "webpack": false,
-    "tsConfigPath": "tsconfig.json"
->>>>>>> Remote
   }
 }

@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ApproveDocumentDto = exports.RejectDocumentDto = exports.UpdateDocumentTypeDto = exports.CreateDocumentTypeDto = exports.DownloadUrlResponseDto = exports.DocumentTypeResponseDto = exports.DocumentResponseDto = exports.RequestGenerationDto = void 0;
+var request_generation_dto_1 = require("./request-generation.dto");
+Object.defineProperty(exports, "RequestGenerationDto", { enumerable: true, get: function () { return request_generation_dto_1.RequestGenerationDto; } });
+var document_response_dto_1 = require("./document-response.dto");
+Object.defineProperty(exports, "DocumentResponseDto", { enumerable: true, get: function () { return document_response_dto_1.DocumentResponseDto; } });
+Object.defineProperty(exports, "DocumentTypeResponseDto", { enumerable: true, get: function () { return document_response_dto_1.DocumentTypeResponseDto; } });
+Object.defineProperty(exports, "DownloadUrlResponseDto", { enumerable: true, get: function () { return document_response_dto_1.DownloadUrlResponseDto; } });
+var create_document_type_dto_1 = require("./create-document-type.dto");
+Object.defineProperty(exports, "CreateDocumentTypeDto", { enumerable: true, get: function () { return create_document_type_dto_1.CreateDocumentTypeDto; } });
+var update_document_type_dto_1 = require("./update-document-type.dto");
+Object.defineProperty(exports, "UpdateDocumentTypeDto", { enumerable: true, get: function () { return update_document_type_dto_1.UpdateDocumentTypeDto; } });
+var review_document_dto_1 = require("./review-document.dto");
+Object.defineProperty(exports, "RejectDocumentDto", { enumerable: true, get: function () { return review_document_dto_1.RejectDocumentDto; } });
+Object.defineProperty(exports, "ApproveDocumentDto", { enumerable: true, get: function () { return review_document_dto_1.ApproveDocumentDto; } });
