@@ -25,7 +25,7 @@ async function bootstrap(): Promise<void> {
 
   // HSTS (HTTP Strict Transport Security) - Force HTTPS
   if (nodeEnv === 'production') {
-    app.use((req, res, next) => {
+    app.use((_req: unknown, res: { setHeader: (name: string, value: string) => void }, next: () => void) => {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
       next();
     });

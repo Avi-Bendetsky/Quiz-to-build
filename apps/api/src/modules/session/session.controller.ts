@@ -150,14 +150,3 @@ export class SessionController {
     return this.sessionService.completeSession(id, user.id);
   }
 }
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';

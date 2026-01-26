@@ -12,7 +12,7 @@ import { Public } from '../auth/decorators/public.decorator';
 @ApiTags('Standards')
 @Controller('standards')
 export class StandardsController {
-  constructor(private readonly standardsService: StandardsService) {}
+  constructor(private readonly standardsService: StandardsService) { }
 
   @Get()
   @Public()
@@ -84,12 +84,3 @@ export class StandardsController {
     return this.standardsService.generateStandardsSection(documentTypeId);
   }
 }
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { StandardCategory } from '@prisma/client';
-import { StandardsService } from './standards.service';
-import {
-  StandardResponseDto,
-  StandardWithMappingsDto,
-  StandardsSectionResponseDto,
-} from './dto/standard.dto';

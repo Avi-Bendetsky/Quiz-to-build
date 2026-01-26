@@ -24,7 +24,7 @@ import { PaginationDto } from '@libs/shared';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
@@ -75,13 +75,3 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 }
-import {
-  Controller,
-  Get,
-  Put,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';

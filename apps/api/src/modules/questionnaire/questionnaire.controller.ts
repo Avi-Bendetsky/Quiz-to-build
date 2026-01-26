@@ -53,17 +53,3 @@ export class QuestionnaireController {
     return this.questionnaireService.findById(id);
   }
 }
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import {
-  QuestionnaireService,
-  QuestionnaireListItem,
-  QuestionnaireDetail,
-} from './questionnaire.service';
