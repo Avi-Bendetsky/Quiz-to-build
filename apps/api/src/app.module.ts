@@ -12,6 +12,10 @@ import { AdaptiveLogicModule } from './modules/adaptive-logic/adaptive-logic.mod
 import { StandardsModule } from './modules/standards/standards.module';
 import { HealthController } from './health.controller';
 import { RootController } from './root.controller';
+import { PagesController } from './pages.controller';
+import { DashboardController } from './dashboard.controller';
+import { AdminController } from './admin.controller';
+import { QuestionnaireUIController } from './questionnaire-ui.controller';
 import configuration from './config/configuration';
 
 @Module({
@@ -56,7 +60,14 @@ import configuration from './config/configuration';
     AdaptiveLogicModule,
     StandardsModule,
   ],
-  controllers: [HealthController, RootController],
+  controllers: [
+    HealthController,
+    RootController,
+    PagesController,
+    DashboardController,
+    AdminController,
+    QuestionnaireUIController
+  ],
   providers: [
     {
       provide: APP_GUARD,

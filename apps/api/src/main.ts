@@ -41,9 +41,9 @@ async function bootstrap(): Promise<void> {
     exposedHeaders: 'Content-Range,X-Content-Range',
   });
 
-  // Global prefix - exclude root path for redirect
+  // Global prefix - exclude UI pages
   app.setGlobalPrefix(apiPrefix, {
-    exclude: ['/'],
+    exclude: ['/', '/login', '/register', '/dashboard', '/admin/dashboard', 'questionnaire/(.*)'],
   });
 
   // Global pipes
