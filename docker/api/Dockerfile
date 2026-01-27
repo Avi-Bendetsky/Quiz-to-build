@@ -69,15 +69,12 @@ USER nestjs
 # Expose port
 EXPOSE 3000
 
-# Security: Use dumb-init to handle signals properly
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-
 # Health check with reduced privileges
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/api/v1/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-# Start the application
-CMD ["./entrypoint.sh"]
+# Start the application with dumb-init
+CMD ["/usr/bin/dumb-init", "--", "./entrypoint.sh"]
 
 # Development stage
 FROM docker.io/library/node:20.18.1-bookworm-slim AS development

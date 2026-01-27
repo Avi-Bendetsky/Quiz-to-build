@@ -8,14 +8,23 @@ export class RedisService implements OnModuleDestroy {
   private readonly client: Redis;
 
   constructor(private readonly configService: ConfigService) {
+    const redisHost = this.configService.get<string>('redis.host', 'localhost');
+    const redisPort = this.configService.get<number>('redis.port', 6379);
+    const redisPassword = this.configService.get<string>('redis.password');
+    // Azure Redis Cache requires TLS on port 6380
+    const useTls = redisPort === 6380 || this.configService.get<boolean>('redis.tls', false);
+
     this.client = new Redis({
-      host: this.configService.get<string>('redis.host', 'localhost'),
-      port: this.configService.get<number>('redis.port', 6379),
-      password: this.configService.get<string>('redis.password') || undefined,
+      host: redisHost,
+      port: redisPort,
+      password: redisPassword || undefined,
+      tls: useTls ? {} : undefined,
       retryStrategy: (times: number) => {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
+      connectTimeout: 10000,
+      maxRetriesPerRequest: 3,
     });
 
     this.client.on('connect', () => {
