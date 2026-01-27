@@ -19,6 +19,13 @@
 - [rule.types.ts](file://apps/api/src/modules/adaptive-logic/types/rule.types.ts)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Removed comprehensive JWT authentication sequence diagrams and flow descriptions
+- Eliminated detailed registration, login, token issuance, refresh, and logout process documentation
+- Maintained focus on core questionnaire management, session handling, and adaptive logic interactions
+- Preserved component interaction diagrams for non-authentication flows
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -31,7 +38,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how the Quiz-to-build system composes its modules and orchestrates interactions across authentication, questionnaire management, session handling, and adaptive logic. It documents the authentication flow from registration and login through JWT token validation to protected route access, and traces the data flow between modules during typical user workflows such as starting a session, submitting responses, and completing assessments. It also covers integration patterns with shared libraries (database and Redis), the strategy pattern used in condition evaluation, and the modular architecture’s benefits for loose coupling and high cohesion.
+This document explains how the Quiz-to-build system composes its modules and orchestrates interactions across questionnaire management, session handling, and adaptive logic. It focuses on the core workflows for starting a session, delivering questions based on adaptive logic, validating responses, and completing assessments. The documentation covers integration patterns with shared libraries (database and Redis), the strategy pattern used in condition evaluation, and the modular architecture's benefits for loose coupling and high cohesion.
 
 ## Project Structure
 The API application is organized as a NestJS monorepo with feature modules and shared libraries:
@@ -65,17 +72,17 @@ APPMOD --> ADAPTIVEMOD
 ```
 
 **Diagram sources**
-- [main.ts](file://apps/api/src/main.ts#L11-L86)
+- [main.ts](file://apps/api/src/main.ts#L11-L108)
 - [app.module.ts](file://apps/api/src/app.module.ts#L16-L66)
-- [prisma.module.ts](file://libs/database/src/prisma.module.ts#L1-L9)
-- [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L9)
+- [prisma.module.ts](file://libs/database/src/prisma.module.ts#L1-L19)
+- [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
 
 **Section sources**
-- [main.ts](file://apps/api/src/main.ts#L11-L86)
+- [main.ts](file://apps/api/src/main.ts#L11-L108)
 - [app.module.ts](file://apps/api/src/app.module.ts#L16-L66)
 
 ## Core Components
-- Authentication module: Provides JWT-based login, registration, refresh/logout, guards, and strategies. Integrates with database and Redis for persistence and token storage.
+- Authentication module: Provides JWT-based authentication infrastructure with guards and strategies. Integrates with database and Redis for persistence and token storage.
 - Session module: Manages questionnaire sessions, progress tracking, response submission, and completion. Coordinates with questionnaire and adaptive logic services.
 - Questionnaire module: Loads questionnaire metadata, sections, and questions, including visibility rules.
 - Adaptive logic module: Evaluates visibility rules and conditions to compute visible questions and derive next steps.
@@ -86,8 +93,8 @@ APPMOD --> ADAPTIVEMOD
 - [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L87-L94)
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L63-L65)
 - [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L26)
-- [prisma.module.ts](file://libs/database/src/prisma.module.ts#L1-L9)
-- [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L9)
+- [prisma.module.ts](file://libs/database/src/prisma.module.ts#L1-L19)
+- [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
 
 ## Architecture Overview
 The system follows a layered, modular architecture:
@@ -131,59 +138,6 @@ SVC_ADAPT --> EVAL
 - [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts#L4-L22)
 
 ## Detailed Component Analysis
-
-### Authentication Flow: Registration, Login, JWT Validation, Protected Access
-This sequence illustrates the end-to-end authentication flow and protected route access.
-
-```mermaid
-sequenceDiagram
-participant C as "Client"
-participant AC as "AuthController"
-participant AS as "AuthService"
-participant PS as "PrismaService"
-participant RS as "RedisService"
-participant GS as "JwtStrategy"
-participant GG as "JwtAuthGuard"
-C->>AC : "POST /auth/register"
-AC->>AS : "register(RegisterDto)"
-AS->>PS : "findUnique(email)"
-AS->>PS : "create(user)"
-AS->>AS : "generateTokens(user)"
-AS->>RS : "set(refresh : {token}, userId, ttl)"
-AS->>PS : "create(refreshToken)"
-AS-->>AC : "TokenResponseDto"
-AC-->>C : "201 Created"
-C->>AC : "POST /auth/login"
-AC->>AS : "login(LoginDto)"
-AS->>PS : "findUnique(email)"
-AS->>PS : "compare(passwordHash)"
-AS->>PS : "update(user : reset failed attempts)"
-AS->>AS : "generateTokens(user)"
-AS->>RS : "set(refresh : {token}, userId, ttl)"
-AS-->>AC : "TokenResponseDto"
-AC-->>C : "200 OK"
-C->>AC : "GET /auth/me (Authorization : Bearer)"
-AC->>GG : "JwtAuthGuard.canActivate()"
-GG->>GS : "validate(jwt payload)"
-GS->>AS : "validateUser(payload)"
-AS->>PS : "findUnique(sub)"
-AS-->>GS : "AuthenticatedUser"
-GS-->>GG : "AuthenticatedUser"
-GG-->>AC : "AuthenticatedUser"
-AC-->>C : "200 OK"
-```
-
-**Diagram sources**
-- [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts#L27-L72)
-- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L54-L232)
-- [jwt.strategy.ts](file://apps/api/src/modules/auth/strategies/jwt.strategy.ts#L20-L28)
-- [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L12-L36)
-
-**Section sources**
-- [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts#L27-L72)
-- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L54-L232)
-- [jwt.strategy.ts](file://apps/api/src/modules/auth/strategies/jwt.strategy.ts#L20-L28)
-- [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L12-L36)
 
 ### Session Lifecycle: Starting, Answering, Completing
 This sequence shows how a user session is created, questions are delivered based on adaptive logic, responses are validated and persisted, and the session is completed.
@@ -412,7 +366,7 @@ AUTH --> REDIS
   - Invalid credentials or locked accounts trigger specific exceptions during login. Review failed login attempts and lockout logic.
   - Expired or invalid tokens are handled by guards and strategies, returning appropriate unauthorized responses.
 - Session access:
-  - Access denied errors occur when a user tries to access another user’s session. Ensure proper user context is passed.
+  - Access denied errors occur when a user tries to access another user's session. Ensure proper user context is passed.
   - Completed sessions cannot accept further submissions; verify session status before submitting.
 - Adaptive logic:
   - If visibility does not update as expected, confirm rule priorities and condition logic. The evaluator applies the first applicable action per category (visibility, requirement).

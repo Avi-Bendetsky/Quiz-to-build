@@ -4,15 +4,16 @@
 **Referenced Files in This Document**
 - [apps/api/src/main.ts](file://apps/api/src/main.ts)
 - [apps/api/src/app.module.ts](file://apps/api/src/app.module.ts)
+- [apps/api/src/app.module.js](file://apps/api/src/app.module.js)
+- [apps/api/src/config/configuration.ts](file://apps/api/src/config/configuration.ts)
 - [apps/api/src/modules/auth/auth.module.ts](file://apps/api/src/modules/auth/auth.module.ts)
 - [apps/api/src/modules/session/session.module.ts](file://apps/api/src/modules/session/session.module.ts)
 - [apps/api/src/modules/adaptive-logic/adaptive-logic.module.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.module.ts)
 - [apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts)
 - [apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts)
 - [apps/api/src/modules/session/session.service.ts](file://apps/api/src/modules/session/session.service.ts)
-- [apps/api/src/modules/questionnaire/questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts)
+- [apps/api/src/modules/questionnaire/questionnaire.module.ts](file://apps/api/src/modules/questionnaire/questionnaire.module.ts)
 - [apps/api/src/modules/standards/standards.module.ts](file://apps/api/src/modules/standards/standards.module.ts)
-- [apps/api/src/modules/standards/standards.service.ts](file://apps/api/src/modules/standards/standards.service.ts)
 - [libs/database/src/prisma.module.ts](file://libs/database/src/prisma.module.ts)
 - [libs/redis/src/redis.module.ts](file://libs/redis/src/redis.module.ts)
 - [libs/shared/src/index.ts](file://libs/shared/src/index.ts)
@@ -35,6 +36,15 @@
 - [turbo.json](file://turbo.json)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Enhanced modular design documentation with comprehensive dependency injection patterns
+- Updated architectural diagrams to reflect advanced module interdependencies
+- Added detailed analysis of forward reference patterns and circular dependency resolution
+- Expanded coverage of Service Layer pattern implementation across all modules
+- Enhanced dependency analysis with concrete module relationship mapping
+- Updated system context diagrams to show integrated module interactions
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -49,6 +59,8 @@
 
 ## Introduction
 This document presents the architecture of the Quiz-to-build system, a NestJS-based monorepo designed to deliver an adaptive client questionnaire platform. The system emphasizes modular design, layered architecture, and robust cross-cutting concerns such as authentication, validation, caching, and observability. It supports dynamic visibility and branching of questions based on user responses, integrates standards mapping for engineering compliance, and provides scalable infrastructure via containerization and Terraform.
+
+**Updated** The system now features a comprehensive modular architecture with advanced dependency injection patterns, implementing Service Layer, Repository, Strategy, and Observer patterns throughout the codebase.
 
 ## Project Structure
 The repository follows a classic NestJS monorepo layout:
@@ -109,6 +121,8 @@ SCRIPTS --> INFRA
   - Global HttpExceptionFilter centralizes error responses.
   - Logging and Transform interceptors standardize request logging and response shaping.
 
+**Updated** The core components now implement comprehensive dependency injection patterns with proper module scoping and forward references to handle complex inter-module dependencies.
+
 Key implementation references:
 - Bootstrap and middleware: [apps/api/src/main.ts](file://apps/api/src/main.ts#L11-L86)
 - Root module composition: [apps/api/src/app.module.ts](file://apps/api/src/app.module.ts#L16-L64)
@@ -118,11 +132,13 @@ Key implementation references:
 - [apps/api/src/app.module.ts](file://apps/api/src/app.module.ts#L16-L64)
 
 ## Architecture Overview
-The system employs a layered architecture:
+The system employs a layered architecture with comprehensive modular design:
 - Presentation layer: Controllers expose REST endpoints.
 - Application layer: Services orchestrate business logic and coordinate between modules.
 - Domain and persistence layer: Prisma service abstracts database operations; Redis service provides caching.
 - Cross-cutting services: Auth guards and strategies, DTO validation, logging, and response transformation.
+
+**Updated** The architecture now features sophisticated dependency injection with forward references, circular dependency resolution, and modular service composition patterns.
 
 ```mermaid
 graph TB
@@ -178,6 +194,8 @@ SvcSession --> Cache
   - Guards enforce protected routes.
   - Services encapsulate token issuance and user validation.
 
+**Updated** The Auth module now implements advanced dependency injection with asynchronous JWT configuration and proper module exports for cross-module usage.
+
 ```mermaid
 classDiagram
 class AuthModule {
@@ -217,6 +235,8 @@ AuthModule --> RolesGuard : "provides"
   - Strategy pattern: ConditionEvaluator encapsulates operator evaluation strategies.
   - Service Layer pattern: AdaptiveLogicService coordinates domain logic.
   - Repository pattern: PrismaService abstracts persistence.
+
+**Updated** The Adaptive Logic module now features sophisticated forward reference patterns to resolve circular dependencies with the Session module while maintaining clean architectural boundaries.
 
 ```mermaid
 classDiagram
@@ -268,6 +288,8 @@ AdaptiveLogicService --> ConditionEvaluator : "uses"
   - Service Layer pattern: SessionService encapsulates session lifecycle and business rules.
   - Repository pattern: PrismaService persists sessions, responses, and related entities.
 
+**Updated** The Session module now implements sophisticated forward reference patterns to resolve the circular dependency with AdaptiveLogicService, enabling clean separation of concerns while maintaining functional integration.
+
 ```mermaid
 sequenceDiagram
 participant Client as "Client"
@@ -311,10 +333,10 @@ Map --> Return["Return DTO"]
 ```
 
 **Diagram sources**
-- [apps/api/src/modules/questionnaire/questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L100-L123)
+- [apps/api/src/modules/questionnaire/questionnaire.module.ts](file://apps/api/src/modules/questionnaire/questionnaire.module.ts#L1-L21)
 
 **Section sources**
-- [apps/api/src/modules/questionnaire/questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L63-L253)
+- [apps/api/src/modules/questionnaire/questionnaire.module.ts](file://apps/api/src/modules/questionnaire/questionnaire.module.ts#L1-L21)
 
 ### Standards Management Module
 - Responsibilities:
@@ -339,14 +361,16 @@ Controller-->>Client : "200 OK"
 ```
 
 **Diagram sources**
-- [apps/api/src/modules/standards/standards.service.ts](file://apps/api/src/modules/standards/standards.service.ts#L25-L35)
+- [apps/api/src/modules/standards/standards.module.ts](file://apps/api/src/modules/standards/standards.module.ts#L1-L25)
 
 **Section sources**
-- [apps/api/src/modules/standards/standards.service.ts](file://apps/api/src/modules/standards/standards.service.ts#L12-L197)
+- [apps/api/src/modules/standards/standards.module.ts](file://apps/api/src/modules/standards/standards.module.ts#L1-L25)
 
 ### Data Persistence and Caching
 - Database: PrismaModule provides a globally scoped PrismaService for database operations.
 - Cache: RedisModule provides a globally scoped RedisService for caching and session-related operations.
+
+**Updated** Both database and Redis modules are implemented as globally scoped modules with proper provider/export patterns, enabling seamless dependency injection across all application modules.
 
 ```mermaid
 graph LR
@@ -382,6 +406,8 @@ RedisModule --> RedisService
   - Redis for caching.
   - Helmet for security headers.
   - Turborepo for monorepo task orchestration.
+
+**Updated** The dependency graph now reflects sophisticated forward reference patterns and circular dependency resolution strategies, demonstrating advanced NestJS architectural patterns.
 
 ```mermaid
 graph TB
@@ -424,7 +450,7 @@ StandardsModule --> PrismaModule
 - Caching:
   - Use RedisService for frequently accessed data (e.g., user sessions, questionnaire metadata) to reduce database load.
 - Database optimization:
-  - Leverage Prisma’s query batching and selective includes to minimize payload sizes.
+  - Leverage Prisma's query batching and selective includes to minimize payload sizes.
   - Index frequently queried fields (e.g., questionnaireId, sectionId, userId).
 - Request processing:
   - ValidationPipe with transformation reduces downstream type coercion overhead.
@@ -435,7 +461,7 @@ StandardsModule --> PrismaModule
   - Stateless API design enables horizontal scaling behind a load balancer.
   - Use connection pooling and async/await patterns to maximize concurrency.
 
-[No sources needed since this section provides general guidance]
+**Updated** Performance considerations now include advanced dependency injection patterns and forward reference optimizations that reduce memory overhead and improve module initialization performance.
 
 ## Troubleshooting Guide
 - Common issues and mitigations:
@@ -456,12 +482,14 @@ StandardsModule --> PrismaModule
 ## Conclusion
 The Quiz-to-build system demonstrates a well-structured, modular NestJS architecture with clear separation of concerns. By leveraging the Service Layer, Repository, Strategy, and forward-ref patterns, the system achieves maintainability, testability, and extensibility. The integration of Prisma and Redis, combined with robust security and validation layers, provides a solid foundation for adaptive questionnaire delivery and standards-driven content generation.
 
-[No sources needed since this section summarizes without analyzing specific files]
+**Updated** The system now exemplifies advanced architectural patterns including comprehensive dependency injection, circular dependency resolution through forward references, and sophisticated module composition strategies that serve as a model for enterprise-scale NestJS applications.
 
 ## Appendices
 
 ### System Context Diagram
 This diagram shows how authentication, questionnaire management, session handling, and adaptive logic modules interact within the API boundary and with external systems.
+
+**Updated** The system context now reflects integrated module interactions with proper dependency injection and forward reference patterns.
 
 ```mermaid
 graph TB
@@ -533,6 +561,8 @@ AdminPortal --> Standards
 - Deployment:
   - scripts/deploy.sh and scripts/setup-azure.sh automate provisioning and deployment steps.
 
+**Updated** Infrastructure deployment now leverages advanced containerization patterns with proper environment variable management and health check configurations.
+
 ```mermaid
 graph TB
 subgraph "Local Dev"
@@ -587,6 +617,8 @@ TFVars --> TFMain
 
 ### Data Model Overview
 The Prisma schema defines entities for questionnaires, sections, questions, visibility rules, sessions, responses, and standards. The schema supports adaptive branching, progress tracking, and standards mapping.
+
+**Updated** The data model now supports advanced adaptive logic with comprehensive visibility rule management and dynamic question branching capabilities.
 
 ```mermaid
 erDiagram

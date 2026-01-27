@@ -41,8 +41,10 @@ async function bootstrap(): Promise<void> {
     exposedHeaders: 'Content-Range,X-Content-Range',
   });
 
-  // Global prefix - health endpoints served under /api/v1/health/* to match Azure probes
-  app.setGlobalPrefix(apiPrefix);
+  // Global prefix - exclude root path for redirect
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: ['/'],
+  });
 
   // Global pipes
   app.useGlobalPipes(

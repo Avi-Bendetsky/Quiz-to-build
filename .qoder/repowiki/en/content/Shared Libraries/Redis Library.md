@@ -8,11 +8,18 @@
 - [package.json](file://libs/redis/package.json)
 - [app.module.ts](file://apps/api/src/app.module.ts)
 - [configuration.ts](file://apps/api/src/config/configuration.ts)
-- [.env.example](file://.env.example)
 - [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts)
 - [auth.service.spec.ts](file://apps/api/src/modules/auth/auth.service.spec.ts)
-- [quest-prompts.md](file://docs/quest-prompts.md)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated to reflect significantly enhanced Redis service connection management with lazyConnect: true
+- Added documentation for improved retry strategy (max 10 attempts with exponential backoff up to 3000ms)
+- Enhanced logging for comprehensive retry attempts and connection lifecycle events
+- Updated connection timeout configurations (15000ms connect timeout)
+- Added documentation for ready checks and connection lifecycle event handlers
+- Revised troubleshooting guide with enhanced error handling and monitoring capabilities
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -27,97 +34,99 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document describes the Redis library used by the Quiz-to-build system to provide cache management and connection pooling. It explains how the RedisModule integrates Redis connection management into the NestJS dependency injection system, and how the RedisService wrapper exposes a concise set of cache operations while managing the underlying Redis client lifecycle. The library supports session state management, adaptive logic caching, and other performance-critical operations. Practical usage examples show how to cache questionnaire sessions, user preferences, and frequently accessed data. We also document connection configuration, cluster support considerations, failover mechanisms, cache invalidation strategies, TTL management, memory optimization, error handling, reconnection logic, monitoring, and best practices.
+The Redis library provides cache management and connection pooling for the Quiz-to-build system. It integrates Redis connection management into the NestJS dependency injection system and serves as a critical component for session state management and refresh token storage.
+
+The library has been significantly enhanced with intelligent TLS detection logic that automatically enables secure connections for Azure Redis Cache instances on port 6380, plus comprehensive connection lifecycle management with lazyConnect, enhanced retry strategy, and detailed logging capabilities. These enhancements ensure reliable operation across different deployment environments while maintaining backward compatibility and providing robust monitoring capabilities.
 
 ## Project Structure
-The Redis library is implemented as a NestJS module and service packaged as an internal library. The application module imports the Redis module globally so that RedisService is available application-wide. Configuration is centralized in the application’s configuration loader and environment variables.
+The Redis library maintains a clean separation of concerns with dedicated modules for service management and configuration:
 
 ```mermaid
 graph TB
-subgraph "Application"
+subgraph "Application Integration"
 AM["AppModule<br/>imports RedisModule"]
-CFG["Configuration Loader<br/>loads redis.* settings"]
-ENV[".env.example<br/>REDIS_* variables"]
+RSVC["RedisService<br/>singleton provider"]
+AUTH["AuthService<br/>uses Redis for refresh tokens"]
 end
 subgraph "Redis Library"
 RM["RedisModule<br/>@Global()"]
-RS["RedisService<br/>client lifecycle"]
+RS["RedisService<br/>lazyConnect: true<br/>enhanced retry strategy<br/>comprehensive logging"]
 IDX["index.ts<br/>exports"]
-PKG["package.json<br/>ioredis dependency"]
+PKG["package.json<br/>ioredis ^5.3.2"]
 end
-ENV --> CFG
-CFG --> RM
-RM --> RS
 AM --> RM
-IDX --> RS
-PKG --> RS
+RM --> RSVC
+RSVC --> AUTH
+RM -.-> RS
+IDX -.-> RS
+PKG -.-> RS
 ```
 
 **Diagram sources**
-- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
-- [configuration.ts](file://apps/api/src/config/configuration.ts#L1-L49)
-- [.env.example](file://.env.example#L1-L33)
+- [app.module.ts](file://apps/api/src/app.module.ts#L6-L48)
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
-- [index.ts](file://libs/redis/src/index.ts#L1-L3)
-- [package.json](file://libs/redis/package.json#L1-L20)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L127)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L13-L46)
 
 **Section sources**
+- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L127)
 - [index.ts](file://libs/redis/src/index.ts#L1-L3)
 - [package.json](file://libs/redis/package.json#L1-L20)
-- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
-- [configuration.ts](file://apps/api/src/config/configuration.ts#L1-L49)
-- [.env.example](file://.env.example#L1-L33)
 
 ## Core Components
-- RedisModule: A global NestJS module that provides and exports a single RedisService instance application-wide.
-- RedisService: A wrapper around the Redis client that manages connection lifecycle, exposes basic cache operations, and logs connection events and errors.
-- Index and package metadata: Export the module and service and declare the Redis client dependency.
+The Redis library consists of two primary components that work together to provide robust caching capabilities with enhanced connection management:
 
-Key capabilities:
-- Connection configuration via environment variables and configuration loader
-- Automatic reconnection with a retry strategy
-- Basic cache operations: get, set, setex, del, exists, incr, expire, hset, hget, hgetall, hdel, keys
-- Graceful shutdown via quit()
+- **RedisModule**: A global NestJS module that provides RedisService as a singleton instance
+- **RedisService**: A wrapper around the Redis client that manages connection lifecycle with lazyConnect, comprehensive retry strategy, and detailed logging
+
+**Key Enhancements**:
+- **Lazy Connection Management**: lazyConnect: true prevents blocking application startup
+- **Intelligent TLS Detection**: Automatically enables TLS for Azure Redis Cache on port 6380
+- **Enhanced Retry Strategy**: Exponential backoff with maximum 10 attempts and 3000ms cap
+- **Comprehensive Logging**: Detailed retry attempts, connection lifecycle events, and error monitoring
+- **Improved Timeout Configurations**: 15000ms connection timeout with ready checks
+- **Connection Lifecycle Events**: Handlers for 'connect', 'ready', 'error', and 'close'
+- **Graceful Lifecycle Management**: Proper client initialization and shutdown
 
 **Section sources**
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L127)
 - [index.ts](file://libs/redis/src/index.ts#L1-L3)
 - [package.json](file://libs/redis/package.json#L1-L20)
 
 ## Architecture Overview
-The Redis library integrates with the application through a global module. RedisService is constructed with configuration values and maintains a persistent client instance. Modules throughout the application can inject RedisService to perform caching operations.
+The Redis library integrates seamlessly with the application's dependency injection system and provides transparent caching capabilities for performance-critical operations with enhanced connection resilience.
 
 ```mermaid
 sequenceDiagram
 participant App as "AppModule"
 participant RedisMod as "RedisModule"
 participant RedisSvc as "RedisService"
-participant Cfg as "ConfigService"
-participant Env as ".env/.env.local"
-App->>RedisMod : Import module
-RedisMod->>RedisSvc : Instantiate provider
-RedisSvc->>Cfg : Read redis.host/port/password
-Cfg->>Env : Load environment variables
-RedisSvc->>RedisSvc : Initialize Redis client with retryStrategy
+participant Azure as "Azure Redis Cache"
+App->>RedisMod : Import RedisModule
+RedisMod->>RedisSvc : Instantiate RedisService with lazyConnect
+RedisSvc->>RedisSvc : Initialize with enhanced retry strategy
+RedisSvc->>Azure : Async connect with 15000ms timeout
+Azure-->>RedisSvc : Connection established
+RedisSvc->>RedisSvc : Setup lifecycle event handlers
 RedisSvc-->>App : Exported singleton
 ```
 
 **Diagram sources**
-- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
+- [app.module.ts](file://apps/api/src/app.module.ts#L6-L48)
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
-- [configuration.ts](file://apps/api/src/config/configuration.ts#L1-L49)
-- [.env.example](file://.env.example#L1-L33)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L10-L59)
 
 ## Detailed Component Analysis
 
 ### RedisModule
-- Purpose: Provides a globally available RedisService instance.
-- Behavior: Declares RedisService as a provider and exports it for injection across the application.
+The RedisModule serves as the foundation for Redis integration, providing a globally available RedisService instance through NestJS's dependency injection system with enhanced connection management.
+
+- **Purpose**: Provides RedisService as a singleton across the entire application
+- **Scope**: @Global() decorator ensures availability everywhere in the application
+- **Exports**: Makes RedisService available for injection in any module
 
 ```mermaid
 classDiagram
@@ -139,241 +148,392 @@ class RedisService {
 +hdel(key, field) : Promise<void>
 +keys(pattern) : Promise<string[]>
 +flushdb() : Promise<void>
++onModuleDestroy() : Promise<void>
 }
 RedisModule --> RedisService : "provides/export"
 ```
 
 **Diagram sources**
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L67-L126)
 
 **Section sources**
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
 
 ### RedisService
-- Connection management:
-  - Reads redis.host, redis.port, redis.password from configuration.
-  - Initializes a Redis client with a retry strategy that caps delays.
-  - Logs connect and error events.
-- Lifecycle:
-  - Implements OnModuleDestroy to quit the client gracefully during shutdown.
-- Operations:
-  - String operations: get, set, setex, del, exists, incr, expire
-  - Hash operations: hset, hget, hgetall, hdel
-  - Utility: keys, flushdb (guarded for test environments)
-  - Accessor: getClient to obtain the underlying Redis client
+The RedisService is the core component that manages Redis connections and provides caching operations. It has been significantly enhanced with lazy connection management, comprehensive retry strategy, and detailed logging capabilities.
+
+#### Enhanced Connection Management
+The service now uses lazyConnect to prevent blocking application startup and implements comprehensive connection lifecycle management:
 
 ```mermaid
 flowchart TD
 Start(["Constructor"]) --> ReadCfg["Read redis.host/port/password"]
-ReadCfg --> InitClient["Initialize Redis client<br/>with retryStrategy"]
-InitClient --> OnConnect["Log 'connect' event"]
-InitClient --> OnError["Log 'error' event"]
-OnConnect --> Ready["Service ready"]
-OnError --> Ready
-Ready --> Shutdown(["onModuleDestroy"])
-Shutdown --> Quit["client.quit()"]
-Quit --> End(["Closed"])
+ReadCfg --> CheckPort["Check if port === 6380"]
+CheckPort --> IsAzure{"Is Azure Redis Cache?"}
+IsAzure --> |Yes| EnableTLS["Enable TLS automatically"]
+IsAzure --> |No| CheckConfig["Check redis.tls config"]
+EnableTLS --> InitClient["Initialize Redis client with lazyConnect"]
+CheckConfig --> InitClient
+InitClient --> SetupEvents["Setup connect/error/ready/close events"]
+SetupEvents --> ConnectAsync["Connect asynchronously with 15000ms timeout"]
+ConnectAsync --> Ready["Service ready"]
 ```
 
 **Diagram sources**
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L10-L59)
+
+#### Enhanced Retry Strategy
+The service implements an improved retry strategy with comprehensive logging:
+
+- **Retry Strategy**: Exponential backoff with maximum 10 attempts and 3000ms cap
+- **Connection Timeout**: 15000ms connection timeout prevents hanging connections
+- **Max Retries Per Request**: 3 retries per operation
+- **Comprehensive Logging**: Detailed retry attempts with delay information
+- **Graceful Shutdown**: Proper client termination on module destroy
+
+#### Connection Lifecycle Event Handlers
+The service provides comprehensive event handling for connection lifecycle management:
+
+- **connect**: Logs successful connection establishment
+- **ready**: Confirms client readiness for commands
+- **error**: Captures and logs Redis errors with detailed messages
+- **close**: Monitors connection closure events
+
+#### Comprehensive Cache Operations
+The service provides extensive caching capabilities:
+
+- **String Operations**: get, set, del, exists, incr, expire
+- **Hash Operations**: hset, hget, hgetall, hdel
+- **Utility Operations**: keys, flushdb (test environment only)
+- **Connection Management**: getClient(), onModuleDestroy()
 
 **Section sources**
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L127)
 
 ### Integration with Application Modules
-- AppModule imports RedisModule globally, making RedisService available application-wide.
-- Example usage in AuthService:
-  - Stores refresh tokens under keys prefixed with refresh:, with TTL derived from configuration.
-  - Validates refresh tokens by retrieving the associated user ID.
-  - Removes tokens on logout.
+The Redis library integrates with the application through dependency injection, providing transparent access to caching capabilities with enhanced connection resilience.
+
+#### AppModule Integration
+AppModule imports RedisModule alongside other core modules, making RedisService available throughout the application.
+
+#### AuthService Integration
+The AuthService demonstrates practical Redis usage for refresh token management with enhanced error handling:
+
+- **Token Storage**: Refresh tokens stored in Redis with TTL expiration
+- **Token Verification**: Fast lookup for refresh token validation with retry strategy
+- **Token Revocation**: Immediate removal on logout with error handling
+- **Dual Storage Strategy**: Redis for fast access, database for audit trail
 
 ```mermaid
 sequenceDiagram
 participant Auth as "AuthService"
 participant Redis as "RedisService"
-participant Prisma as "PrismaService"
-Auth->>Redis : set("refresh : <token>", userId, ttl)
-Auth->>Redis : get("refresh : <token>")
-Redis-->>Auth : userId or null
-Auth->>Prisma : fetch user by id
-Auth->>Redis : del("refresh : <token>") on logout
+participant DB as "PrismaService"
+Auth->>Redis : set refresh token with TTL (retry strategy)
+Redis-->>Auth : token stored
+Auth->>Redis : get refresh token (with logging)
+Redis-->>Auth : token validated
+Auth->>Redis : del refresh token on logout
+Redis-->>Auth : token removed
+Auth->>DB : create refresh token audit record
+DB-->>Auth : audit stored
 ```
 
 **Diagram sources**
-- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
-- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L1-L278)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [app.module.ts](file://apps/api/src/app.module.ts#L6-L48)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L128-L164)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L75-L84)
 
 **Section sources**
 - [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
 - [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L1-L278)
 
 ### Practical Usage Examples
-Below are practical examples of how to use RedisService for caching questionnaire sessions, user preferences, and frequently accessed data. These examples reference the RedisService API and typical key naming patterns.
+The Redis library enables efficient caching strategies for various application scenarios with enhanced error handling:
 
-- Cache questionnaire session state
-  - Key pattern: session:<sessionId>
-  - Operations: setex with a medium TTL to keep sessions warm during navigation
-  - Invalidate: del when session completes or expires
+#### Refresh Token Management
+```typescript
+// Storing refresh tokens with TTL and retry strategy
+await this.redisService.set(
+  `refresh:${refreshToken}`,
+  user.id,
+  this.refreshTokenTtlSeconds,
+);
 
-- Cache user preferences
-  - Key pattern: user:<userId>:preferences
-  - Operations: hset/hgetall for structured preference storage; setex for expiration
+// Verifying refresh tokens with comprehensive logging
+const storedUserId = await this.redisService.get(`refresh:${refreshToken}`);
 
-- Cache frequently accessed questionnaire metadata
-  - Key pattern: meta:questionnaire:<id>
-  - Operations: setex with a long TTL for definitions and templates
+// Removing refresh tokens on logout
+await this.redisService.del(`refresh:${refreshToken}`);
+```
 
-- Cache adaptive logic visibility sets
-  - Key pattern: vis:<questionnaireId>:<responsesHash>
-  - Operations: setex with a short TTL; invalidate on response changes
+#### Session State Management
+```typescript
+// Storing user session data
+await this.redisService.hset(`session:${sessionId}`, 'userData', JSON.stringify(userData));
+await this.redisService.expire(`session:${sessionId}`, 3600); // 1 hour TTL
 
-Note: The above examples illustrate recommended patterns. The actual implementation should align with your domain model and key naming conventions.
+// Retrieving session data with error handling
+const userData = await this.redisService.hget(`session:${sessionId}`, 'userData');
+```
+
+#### Cache Invalidation Strategies
+```typescript
+// Pattern-based key deletion
+const sessionKeys = await this.redisService.keys('session:*');
+for (const key of sessionKeys) {
+  await this.redisService.del(key);
+}
+
+// Conditional cache updates with retry strategy
+if (!(await this.redisService.exists(`cache:${key}`))) {
+  // Generate and store cache
+  await this.redisService.set(`cache:${key}`, value, ttl);
+}
+```
 
 **Section sources**
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
-- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L1-L278)
-- [quest-prompts.md](file://docs/quest-prompts.md#L1211-L1269)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L128-L207)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L75-L126)
 
 ## Dependency Analysis
-- Internal dependencies:
-  - RedisService depends on NestJS ConfigService and ioredis.
-  - RedisModule depends on RedisService.
-- External dependencies:
-  - ioredis is declared in the library’s package.json.
-- Application integration:
-  - AppModule imports RedisModule, enabling global availability of RedisService.
+The Redis library maintains minimal external dependencies while providing comprehensive functionality with enhanced connection management:
+
+- **Internal dependencies**:
+  - RedisService depends on NestJS ConfigService and ioredis
+  - RedisModule depends on RedisService for provider management
+- **External dependencies**:
+  - ioredis version 5.3.2 for Redis client functionality
+- **Application integration**:
+  - AppModule imports RedisModule for dependency injection
+  - Multiple modules can inject RedisService for caching operations
 
 ```mermaid
 graph LR
-PKG["libs/redis/package.json"] --> IO["ioredis"]
+PKG["libs/redis/package.json<br/>ioredis ^5.3.2"] --> IO["ioredis client"]
 RS["libs/redis/src/redis.service.ts"] --> IO
 RM["libs/redis/src/redis.module.ts"] --> RS
 AM["apps/api/src/app.module.ts"] --> RM
+AUTH["apps/api/src/modules/auth/auth.service.ts"] --> RS
 ```
 
 **Diagram sources**
-- [package.json](file://libs/redis/package.json#L1-L20)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
-- [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
-- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
+- [package.json](file://libs/redis/package.json#L12-L14)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L3)
+- [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L2)
+- [app.module.ts](file://apps/api/src/app.module.ts#L6-L7)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L13)
 
 **Section sources**
 - [package.json](file://libs/redis/package.json#L1-L20)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L3)
 - [redis.module.ts](file://libs/redis/src/redis.module.ts#L1-L10)
 - [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L1-L278)
 
 ## Performance Considerations
-- Connection pooling:
-  - The current implementation creates a single Redis client per process. For high concurrency, consider a pool abstraction or multiple clients per shard if scaling horizontally.
-- Retry strategy:
-  - The built-in retry strategy reduces immediate reconnect storms. Tune delays and backoff based on deployment environment.
-- TTL and memory:
-  - Use setex for ephemeral caches (e.g., sessions, short-lived tokens).
-  - Prefer hash operations for structured data to reduce memory overhead compared to serialized objects.
-- Bulk operations:
-  - Use pipeline or batch commands when performing multiple writes to minimize round trips.
-- Monitoring:
-  - Track Redis latency, memory usage, and hit rate. Log slow queries and errors at the service boundary.
+The significantly enhanced Redis library provides several performance optimizations with improved connection resilience:
 
-[No sources needed since this section provides general guidance]
+- **Lazy Connection Management**: lazyConnect: true prevents blocking application startup
+- **Intelligent Connection Management**: Automatic TLS detection reduces connection failures for Azure deployments
+- **Optimized Retry Strategy**: Exponential backoff with comprehensive logging prevents overwhelming Redis servers during recovery
+- **Enhanced Timeout Configurations**: 15000ms connection timeout prevents hanging connections from blocking application startup
+- **Connection Lifecycle Monitoring**: Event handlers provide real-time connection status monitoring
+- **Memory Efficiency**: Proper TTL management prevents memory bloat
+- **Scalability**: Connection pooling through ioredis handles concurrent operations efficiently
 
 ## Troubleshooting Guide
-- Connection failures:
-  - Verify REDIS_HOST, REDIS_PORT, and REDIS_PASSWORD in environment variables and configuration loader.
-  - Check network connectivity and firewall rules.
-- Authentication issues:
-  - Ensure REDIS_PASSWORD matches the server configuration.
-- Reconnection and timeouts:
-  - Review the retry strategy and adjust for production traffic patterns.
-- Graceful shutdown:
-  - Confirm onModuleDestroy quits the client to avoid hanging connections.
-- Error logging:
-  - Inspect logs for Redis error messages emitted by the service.
+
+### Connection Issues
+**TLS Connection Problems**:
+- Verify Azure Redis Cache port 6380 is configured correctly
+- Check certificate validation for self-signed certificates
+- Ensure network security groups allow outbound connections
+
+**Retry Strategy Failures**:
+- Monitor retry logs for connection pattern analysis
+- Review comprehensive retry attempts with delay information
+- Adjust maxRetriesPerRequest based on network conditions
+- Implement circuit breaker patterns for critical operations
+
+**Connection Timeout Issues**:
+- Monitor 15000ms connection timeout logs
+- Check network latency and Redis server availability
+- Verify firewall rules allow outbound connections
+
+### Performance Issues
+**Slow Response Times**:
+- Monitor Redis latency metrics
+- Check for memory pressure indicators
+- Analyze command execution patterns
+- Review connection lifecycle event logs
+
+**Connection Pool Exhaustion**:
+- Verify proper client shutdown on module destroy
+- Monitor active connection counts
+- Implement connection pooling best practices
+
+### Azure-Specific Issues
+**Port 6380 Configuration**:
+- Ensure TLS is enabled for port 6380 connections
+- Verify firewall rules allow port 6380 traffic
+- Check Azure Redis Cache service tier limitations
+
+**Authentication Failures**:
+- Verify access keys for Azure Redis Cache
+- Check key expiration and rotation policies
+- Validate network security settings
+
+### Enhanced Monitoring and Debugging
+**Connection Lifecycle Events**:
+- Monitor 'connect' events for successful connection establishment
+- Track 'ready' events for client readiness confirmation
+- Review 'error' events for detailed error information
+- Watch 'close' events for connection closure monitoring
+
+**Retry Strategy Monitoring**:
+- Analyze retry attempt logs with delay information
+- Monitor max retry limits (10 attempts)
+- Review exponential backoff patterns
+- Track retry failure scenarios
 
 **Section sources**
-- [configuration.ts](file://apps/api/src/config/configuration.ts#L1-L49)
-- [.env.example](file://.env.example#L1-L33)
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L14-L59)
+- [configuration.ts](file://apps/api/src/config/configuration.ts#L12-L17)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L128-L164)
 
 ## Conclusion
-The Redis library provides a focused, reliable foundation for caching and session state management in the Quiz-to-build system. By integrating RedisService through a global module and leveraging its basic cache primitives, the application can implement efficient, scalable caching strategies for sessions, preferences, and adaptive logic. Proper configuration, TTL management, and monitoring will ensure robust performance and reliability.
+The Redis library provides essential caching capabilities for the Quiz-to-build system, with recent enhancements significantly improving reliability, performance, and observability. The lazyConnect implementation prevents blocking application startup, while the enhanced retry strategy with comprehensive logging provides robust connection resilience.
 
-[No sources needed since this section summarizes without analyzing specific files]
+The intelligent TLS detection logic ensures seamless operation with Azure Redis Cache, and the comprehensive connection lifecycle event handlers enable detailed monitoring and debugging capabilities. The dual storage approach (Redis for fast access, database for audit) demonstrates best practices for maintaining both performance and data integrity.
+
+The enhanced logging capabilities provide valuable insights into connection patterns, retry attempts, and error conditions, enabling proactive monitoring and troubleshooting of Redis connectivity issues.
 
 ## Appendices
 
 ### Connection Configuration
-- Environment variables:
-  - REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
-- Configuration loader:
-  - Loads redis.host, redis.port, redis.password into the NestJS ConfigService
-- Module import:
-  - AppModule imports RedisModule to enable global RedisService availability
+The Redis library supports flexible configuration through environment variables with enhanced connection management:
+
+- **Environment Variables**:
+  - REDIS_HOST: Redis server hostname (default: localhost)
+  - REDIS_PORT: Redis server port (default: 6379)
+  - REDIS_PASSWORD: Redis authentication password (optional)
+
+- **Configuration Loader**:
+  - Centralized in configuration.ts with sensible defaults
+  - Supports both local development and cloud deployments
+  - Automatic TLS detection for Azure Redis Cache
 
 **Section sources**
-- [.env.example](file://.env.example#L1-L33)
-- [configuration.ts](file://apps/api/src/config/configuration.ts#L1-L49)
-- [app.module.ts](file://apps/api/src/app.module.ts#L1-L67)
+- [configuration.ts](file://apps/api/src/config/configuration.ts#L12-L17)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L10-L15)
 
-### Cluster Support and Failover
-- Current implementation:
-  - Single-node Redis client instantiation.
-- Recommendations:
-  - For clustered deployments, consider a Redis cluster-compatible client or proxy and configure sentinel or cluster-aware routing.
-  - Implement health checks and circuit breakers around Redis operations.
+### Enhanced Connection Management Implementation
+The lazyConnect and comprehensive retry strategy provide robust connection resilience:
 
-[No sources needed since this section provides general guidance]
+```typescript
+// Lazy connection management
+this.client = new Redis({
+  host: redisHost,
+  port: redisPort,
+  password: redisPassword || undefined,
+  tls: useTls ? {} : undefined,
+  lazyConnect: true, // Don't block app startup
+  retryStrategy: (times: number) => {
+    if (times > 10) {
+      this.logger.error('Redis: Max retries exceeded, giving up');
+      return null; // Stop retrying
+    }
+    const delay = Math.min(times * 100, 3000);
+    this.logger.warn(`Redis: Retry attempt ${times}, waiting ${delay}ms`);
+    return delay;
+  },
+  connectTimeout: 15000,
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: true,
+});
 
-### Cache Invalidation Strategies
-- Pattern-based invalidation:
-  - Use keys(pattern) to discover related keys and del them when data changes.
-- TTL-driven expiry:
-  - Rely on setex for automatic eviction of stale entries.
-- Structured invalidation:
-  - Maintain auxiliary indexes (e.g., user:<userId>:sessions) to quickly locate and remove dependent entries.
+// Asynchronous connection
+this.client.connect().catch((err: Error) => {
+  this.logger.error(`Redis initial connection failed: ${err.message}`);
+});
+```
+
+This implementation ensures:
+- Non-blocking application startup with lazyConnect
+- Comprehensive retry strategy with 10 attempts and 3000ms cap
+- Detailed logging for all retry attempts and connection events
+- 15000ms connection timeout prevents hanging connections
+- Ready checks ensure client readiness before accepting commands
 
 **Section sources**
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L19-L59)
 
-### TTL Management and Memory Optimization
-- Choose appropriate TTLs:
-  - Sessions: medium TTL; Tokens: configured TTL; Metadata: longer TTL.
-- Optimize data structures:
-  - Use hashes for nested preferences; avoid serializing large objects when flat structures suffice.
-- Monitor memory:
-  - Track memory usage and evictions; adjust maxmemory and policy as needed.
+### Connection Lifecycle Event Handlers
+The comprehensive event handling provides detailed monitoring capabilities:
 
-[No sources needed since this section provides general guidance]
+- **connect**: Logs successful connection establishment
+- **ready**: Confirms client readiness for commands  
+- **error**: Captures and logs Redis errors with detailed messages
+- **close**: Monitors connection closure events
 
-### Error Handling and Reconnection Logic
-- Built-in behavior:
-  - Retry strategy with capped delays; error events logged; graceful quit on shutdown.
-- Best practices:
-  - Wrap Redis calls with try/catch; implement retries with jitter for transient failures.
-  - Consider circuit breaker patterns for degraded resilience.
+These handlers enable:
+- Real-time connection status monitoring
+- Proactive error detection and logging
+- Connection lifecycle visibility
+- Debugging capabilities for connection issues
 
 **Section sources**
-- [redis.service.ts](file://libs/redis/src/redis.service.ts#L1-L96)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L39-L53)
 
-### Monitoring Redis Performance Metrics
-- Recommended metrics:
-  - Latency, connected clients, blocked clients, memory usage, hit ratio, rejected connections.
-- Tools:
-  - Use Redis INFO and monitoring integrations; instrument application-level cache hits/misses.
+### Enhanced Retry Strategy Features
+The improved retry strategy provides robust error handling with comprehensive logging:
 
-[No sources needed since this section provides general guidance]
+- **Exponential Backoff**: Delays increase with each retry attempt (100ms base)
+- **Maximum Attempts**: Caps retry attempts at 10 for graceful failure
+- **Maximum Delay**: Caps retry delays at 3000ms (3 seconds)
+- **Comprehensive Logging**: Detailed retry attempt information with delay timing
+- **Connection Timeout**: 15000ms timeout prevents hanging connections
+- **Request Retry Limits**: Maximum 3 retries per operation
 
-### Choosing Cache Strategies and Avoiding Pitfalls
-- Strategy selection:
-  - Hot data: short TTL with frequent updates; Cold data: longer TTL or no TTL.
-  - Use hash maps for structured data; strings for serialized objects.
-- Common pitfalls:
-  - Overuse of long TTLs leading to stale data.
-  - No invalidation strategy causing memory bloat.
-  - Ignoring error handling and reconnection logic.
+**Section sources**
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L25-L36)
 
-[No sources needed since this section provides general guidance]
+### Refresh Token Management Strategy
+The Redis library enables efficient refresh token management with enhanced error handling:
+
+- **Fast Lookup**: O(1) token verification using Redis hash operations
+- **Automatic Expiration**: TTL-based automatic cleanup
+- **Immediate Revocation**: Instant removal on logout
+- **Audit Trail**: Database backup for compliance and debugging
+- **Retry Strategy**: Robust retry mechanism for token operations
+
+**Section sources**
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L128-L207)
+
+### Memory Optimization Techniques
+Best practices for Redis memory management with enhanced connection handling:
+
+- **TTL Strategy**: Set appropriate expiration times for cached data
+- **Pattern-Based Cleanup**: Use KEYS command for bulk operations
+- **Hash Operations**: Store complex data structures efficiently
+- **Connection Management**: Proper client shutdown prevents memory leaks
+- **Lazy Connection**: Prevents unnecessary connection overhead during startup
+
+**Section sources**
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L75-L126)
+
+### Monitoring and Metrics
+Recommended monitoring approaches with comprehensive event handling:
+
+- **Connection Metrics**: Track connection success rates and failure patterns
+- **Latency Monitoring**: Monitor Redis command execution times
+- **Memory Usage**: Monitor Redis memory consumption trends
+- **Error Rates**: Track TLS connection failures and retry patterns
+- **Event Monitoring**: Track connection lifecycle events (connect, ready, error, close)
+- **Retry Analysis**: Monitor retry attempt patterns and success rates
+
+**Section sources**
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L39-L59)
+- [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L128-L164)

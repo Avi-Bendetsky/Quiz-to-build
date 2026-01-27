@@ -11,6 +11,7 @@ import { SessionModule } from './modules/session/session.module';
 import { AdaptiveLogicModule } from './modules/adaptive-logic/adaptive-logic.module';
 import { StandardsModule } from './modules/standards/standards.module';
 import { HealthController } from './health.controller';
+import { RootController } from './root.controller';
 import configuration from './config/configuration';
 
 @Module({
@@ -55,7 +56,7 @@ import configuration from './config/configuration';
     AdaptiveLogicModule,
     StandardsModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, RootController],
   providers: [
     {
       provide: APP_GUARD,
@@ -63,4 +64,4 @@ import configuration from './config/configuration';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

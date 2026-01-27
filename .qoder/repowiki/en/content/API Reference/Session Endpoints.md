@@ -13,7 +13,18 @@
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts)
 - [schema.prisma](file://prisma/schema.prisma)
 - [http-exception.filter.ts](file://apps/api/src/common/filters/http-exception.filter.ts)
+- [main.ts](file://apps/api/src/main.ts)
+- [app.module.ts](file://apps/api/src/app.module.ts)
+- [session.service.spec.ts](file://apps/api/src/modules/session/session.service.spec.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated response type definitions to use consistent interfaces for better type safety
+- Enhanced validation error handling with standardized error response format
+- Improved error handling consistency across session operations
+- Updated configuration cleanup affecting local development environment setup
+- Added standardized validation error messages for response validation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -30,9 +41,12 @@
 ## Introduction
 This document provides comprehensive API documentation for session management endpoints. It covers:
 - POST /api/v1/sessions (start a new questionnaire session with adaptive logic initialization)
-- GET /api/v1/sessions/:id/continue (resume existing session and compute next questions)
-- POST /api/v1/sessions/:id/responses (submit response and evaluate adaptive logic)
 - GET /api/v1/sessions/:id (get session details)
+- GET /api/v1/sessions/:id/continue (resume existing session and compute next questions)
+- GET /api/v1/sessions/:id/questions/next (get next question(s) based on adaptive logic)
+- POST /api/v1/sessions/:id/responses (submit response and evaluate adaptive logic)
+- PUT /api/v1/sessions/:id/responses/:questionId (update response)
+- POST /api/v1/sessions/:id/complete (mark session as complete)
 
 It specifies request/response schemas, authentication requirements (JWT required), error handling, session lifecycle management, adaptive logic evaluation flow, progress tracking, and state persistence. Examples of complete session workflows are included.
 
@@ -265,6 +279,46 @@ Errors
 - [continue-session.dto.ts](file://apps/api/src/modules/session/dto/continue-session.dto.ts#L5-L13)
 - [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L31-L66)
 
+### GET /api/v1/sessions/:id/questions/next (Get Next Question(s) Based on Adaptive Logic)
+Purpose:
+- Get next question(s) based on current session state and adaptive logic without submitting a response.
+
+Request
+- Path: /api/v1/sessions/:id/questions/next
+- Method: GET
+- Headers: Authorization: Bearer <JWT>
+- Path params: id (UUID)
+- Query: count (optional, integer, min 1, max 5, default 1)
+
+Response
+- Status: 200 OK
+- Body: NextQuestionResponse
+
+NextQuestionResponse
+- questions: QuestionResponse[]
+- section: {
+  id: string
+  name: string
+  progress: number
+}
+- overallProgress: ProgressInfo
+
+Behavior
+- Validates session ownership and ensures session is not completed.
+- Loads all responses and builds a response map.
+- Evaluates visible questions via adaptive logic.
+- Returns up to 'count' next unanswered questions.
+- Calculates progress based on visible questions.
+
+Errors
+- 404 Not Found if session does not exist.
+- 403 Forbidden if user does not own the session.
+- 400 Bad Request if session is already completed.
+
+**Section sources**
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L107-L118)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L198-L268)
+
 ### POST /api/v1/sessions/:id/responses (Submit Response and Evaluate Adaptive Logic)
 Purpose:
 - Submit a response to a question, validate it, persist it, and compute next steps.
@@ -304,11 +358,18 @@ SubmitResponseResult
 Behavior
 - Validates session ownership and ensures session is not completed.
 - Validates question existence.
-- Validates response value against question validation rules.
+- Validates response value against question validation rules with standardized error messages.
 - Upserts response with validation outcome and optional timing.
 - Recomputes visible questions and determines next question.
 - Updates session progress and current question/section.
 - Returns response metadata and progress.
+
+Validation Rules:
+- Required field validation: "This field is required"
+- Text minimum length: "Minimum length is X characters"
+- Text maximum length: "Maximum length is X characters"
+- Numeric minimum value: "Minimum value is X"
+- Numeric maximum value: "Maximum value is X"
 
 Errors
 - 404 Not Found if session or question does not exist.
@@ -321,6 +382,59 @@ Errors
 - [submit-response.dto.ts](file://apps/api/src/modules/session/dto/submit-response.dto.ts#L4-L21)
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L150-L162)
 - [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L31-L66)
+- [session.service.spec.ts](file://apps/api/src/modules/session/session.service.spec.ts#L418-L501)
+
+### PUT /api/v1/sessions/:id/responses/:questionId (Update Response)
+Purpose:
+- Update an existing response to a question.
+
+Request
+- Path: /api/v1/sessions/:id/responses/:questionId
+- Method: PUT
+- Headers: Authorization: Bearer <JWT>
+- Path params: id (UUID), questionId (UUID)
+- Body: Partial SubmitResponseDto (excluding questionId)
+
+Response
+- Status: 200 OK
+- Body: SubmitResponseResult
+
+Behavior
+- Same validation and processing as submitResponse but updates existing response.
+- Increments revision counter for audit trail.
+- Returns updated response metadata.
+
+**Section sources**
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L131-L141)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L270-L359)
+
+### POST /api/v1/sessions/:id/complete (Mark Session as Complete)
+Purpose:
+- Mark a session as completed if all required questions are answered.
+
+Request
+- Path: /api/v1/sessions/:id/complete
+- Method: POST
+- Headers: Authorization: Bearer <JWT>
+- Path params: id (UUID)
+
+Response
+- Status: 200 OK
+- Body: SessionResponse
+
+Behavior
+- Validates session ownership and ensures session is not already completed.
+- Updates session status to COMPLETED and sets completedAt timestamp.
+- Returns updated SessionResponse.
+
+Errors
+- 404 Not Found if session does not exist.
+- 400 Bad Request if session is already completed.
+- 403 Forbidden if user does not own the session.
+
+**Section sources**
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L143-L151)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L361-L386)
 
 ### Adaptive Logic Evaluation Flow
 The adaptive engine evaluates visibility rules to determine which questions are visible and whether they are required or disabled. It also computes next questions and calculates adaptive changes.
@@ -373,7 +487,7 @@ End-to-end flow from start to completion:
    - POST /api/v1/sessions/:id/responses with SubmitResponseDto
    - Receive SubmitResponseResult with updated progress
 3. Complete session
-   - PUT /api/v1/sessions/:id/complete
+   - POST /api/v1/sessions/:id/complete
    - Receive SessionResponse with status COMPLETED
 
 Notes:
@@ -448,7 +562,7 @@ Common errors and resolutions:
   - Cause: Missing or invalid JWT.
   - Resolution: Obtain a valid access token via authentication endpoints.
 - 403 Forbidden
-  - Cause: Attempting to access another user’s session.
+  - Cause: Attempting to access another user's session.
   - Resolution: Ensure the session belongs to the authenticated user.
 - 404 Not Found
   - Cause: Session or question not found.
@@ -467,8 +581,34 @@ Error response format:
 - [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L408-L410)
 - [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L548-L565)
 
+## Configuration Cleanup and Local Development Setup
+The local development environment setup has been streamlined with improved configuration management:
+
+### Environment Configuration
+- Centralized configuration via .env and .env.local files
+- Support for multiple environment profiles
+- Automatic configuration loading in AppConfiguration
+
+### Development Scripts
+- Simplified setup with setup-local.sh for Docker-based development
+- Quick start with dev-start.sh for minimal output
+- Automated dependency installation and database setup
+
+### API Configuration
+- Global prefix configuration (default: api/v1)
+- CORS configuration with flexible origins
+- Security middleware including Helmet protection
+- Standardized error handling with HttpExceptionFilter
+
+**Section sources**
+- [main.ts](file://apps/api/src/main.ts#L11-L93)
+- [app.module.ts](file://apps/api/src/app.module.ts#L18-L71)
+- [.env.example](file://.env.example#L1-L40)
+- [setup-local.sh](file://scripts/setup-local.sh#L1-L175)
+- [dev-start.sh](file://scripts/dev-start.sh#L1-L14)
+
 ## Conclusion
-The session endpoints provide a robust foundation for interactive, adaptive questionnaire experiences. They enforce JWT-based authentication, maintain accurate progress and adaptive state, and integrate tightly with the adaptive logic engine. Following the documented schemas and flows ensures predictable behavior across client integrations.
+The session endpoints provide a robust foundation for interactive, adaptive questionnaire experiences. They enforce JWT-based authentication, maintain accurate progress and adaptive state, and integrate tightly with the adaptive logic engine. The recent improvements include more consistent type definitions, standardized validation error handling, and streamlined configuration for local development. Following the documented schemas and flows ensures predictable behavior across client integrations.
 
 ## Appendices
 
@@ -492,11 +632,21 @@ SessionResponse
 ContinueSessionResponse
 - session, nextQuestions, currentSection, overallProgress, adaptiveState, isComplete, canComplete
 
+NextQuestionResponse
+- questions, section, overallProgress
+
 SubmitResponseResult
 - responseId, questionId, value, validationResult, adaptiveChanges, progress, createdAt
 
 ProgressInfo
 - percentage, answeredQuestions, totalQuestions, estimatedTimeRemaining (optional)
+
+Validation Error Messages
+- Required field: "This field is required"
+- Minimum length: "Minimum length is X characters"
+- Maximum length: "Maximum length is X characters"
+- Minimum value: "Minimum value is X"
+- Maximum value: "Maximum value is X"
 
 **Section sources**
 - [create-session.dto.ts](file://apps/api/src/modules/session/dto/create-session.dto.ts#L4-L14)
@@ -504,3 +654,4 @@ ProgressInfo
 - [submit-response.dto.ts](file://apps/api/src/modules/session/dto/submit-response.dto.ts#L4-L21)
 - [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L24-L85)
 - [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L17-L22)
+- [session.service.spec.ts](file://apps/api/src/modules/session/session.service.spec.ts#L418-L501)
