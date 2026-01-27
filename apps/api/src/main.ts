@@ -41,8 +41,10 @@ async function bootstrap(): Promise<void> {
     exposedHeaders: 'Content-Range,X-Content-Range',
   });
 
-  // Global prefix
-  app.setGlobalPrefix(apiPrefix);
+  // Global prefix - exclude health endpoints for container probes
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: ['health', 'health/live', 'health/ready'],
+  });
 
   // Global pipes
   app.useGlobalPipes(

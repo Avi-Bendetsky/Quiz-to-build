@@ -14,25 +14,47 @@ export class RedisService implements OnModuleDestroy {
     // Azure Redis Cache requires TLS on port 6380
     const useTls = redisPort === 6380 || this.configService.get<boolean>('redis.tls', false);
 
+    this.logger.log(`Initializing Redis client - Host: ${redisHost}, Port: ${redisPort}, TLS: ${useTls}`);
+
     this.client = new Redis({
       host: redisHost,
       port: redisPort,
       password: redisPassword || undefined,
       tls: useTls ? {} : undefined,
+      lazyConnect: true, // Don't block app startup
       retryStrategy: (times: number) => {
-        const delay = Math.min(times * 50, 2000);
+        if (times > 10) {
+          this.logger.error('Redis: Max retries exceeded, giving up');
+          return null; // Stop retrying
+        }
+        const delay = Math.min(times * 100, 3000);
+        this.logger.warn(`Redis: Retry attempt ${times}, waiting ${delay}ms`);
         return delay;
       },
-      connectTimeout: 10000,
+      connectTimeout: 15000,
       maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
     });
 
     this.client.on('connect', () => {
       this.logger.log('Redis connection established');
     });
 
+    this.client.on('ready', () => {
+      this.logger.log('Redis client ready to accept commands');
+    });
+
     this.client.on('error', (error: Error) => {
       this.logger.error(`Redis error: ${error.message}`);
+    });
+
+    this.client.on('close', () => {
+      this.logger.warn('Redis connection closed');
+    });
+
+    // Connect asynchronously - don't block app startup
+    this.client.connect().catch((err: Error) => {
+      this.logger.error(`Redis initial connection failed: ${err.message}`);
     });
   }
 
