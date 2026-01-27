@@ -407,4 +407,11 @@ export class ScoringService {
         const readiness = await this.calculateReadiness(sessionId);
         return readiness.meetsThreshold;
     }
+
+    /**
+     * Check if a score meets the readiness threshold
+     */
+    meetsReadinessThresholdScore(score: number): boolean {
+        return score >= this.TARGET_SCORE;
+    }
 }
