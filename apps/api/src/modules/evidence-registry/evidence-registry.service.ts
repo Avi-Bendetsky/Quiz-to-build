@@ -610,7 +610,7 @@ export class EvidenceRegistryService {
             where: { id: evidenceId },
             include: {
                 verifier: {
-                    select: { id: true, email: true, firstName: true, lastName: true },
+                    select: { id: true, email: true, name: true },
                 },
             },
         });
@@ -619,20 +619,17 @@ export class EvidenceRegistryService {
             throw new NotFoundException(`Evidence not found: ${evidenceId}`);
         }
 
-        // Get related decision logs for this evidence
+        // Get related decision logs for this evidence (via session)
         const auditLogs = await this.prisma.decisionLog.findMany({
             where: {
-                relatedIds: {
-                    has: evidenceId,
-                },
+                sessionId: evidence.sessionId,
             },
             orderBy: { createdAt: 'asc' },
             select: {
                 id: true,
-                decisionType: true,
-                rationale: true,
+                statement: true,
                 createdAt: true,
-                metadata: true,
+                status: true,
             },
         });
 
@@ -656,20 +653,18 @@ export class EvidenceRegistryService {
                 action: 'VERIFIED',
                 timestamp: evidence.verifiedAt,
                 userId: evidence.verifierId,
-                userName: evidence.verifier
-                    ? `${evidence.verifier.firstName} ${evidence.verifier.lastName}`
-                    : null,
+                userName: evidence.verifier?.name || null,
                 details: {},
             });
         }
 
-        // Add any logged decisions
+        // Add any logged decisions (filter to relevant ones)
         auditLogs.forEach((log) => {
             auditTrail.push({
-                action: log.decisionType as string,
+                action: log.status as string,
                 timestamp: log.createdAt,
                 userId: null,
-                details: log.metadata as Record<string, unknown>,
+                details: { statement: log.statement },
             });
         });
 

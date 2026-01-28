@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@libs/database';
-import { EvidenceType } from '@prisma/client';
+import { EvidenceType, Prisma } from '@prisma/client';
 import * as crypto from 'crypto';
 
 /** CI Artifact metadata stored in EvidenceRegistry.metadata JSON field */
@@ -126,6 +126,19 @@ export class CIArtifactIngestionService {
             .digest('hex');
 
         // Create evidence record with CI metadata embedded
+        const ciMetadata = {
+            ciProvider: dto.ciProvider,
+            buildId: dto.buildId,
+            buildNumber: dto.buildNumber,
+            pipelineName: dto.pipelineName,
+            branch: dto.branch,
+            commitSha: dto.commitSha,
+            artifactType: dto.artifactType,
+            parsedData: parsedData as unknown as Prisma.JsonValue,
+            status: 'INGESTED',
+            ingestedAt: new Date().toISOString(),
+        };
+
         const evidence = await this.prisma.evidenceRegistry.create({
             data: {
                 sessionId: dto.sessionId,
@@ -137,18 +150,7 @@ export class CIArtifactIngestionService {
                 mimeType: dto.mimeType || 'application/json',
                 hashSignature,
                 verified: dto.autoVerify || false,
-                metadata: {
-                    ciProvider: dto.ciProvider,
-                    buildId: dto.buildId,
-                    buildNumber: dto.buildNumber,
-                    pipelineName: dto.pipelineName,
-                    branch: dto.branch,
-                    commitSha: dto.commitSha,
-                    artifactType: dto.artifactType,
-                    parsedData,
-                    status: 'INGESTED',
-                    ingestedAt: new Date().toISOString(),
-                },
+                metadata: ciMetadata as unknown as Prisma.InputJsonValue,
             },
         });
 

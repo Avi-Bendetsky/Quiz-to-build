@@ -34,6 +34,16 @@ import {
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+/** File upload type for multer */
+interface UploadedFileType {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+}
+
 /**
  * Evidence Registry Controller
  * 
@@ -113,7 +123,7 @@ The file will be stored in Azure Blob Storage with a SHA-256 hash computed for i
         description: 'Invalid file type, size, or missing required fields',
     })
     async uploadEvidence(
-        @UploadedFile() file: Express.Multer.File,
+        @UploadedFile() file: UploadedFileType,
         @Body() dto: UploadEvidenceDto,
         @Request() req: { user: { userId: string } },
     ): Promise<EvidenceItemResponse> {
