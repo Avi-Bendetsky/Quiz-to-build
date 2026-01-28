@@ -44,7 +44,8 @@ async function main(): Promise<void> {
     create: {
       id: 'quest-main-001',
       name: 'Business Plan Questionnaire',
-      description: 'Comprehensive questionnaire for generating business plans and technical documentation',
+      description:
+        'Comprehensive questionnaire for generating business plans and technical documentation',
       industry: 'general',
       version: 1,
       isActive: true,
@@ -169,7 +170,11 @@ async function main(): Promise<void> {
         { id: 'opt-bf-002-1', label: 'Existing business (operating)', value: 'existing' },
         { id: 'opt-bf-002-2', label: 'New startup (pre-launch)', value: 'startup' },
         { id: 'opt-bf-002-3', label: 'Existing business pivoting to new product', value: 'pivot' },
-        { id: 'opt-bf-002-4', label: 'Internal project within larger organization', value: 'internal' },
+        {
+          id: 'opt-bf-002-4',
+          label: 'Internal project within larger organization',
+          value: 'internal',
+        },
       ],
     },
     {
@@ -319,7 +324,11 @@ async function main(): Promise<void> {
       options: [
         { id: 'opt-tm-001-1', label: 'Individual Consumers (B2C)', value: 'b2c' },
         { id: 'opt-tm-001-2', label: 'Small/Medium Businesses (B2B SMB)', value: 'b2b_smb' },
-        { id: 'opt-tm-001-3', label: 'Enterprise Companies (B2B Enterprise)', value: 'b2b_enterprise' },
+        {
+          id: 'opt-tm-001-3',
+          label: 'Enterprise Companies (B2B Enterprise)',
+          value: 'b2b_enterprise',
+        },
         { id: 'opt-tm-001-4', label: 'Businesses serving consumers (B2B2C)', value: 'b2b2c' },
         { id: 'opt-tm-001-5', label: 'Government/Public Sector (B2G)', value: 'b2g' },
         { id: 'opt-tm-001-6', label: 'Multiple segments', value: 'mixed' },
@@ -494,11 +503,9 @@ async function main(): Promise<void> {
   console.log('Database seed completed successfully!');
 }
 
-main()
+void main()
   .catch((e) => {
     console.error('Seed failed:', e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => void prisma.$disconnect());

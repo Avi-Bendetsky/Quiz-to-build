@@ -8,7 +8,6 @@ import {
   PolicyDocument,
   PolicyType,
   DocumentStatus,
-  PolicyStatement,
   RequirementLevel,
   StandardDocument,
   StandardRequirement,
@@ -244,7 +243,7 @@ export class PolicyGeneratorService {
   private generateProcedures(
     standardId: string,
     template: PolicyTemplate,
-    gap: GapContext,
+    _gap: GapContext,
   ): ProcedureDocument[] {
     const procedureId = `proc-${uuidv4()}`;
 

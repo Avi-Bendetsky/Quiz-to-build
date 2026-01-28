@@ -2,17 +2,7 @@
  * Policy Pack Controller
  * API endpoints for policy pack generation
  */
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Res,
-  UseGuards,
-  Logger,
-  StreamableFile,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, Res, UseGuards, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

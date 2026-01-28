@@ -12,9 +12,9 @@ export * from './business-plan.template';
  * Registry of all available document templates by slug
  */
 export const TEMPLATE_REGISTRY = {
-  'technology-roadmap': () =>
+  ['technology-roadmap']: () =>
     import('./technology-roadmap.template').then((m) => m.TECHNOLOGY_ROADMAP_TEMPLATE),
-  'business-plan': () => import('./business-plan.template').then((m) => m.BUSINESS_PLAN_TEMPLATE),
+  ['business-plan']: () => import('./business-plan.template').then((m) => m.BUSINESS_PLAN_TEMPLATE),
 } as const;
 
 export type TemplateSlug = keyof typeof TEMPLATE_REGISTRY;

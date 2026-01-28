@@ -7,13 +7,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import {
-  Session,
-  SessionStatus,
-  Question,
-  Response as PrismaResponse,
-  Prisma,
-} from '@prisma/client';
+import { Session, SessionStatus, Question, Prisma } from '@prisma/client';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitResponseDto } from './dto/submit-response.dto';
 import { QuestionnaireService, QuestionResponse } from '../questionnaire/questionnaire.service';
@@ -684,30 +678,30 @@ export class SessionService {
     }
 
     // Type-specific validation
-    if (value !== null && value !== undefined) {
-      if (validation) {
-        // Min/max length for text
-        if (
-          validation.minLength &&
-          typeof value === 'string' &&
-          value.length < (validation.minLength as number)
-        ) {
-          errors.push(`Minimum length is ${validation.minLength} characters`);
-        }
-        if (
-          validation.maxLength &&
-          typeof value === 'string' &&
-          value.length > (validation.maxLength as number)
-        ) {
-          errors.push(`Maximum length is ${validation.maxLength} characters`);
-        }
+    if (value !== null && value !== undefined && validation) {
+      // Narrow validation rule types once up front
+      const minLength = typeof validation.minLength === 'number' ? validation.minLength : undefined;
+      const maxLength = typeof validation.maxLength === 'number' ? validation.maxLength : undefined;
+      const min = typeof validation.min === 'number' ? validation.min : undefined;
+      const max = typeof validation.max === 'number' ? validation.max : undefined;
 
-        // Min/max for numbers
-        if (validation.min && typeof value === 'number' && value < (validation.min as number)) {
-          errors.push(`Minimum value is ${validation.min}`);
+      // Min/max length for text
+      if (typeof value === 'string') {
+        if (minLength !== undefined && value.length < minLength) {
+          errors.push(`Minimum length is ${minLength} characters`);
         }
-        if (validation.max && typeof value === 'number' && value > (validation.max as number)) {
-          errors.push(`Maximum value is ${validation.max}`);
+        if (maxLength !== undefined && value.length > maxLength) {
+          errors.push(`Maximum length is ${maxLength} characters`);
+        }
+      }
+
+      // Min/max for numbers
+      if (typeof value === 'number') {
+        if (min !== undefined && value < min) {
+          errors.push(`Minimum value is ${min}`);
+        }
+        if (max !== undefined && value > max) {
+          errors.push(`Maximum value is ${max}`);
         }
       }
     }
@@ -851,7 +845,7 @@ export class SessionService {
 
     // Calculate time statistics
     const timesSpent = responses
-      .filter((r) => r.timeSpentSeconds != null)
+      .filter((r) => r.timeSpentSeconds !== null)
       .map((r) => Number(r.timeSpentSeconds));
     const totalTimeSpent = timesSpent.reduce((sum, t) => sum + t, 0);
     const avgTimePerQuestion = timesSpent.length > 0 ? totalTimeSpent / timesSpent.length : 0;
@@ -861,7 +855,6 @@ export class SessionService {
     const sectionTimes: Record<string, number[]> = {};
 
     responses.forEach((r) => {
-      const sectionId = r.question.section?.id || 'unknown';
       const sectionName = r.question.section?.name || 'Unknown';
 
       if (!bySection[sectionName]) {
@@ -935,11 +928,13 @@ export class SessionService {
     });
 
     const completed = sessions.filter((s) => s.status === SessionStatus.COMPLETED);
-    const inProgress = sessions.filter((s) => s.status === SessionStatus.IN_PROGRESS);
-    const archived = sessions.filter((s) => s.status === SessionStatus.ABANDONED);
+    const inProgress = sessions.filter(
+      (s) => String(s.status) === String(SessionStatus.IN_PROGRESS),
+    );
+    const archived = sessions.filter((s) => String(s.status) === String(SessionStatus.ABANDONED));
 
     const scores = completed
-      .filter((s) => s.readinessScore != null)
+      .filter((s) => s.readinessScore !== null)
       .map((s) => Number(s.readinessScore));
     const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     const highestScore = scores.length > 0 ? Math.max(...scores) : 0;

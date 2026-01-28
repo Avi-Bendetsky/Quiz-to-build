@@ -7,7 +7,6 @@ import {
   Req,
   HttpCode,
   HttpStatus,
-  UseGuards,
   BadRequestException,
   Logger,
   RawBodyRequest,
@@ -120,7 +119,8 @@ export class PaymentController {
     try {
       event = this.paymentService.constructWebhookEvent(req.rawBody, signature, this.webhookSecret);
     } catch (err) {
-      this.logger.error(`Webhook signature verification failed: ${err}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Webhook signature verification failed: ${errorMessage}`);
       throw new BadRequestException('Invalid webhook signature');
     }
 

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import type { QuestionInputProps } from '../../types';
 
-interface FileWithPreview {
+export interface FileWithPreview {
   file: File;
   preview?: string;
   id: string;

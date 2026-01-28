@@ -4,7 +4,6 @@ import {
   Post,
   Body,
   Param,
-  Query,
   UseGuards,
   ParseUUIDPipe,
   Res,
@@ -16,12 +15,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../../auth/auth.service';
 import { DeliverablesCompilerService } from '../services/deliverables-compiler.service';
-import {
-  CompileDeliverablesDto,
-  DeliverablePackResponseDto,
-  CompiledDocumentDto,
-  ExportUrlResponseDto,
-} from '../dto';
+import { CompileDeliverablesDto, DeliverablePackResponseDto, CompiledDocumentDto } from '../dto';
 
 /**
  * DeliverablesCompilerController
@@ -99,7 +93,7 @@ export class DeliverablesCompilerController {
       autoSection: true,
     });
 
-    const document = pack.documents.find((doc) => doc.category === category);
+    const document = pack.documents.find((doc) => String(doc.category) === category);
     if (!document) {
       throw new Error(`Document category '${category}' not found in pack`);
     }
@@ -254,7 +248,7 @@ export class DeliverablesCompilerController {
       autoSection: true,
     });
 
-    const readinessReport = pack.documents.find((doc) => doc.category === 'READINESS');
+    const readinessReport = pack.documents.find((doc) => String(doc.category) === 'READINESS');
 
     return readinessReport ?? null;
   }

@@ -9,7 +9,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Config } from '../lib/config';
+import { Config, type OfflineSessionData } from '../lib/config';
 import { ApiClient } from '../lib/api-client';
 
 export const offlineCommand = new Command('offline').description('Offline mode operations');
@@ -134,11 +134,3 @@ offlineCommand
       console.log(chalk.green('✅ Cleared all offline data'));
     }
   });
-
-interface OfflineSessionData {
-  sessionId: string;
-  syncedAt: string;
-  score: unknown;
-  heatmap: unknown;
-  questions: unknown[];
-}

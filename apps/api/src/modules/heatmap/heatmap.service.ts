@@ -47,7 +47,7 @@ export class HeatmapService {
     }
 
     // Load data
-    const { session, dimensions, questions, responses } = await this.loadData(sessionId);
+    const { dimensions, questions, responses } = await this.loadData(sessionId);
 
     // Generate cells
     const cells = this.generateCells(dimensions, questions, responses);
@@ -215,7 +215,7 @@ export class HeatmapService {
     dimensionKey: string,
     severityBucket: string,
   ): Promise<HeatmapDrilldownDto> {
-    const { session, dimensions, questions, responses } = await this.loadData(sessionId);
+    const { dimensions, questions, responses } = await this.loadData(sessionId);
 
     // Find matching cell
     const result = await this.generateHeatmap(sessionId);
@@ -581,8 +581,9 @@ export class HeatmapService {
     // Phase 1: Critical gaps (red cells in critical/high severity)
     const criticalGaps = priorityGaps.filter(
       (g) =>
-        g.colorCode === HeatmapColor.RED &&
-        (g.severityBucket === SeverityBucket.CRITICAL || g.severityBucket === SeverityBucket.HIGH),
+        String(g.colorCode) === String(HeatmapColor.RED) &&
+        (String(g.severityBucket) === String(SeverityBucket.CRITICAL) ||
+          String(g.severityBucket) === String(SeverityBucket.HIGH)),
     );
     if (criticalGaps.length > 0) {
       phases.push({

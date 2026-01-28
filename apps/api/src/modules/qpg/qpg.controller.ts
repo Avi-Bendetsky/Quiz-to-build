@@ -13,7 +13,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { QpgService } from './qpg.service';
-import { GeneratePromptsDto, GenerateSinglePromptDto } from './dto';
+import { GeneratePromptsDto } from './dto';
 import { PromptGeneratorService } from './services/prompt-generator.service';
 
 @ApiTags('QPG - Qoder Prompt Generator')

@@ -3,7 +3,7 @@
  * Generates OPA/Rego policies for infrastructure validation
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { OpaPolicy, PolicySeverity, OpaPolicyTest } from '../types';
+import { OpaPolicy, PolicySeverity } from '../types';
 
 @Injectable()
 export class OpaPolicyService {

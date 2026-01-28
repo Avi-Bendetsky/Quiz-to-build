@@ -8,11 +8,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import {
-  ApprovalCategory,
-  ApprovalWorkflowService,
-  ApprovalStatus,
-} from '../approval-workflow.service';
+import { ApprovalCategory, ApprovalWorkflowService } from '../approval-workflow.service';
 
 /**
  * Metadata key for approval requirements

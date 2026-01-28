@@ -165,7 +165,7 @@ export class EvidenceRegistryService {
   async uploadEvidence(
     file: MulterFile,
     dto: UploadEvidenceDto,
-    userId: string,
+    _userId: string,
   ): Promise<EvidenceItemResponse> {
     // Validate file
     this.validateFile(file);

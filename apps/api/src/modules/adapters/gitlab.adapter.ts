@@ -544,7 +544,7 @@ export class GitLabAdapter {
   ): Promise<GitLabEvidenceResult | null> {
     try {
       const projectId = this.encodeProjectId(config.projectId);
-      const { ref = 'main', startDate, endDate } = options;
+      const { ref = 'main' } = options;
       const endpoint = `/projects/${projectId}/jobs?scope=success&per_page=50`;
 
       const jobs = await this.makeRequest<GitLabJob[]>(config, endpoint);

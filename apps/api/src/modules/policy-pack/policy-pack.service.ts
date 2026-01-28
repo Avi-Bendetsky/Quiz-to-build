@@ -42,7 +42,8 @@ export class PolicyPackService {
         policies.push(policy);
         dimensionsCovered.add(gap.dimensionKey);
       } catch (error) {
-        this.logger.warn(`Failed to generate policy for gap ${gap.questionId}: ${error}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Failed to generate policy for gap ${gap.questionId}: ${errorMessage}`);
       }
     }
 

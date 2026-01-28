@@ -3,7 +3,7 @@
  * Manages prompt templates for all 11 readiness dimensions
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { PromptTemplate, EvidenceType, TaskTemplate } from '../types';
+import { PromptTemplate, EvidenceType } from '../types';
 
 @Injectable()
 export class PromptTemplateService {

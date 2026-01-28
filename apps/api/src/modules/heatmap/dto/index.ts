@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsOptional, IsString, IsNumber, Min, Max } from 'class-validator';
+import { IsUUID, IsOptional, IsString } from 'class-validator';
 
 /**
  * Severity bucket classification for heatmap cells.

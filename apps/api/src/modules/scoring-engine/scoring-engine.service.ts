@@ -536,7 +536,7 @@ export class ScoringEngineService {
    * Get score history for a session
    * Returns historical score snapshots for trend analysis
    */
-  async getScoreHistory(sessionId: string, limit: number = 10): Promise<ScoreHistoryResult> {
+  async getScoreHistory(sessionId: string, _limit: number = 10): Promise<ScoreHistoryResult> {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       select: {

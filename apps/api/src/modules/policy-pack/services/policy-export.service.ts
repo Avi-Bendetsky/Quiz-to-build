@@ -3,7 +3,7 @@
  * Exports policy packs as ZIP bundles with README
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { PolicyPackBundle, PolicyDocument, OpaPolicy } from '../types';
+import { PolicyPackBundle, PolicyDocument } from '../types';
 
 @Injectable()
 export class PolicyExportService {
@@ -116,7 +116,11 @@ export class PolicyExportService {
 
     for (const stmt of policy.statements) {
       const icon =
-        stmt.requirement === 'SHALL' ? '🔴' : stmt.requirement === 'SHOULD' ? '🟡' : '🟢';
+        String(stmt.requirement) === 'SHALL'
+          ? '🔴'
+          : String(stmt.requirement) === 'SHOULD'
+            ? '🟡'
+            : '🟢';
       lines.push(`${icon} **${stmt.requirement}:** ${stmt.text}`);
       if (stmt.evidenceRequired) {
         lines.push('   - *Evidence required*');

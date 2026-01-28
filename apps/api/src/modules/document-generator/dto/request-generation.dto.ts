@@ -23,5 +23,5 @@ export class RequestGenerationDto {
   })
   @IsOptional()
   @IsEnum(['DOCX'])
-  format?: 'DOCX' = 'DOCX';
+  format?: 'DOCX' = 'DOCX' as const;
 }

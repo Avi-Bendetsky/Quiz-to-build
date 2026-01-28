@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import { SessionStatus, DecisionStatus, CoverageLevel } from '@prisma/client';
+import { SessionStatus, DecisionStatus } from '@prisma/client';
 
 /**
  * DeliverablesCompilerService - Quiz2Biz Deliverables Pack Compiler
@@ -1013,7 +1013,7 @@ Based on ${responses.length} architecture-related responses, this document outli
     return content.trim();
   }
 
-  private generateSecurityArchitecture(responses: any[]): string {
+  private generateSecurityArchitecture(_responses: any[]): string {
     return `
 ## Security Architecture
 
@@ -1031,7 +1031,7 @@ Continuous security monitoring and alerting capabilities are configured.
     `.trim();
   }
 
-  private generateTechnologyStack(responses: any[]): string {
+  private generateTechnologyStack(_responses: any[]): string {
     return `
 ## Technology Stack
 
@@ -1049,7 +1049,7 @@ Cloud and infrastructure components as documented.
     `.trim();
   }
 
-  private generateDevelopmentProcess(responses: any[]): string {
+  private generateDevelopmentProcess(_responses: any[]): string {
     return `
 ## Development Process
 
@@ -1064,7 +1064,7 @@ Automated quality checks and CI/CD integration.
     `.trim();
   }
 
-  private generateCICDPipeline(responses: any[]): string {
+  private generateCICDPipeline(_responses: any[]): string {
     return `
 ## CI/CD Pipeline
 
@@ -1082,107 +1082,107 @@ SAST, DAST, and SCA scanning integration.
     `.trim();
   }
 
-  private generateBranchingStrategy(responses: any[]): string {
+  private generateBranchingStrategy(_responses: any[]): string {
     return '## Branching Strategy\n\nGit flow or trunk-based development as appropriate.';
   }
 
-  private generateReleaseManagement(responses: any[]): string {
+  private generateReleaseManagement(_responses: any[]): string {
     return '## Release Management\n\nRelease planning and version control processes.';
   }
 
-  private generateTestObjectives(responses: any[]): string {
+  private generateTestObjectives(_responses: any[]): string {
     return '## Test Objectives\n\nQuality assurance goals and coverage targets.';
   }
 
-  private generateTestTypesCoverage(responses: any[]): string {
+  private generateTestTypesCoverage(_responses: any[]): string {
     return '## Test Types & Coverage\n\nUnit, integration, E2E, and performance testing requirements.';
   }
 
-  private generateTestAutomation(responses: any[]): string {
+  private generateTestAutomation(_responses: any[]): string {
     return '## Test Automation\n\nAutomated testing framework and tooling.';
   }
 
-  private generatePerformanceTesting(responses: any[]): string {
+  private generatePerformanceTesting(_responses: any[]): string {
     return '## Performance Testing\n\nLoad testing, stress testing, and benchmarking requirements.';
   }
 
-  private generateSecurityIntegration(responses: any[]): string {
+  private generateSecurityIntegration(_responses: any[]): string {
     return '## Security Integration\n\nShift-left security practices and DevSecOps integration.';
   }
 
-  private generateVulnerabilityManagement(responses: any[]): string {
+  private generateVulnerabilityManagement(_responses: any[]): string {
     return '## Vulnerability Management\n\nVulnerability scanning and remediation processes.';
   }
 
-  private generateComplianceAutomation(responses: any[]): string {
+  private generateComplianceAutomation(_responses: any[]): string {
     return '## Compliance Automation\n\nAutomated compliance checking and reporting.';
   }
 
-  private generateIncidentResponse(responses: any[]): string {
+  private generateIncidentResponse(_responses: any[]): string {
     return '## Incident Response\n\nSecurity incident detection and response procedures.';
   }
 
-  private generateDataClassification(responses: any[]): string {
+  private generateDataClassification(_responses: any[]): string {
     return '## Data Classification\n\nData sensitivity levels and handling requirements.';
   }
 
-  private generatePrivacyControls(responses: any[]): string {
+  private generatePrivacyControls(_responses: any[]): string {
     return '## Privacy Controls\n\nPrivacy protection mechanisms and controls.';
   }
 
-  private generateDataRetention(responses: any[]): string {
+  private generateDataRetention(_responses: any[]): string {
     return '## Data Retention\n\nData lifecycle management and retention policies.';
   }
 
-  private generateGDPRCompliance(responses: any[]): string {
+  private generateGDPRCompliance(_responses: any[]): string {
     return '## GDPR Compliance\n\nGDPR requirements and compliance measures.';
   }
 
-  private generateMonitoringStrategy(responses: any[]): string {
+  private generateMonitoringStrategy(_responses: any[]): string {
     return '## Monitoring Strategy\n\nApplication and infrastructure monitoring approach.';
   }
 
-  private generateLoggingArchitecture(responses: any[]): string {
+  private generateLoggingArchitecture(_responses: any[]): string {
     return '## Logging Architecture\n\nCentralized logging and log management.';
   }
 
-  private generateAlertingRunbooks(responses: any[]): string {
+  private generateAlertingRunbooks(_responses: any[]): string {
     return '## Alerting & Runbooks\n\nAlert configuration and incident runbooks.';
   }
 
-  private generateSLOsErrorBudgets(responses: any[]): string {
+  private generateSLOsErrorBudgets(_responses: any[]): string {
     return '## SLOs & Error Budgets\n\nService level objectives and error budget policies.';
   }
 
-  private generateCostAnalysis(responses: any[]): string {
+  private generateCostAnalysis(_responses: any[]): string {
     return '## Cost Analysis\n\nTotal cost of ownership and cost optimization.';
   }
 
-  private generateUnitEconomics(responses: any[]): string {
+  private generateUnitEconomics(_responses: any[]): string {
     return '## Unit Economics\n\nPer-unit cost analysis and profitability metrics.';
   }
 
-  private generateBudgetAllocation(responses: any[]): string {
+  private generateBudgetAllocation(_responses: any[]): string {
     return '## Budget Allocation\n\nResource allocation and budget planning.';
   }
 
-  private generateROIProjections(responses: any[]): string {
+  private generateROIProjections(_responses: any[]): string {
     return '## ROI Projections\n\nReturn on investment analysis and projections.';
   }
 
-  private generatePolicies(responses: any[]): string {
+  private generatePolicies(_responses: any[]): string {
     return '## Policies\n\nHigh-level governance policies and principles.';
   }
 
-  private generateStandards(responses: any[]): string {
+  private generateStandards(_responses: any[]): string {
     return '## Standards\n\nTechnical and operational standards.';
   }
 
-  private generateProcedures(responses: any[]): string {
+  private generateProcedures(_responses: any[]): string {
     return '## Procedures\n\nOperational procedures and work instructions.';
   }
 
-  private generateControlMappings(responses: any[]): string {
+  private generateControlMappings(_responses: any[]): string {
     return '## Control Mappings\n\nISO 27001, NIST CSF, and OWASP control mappings.';
   }
 

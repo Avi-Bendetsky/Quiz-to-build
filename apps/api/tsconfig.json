@@ -4,6 +4,10 @@
     "outDir": "../../dist/apps/api",
     "rootDir": ".",
     "baseUrl": ".",
+    "types": [
+      "jest",
+      "node"
+    ],
     "paths": {
       "@libs/database": [
         "../../libs/database/dist"
@@ -30,8 +34,6 @@
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "**/*.spec.ts",
-    "test/**/*"
+    "dist"
   ]
 }
