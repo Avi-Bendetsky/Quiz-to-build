@@ -471,6 +471,7 @@ model EvidenceRegistry {
   verifiedAt    DateTime?    @map("verified_at")
   hashSignature String?      @map("hash_signature")        // SHA-256 or signature/provenance
   coverageValue CoverageLevel @default(NONE) @map("coverage_value") // Coverage contribution when verified
+  metadata      Json?        @map("metadata")              // Additional metadata (CI info, etc.)
   
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
@@ -478,6 +479,7 @@ model EvidenceRegistry {
   session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   question Question @relation(fields: [questionId], references: [id])
   verifier User?    @relation("EvidenceVerifier", fields: [verifierId], references: [id])
+  ciArtifacts CIArtifact[]
 
   @@index([sessionId])
   @@index([questionId])
@@ -640,4 +642,66 @@ model DocumentTypeStandard {
   @@index([documentTypeId])
   @@index([standardId])
   @@map("document_type_standards")
+}
+
+// =============================================================================
+// EVIDENCE INTEGRITY MODELS (Sprint 14)
+// =============================================================================
+
+// Evidence Chain - Blockchain-style hash linking for evidence integrity
+model EvidenceChain {
+  id             String   @id @default(uuid())
+  evidenceId     String   @map("evidence_id")
+  sessionId      String   @map("session_id")
+  sequenceNumber Int      @map("sequence_number")
+  
+  // Hash chain fields
+  previousHash   String   @map("previous_hash")       // Hash of previous entry (genesis = 0x00...)
+  chainHash      String   @map("chain_hash")          // SHA-256 of canonical entry data
+  evidenceHash   String   @map("evidence_hash")       // Original evidence hash at time of chaining
+  
+  // RFC 3161 Timestamp
+  timestampToken String?  @map("timestamp_token") @db.Text  // Base64-encoded TSA response
+  tsaUrl         String?  @map("tsa_url")             // Timestamp Authority URL used
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([sessionId, sequenceNumber])
+  @@index([evidenceId])
+  @@index([sessionId])
+  @@index([chainHash])
+  @@map("evidence_chain")
+}
+
+// CI Artifact - Tracking CI/CD pipeline artifacts ingested as evidence
+model CIArtifact {
+  id           String   @id @default(uuid())
+  evidenceId   String   @map("evidence_id")
+  sessionId    String   @map("session_id")
+  
+  // CI Provider details
+  ciProvider   String   @map("ci_provider")           // azure-devops, github-actions, gitlab-ci
+  buildId      String   @map("build_id")
+  buildNumber  String?  @map("build_number")
+  pipelineName String?  @map("pipeline_name")
+  
+  // Artifact details
+  artifactType String   @map("artifact_type")         // junit, jest, lcov, cyclonedx, trivy, etc.
+  branch       String?
+  commitSha    String?  @map("commit_sha")
+  
+  // Processing status
+  status       String   @default("PENDING")           // PENDING, INGESTED, VERIFIED, ERROR
+  parsedMetrics Json?   @map("parsed_metrics")        // Extracted metrics from artifact
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  evidence     EvidenceRegistry @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([ciProvider])
+  @@index([buildId])
+  @@index([artifactType])
+  @@map("ci_artifacts")
 }

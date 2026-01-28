@@ -24,6 +24,8 @@ import {
     ApiBody,
 } from '@nestjs/swagger';
 import { EvidenceRegistryService } from './evidence-registry.service';
+import { EvidenceIntegrityService } from './evidence-integrity.service';
+import { CIArtifactIngestionService, IngestArtifactDto, BulkIngestDto } from './ci-artifact-ingestion.service';
 import {
     UploadEvidenceDto,
     VerifyEvidenceDto,
@@ -39,13 +41,19 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
  * - Upload evidence files with SHA-256 hashing
  * - Verify evidence with coverage updates
  * - List and filter evidence items
+ * - Evidence chain integrity verification (Sprint 14)
+ * - CI artifact ingestion (Sprint 14)
  */
 @ApiTags('Evidence Registry')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('evidence')
 export class EvidenceRegistryController {
-    constructor(private readonly evidenceService: EvidenceRegistryService) { }
+    constructor(
+        private readonly evidenceService: EvidenceRegistryService,
+        private readonly integrityService: EvidenceIntegrityService,
+        private readonly ciIngestionService: CIArtifactIngestionService,
+    ) { }
 
     /**
      * Upload evidence file
@@ -250,5 +258,181 @@ Only users with Verifier role should be allowed to verify evidence.
         @Request() req: { user: { userId: string } },
     ): Promise<void> {
         await this.evidenceService.deleteEvidence(evidenceId, req.user.userId);
+    }
+
+    // ================================================================
+    // EVIDENCE CHAIN INTEGRITY ENDPOINTS (Sprint 14)
+    // ================================================================
+
+    /**
+     * Chain evidence to the integrity chain
+     */
+    @Post(':evidenceId/chain')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Add evidence to integrity chain',
+        description: `
+Link evidence to the hash chain for cryptographic integrity verification.
+Each evidence is linked to the previous entry via SHA-256 hash chain.
+Optionally requests a timestamp token from RFC 3161 TSA.
+        `,
+    })
+    @ApiParam({ name: 'evidenceId', description: 'Evidence UUID' })
+    @ApiResponse({ status: 200, description: 'Evidence added to chain' })
+    @ApiResponse({ status: 404, description: 'Evidence not found' })
+    async chainEvidence(
+        @Param('evidenceId') evidenceId: string,
+        @Body() body: { sessionId: string },
+    ) {
+        return this.integrityService.chainEvidence(evidenceId, body.sessionId);
+    }
+
+    /**
+     * Get evidence chain for a session
+     */
+    @Get('chain/:sessionId')
+    @ApiOperation({
+        summary: 'Get evidence chain',
+        description: 'Get the full hash chain for all evidence in a session.',
+    })
+    @ApiParam({ name: 'sessionId', description: 'Session UUID' })
+    @ApiResponse({ status: 200, description: 'Evidence chain entries' })
+    async getEvidenceChain(@Param('sessionId') sessionId: string) {
+        return this.integrityService.getEvidenceChain(sessionId);
+    }
+
+    /**
+     * Verify evidence chain integrity
+     */
+    @Get('chain/:sessionId/verify')
+    @ApiOperation({
+        summary: 'Verify evidence chain integrity',
+        description: `
+Verify the integrity of the entire evidence chain for a session.
+Checks: hash chain links, computed hashes match stored hashes, evidence not modified.
+        `,
+    })
+    @ApiParam({ name: 'sessionId', description: 'Session UUID' })
+    @ApiResponse({ status: 200, description: 'Chain verification result' })
+    async verifyChain(@Param('sessionId') sessionId: string) {
+        return this.integrityService.verifyChain(sessionId);
+    }
+
+    /**
+     * Verify single evidence integrity
+     */
+    @Get(':evidenceId/integrity')
+    @ApiOperation({
+        summary: 'Verify evidence integrity',
+        description: 'Comprehensive integrity check: hash, chain position, timestamp status.',
+    })
+    @ApiParam({ name: 'evidenceId', description: 'Evidence UUID' })
+    @ApiResponse({ status: 200, description: 'Integrity verification result' })
+    @ApiResponse({ status: 404, description: 'Evidence not found' })
+    async verifyEvidenceIntegrity(@Param('evidenceId') evidenceId: string) {
+        return this.integrityService.verifyEvidenceIntegrity(evidenceId);
+    }
+
+    /**
+     * Generate integrity report for a session
+     */
+    @Get('integrity-report/:sessionId')
+    @ApiOperation({
+        summary: 'Generate integrity report',
+        description: 'Generate a comprehensive integrity report for all evidence in a session.',
+    })
+    @ApiParam({ name: 'sessionId', description: 'Session UUID' })
+    @ApiResponse({ status: 200, description: 'Session integrity report' })
+    async generateIntegrityReport(@Param('sessionId') sessionId: string) {
+        return this.integrityService.generateIntegrityReport(sessionId);
+    }
+
+    // ================================================================
+    // CI ARTIFACT INGESTION ENDPOINTS (Sprint 14)
+    // ================================================================
+
+    /**
+     * Ingest CI artifact as evidence
+     */
+    @Post('ci/ingest')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({
+        summary: 'Ingest CI artifact',
+        description: `
+Automatically ingest CI/CD artifacts as evidence.
+Supports: JUnit XML, Jest JSON, lcov, Cobertura, CycloneDX SBOM, SPDX, Trivy, OWASP DC.
+Parses artifacts and extracts relevant metrics.
+        `,
+    })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                sessionId: { type: 'string', format: 'uuid' },
+                questionId: { type: 'string', format: 'uuid', description: 'Optional - auto-detected if not provided' },
+                ciProvider: { type: 'string', enum: ['azure-devops', 'github-actions', 'gitlab-ci'] },
+                buildId: { type: 'string' },
+                buildNumber: { type: 'string' },
+                pipelineName: { type: 'string' },
+                artifactType: { type: 'string', enum: ['junit', 'jest', 'lcov', 'cobertura', 'cyclonedx', 'spdx', 'trivy', 'owasp'] },
+                content: { type: 'string', description: 'Artifact content (XML/JSON)' },
+                branch: { type: 'string' },
+                commitSha: { type: 'string' },
+                autoVerify: { type: 'boolean', default: false },
+            },
+            required: ['sessionId', 'ciProvider', 'buildId', 'artifactType', 'content'],
+        },
+    })
+    @ApiResponse({ status: 201, description: 'Artifact ingested successfully' })
+    @ApiResponse({ status: 400, description: 'Invalid artifact format or type' })
+    async ingestCIArtifact(@Body() dto: IngestArtifactDto) {
+        return this.ciIngestionService.ingestArtifact(dto);
+    }
+
+    /**
+     * Bulk ingest CI artifacts
+     */
+    @Post('ci/bulk-ingest')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({
+        summary: 'Bulk ingest CI artifacts',
+        description: 'Ingest multiple CI artifacts from a single build in one request.',
+    })
+    @ApiResponse({ status: 201, description: 'Bulk ingestion result' })
+    async bulkIngestCIArtifacts(@Body() dto: BulkIngestDto) {
+        return this.ciIngestionService.bulkIngestArtifacts(dto);
+    }
+
+    /**
+     * Get CI artifacts for a session
+     */
+    @Get('ci/session/:sessionId')
+    @ApiOperation({
+        summary: 'Get session CI artifacts',
+        description: 'Get all CI artifacts ingested for a session.',
+    })
+    @ApiParam({ name: 'sessionId', description: 'Session UUID' })
+    @ApiResponse({ status: 200, description: 'List of CI artifacts' })
+    async getSessionCIArtifacts(@Param('sessionId') sessionId: string) {
+        return this.ciIngestionService.getSessionArtifacts(sessionId);
+    }
+
+    /**
+     * Get CI build summary
+     */
+    @Get('ci/build/:sessionId/:buildId')
+    @ApiOperation({
+        summary: 'Get CI build summary',
+        description: 'Get aggregated metrics and artifacts for a specific CI build.',
+    })
+    @ApiParam({ name: 'sessionId', description: 'Session UUID' })
+    @ApiParam({ name: 'buildId', description: 'CI Build ID' })
+    @ApiResponse({ status: 200, description: 'Build summary with metrics' })
+    @ApiResponse({ status: 404, description: 'Build not found' })
+    async getCIBuildSummary(
+        @Param('sessionId') sessionId: string,
+        @Param('buildId') buildId: string,
+    ) {
+        return this.ciIngestionService.getBuildSummary(sessionId, buildId);
     }
 }
