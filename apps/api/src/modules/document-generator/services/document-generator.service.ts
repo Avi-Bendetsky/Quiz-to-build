@@ -422,7 +422,7 @@ export class DocumentGeneratorService {
     // Increment version
     const newVersion = existingDocument.version + 1;
 
-    // Create new document record
+    // Create new document record (maintains separate version records)
     const newDocument = await this.prisma.document.create({
       data: {
         sessionId: existingDocument.sessionId,
@@ -430,7 +430,10 @@ export class DocumentGeneratorService {
         status: DocumentStatus.PENDING,
         format: existingDocument.format,
         version: newVersion,
-        previousVersionId: documentId,
+        generationMetadata: {
+          previousVersionId: documentId,
+          regeneratedFrom: documentId,
+        },
       },
     });
 
@@ -452,10 +455,13 @@ export class DocumentGeneratorService {
       throw error;
     }
 
-    // Archive the old version
+    // Mark the old version as superseded (using REJECTED status for archived/superseded documents)
     await this.prisma.document.update({
       where: { id: documentId },
-      data: { status: DocumentStatus.ARCHIVED },
+      data: {
+        status: DocumentStatus.REJECTED,
+        rejectionReason: `Superseded by version ${newVersion} (document ${newDocument.id})`,
+      },
     });
 
     this.logger.log(
@@ -481,7 +487,7 @@ export class DocumentGeneratorService {
     const history: DocumentHistoryEntry[] = [];
     let currentDoc: DocumentWithType | null = document;
 
-    // Walk backwards through version history
+    // Walk backwards through version history (using generationMetadata.previousVersionId)
     while (currentDoc) {
       history.push({
         documentId: currentDoc.id,
@@ -492,9 +498,10 @@ export class DocumentGeneratorService {
         fileSize: currentDoc.fileSize ? Number(currentDoc.fileSize) : null,
       });
 
-      if (currentDoc.previousVersionId) {
+      const metadata = currentDoc.generationMetadata as { previousVersionId?: string } | null;
+      if (metadata?.previousVersionId) {
         currentDoc = await this.prisma.document.findUnique({
-          where: { id: currentDoc.previousVersionId },
+          where: { id: metadata.previousVersionId },
           include: { documentType: true },
         });
       } else {

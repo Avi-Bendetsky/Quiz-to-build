@@ -9,6 +9,20 @@ import { PrismaService } from '@libs/database';
 import { EvidenceType } from '@prisma/client';
 import * as crypto from 'crypto';
 
+/** CI Artifact metadata stored in EvidenceRegistry.metadata JSON field */
+interface CIMetadata {
+    ciProvider: string;
+    buildId: string;
+    buildNumber?: string;
+    pipelineName?: string;
+    branch?: string;
+    commitSha?: string;
+    artifactType?: string;
+    parsedData?: ParsedArtifactData;
+    status?: string;
+    ingestedAt?: string;
+}
+
 /**
  * CI Artifact Ingestion Service
  * 
@@ -111,7 +125,7 @@ export class CIArtifactIngestionService {
             .update(dto.content)
             .digest('hex');
 
-        // Create evidence record
+        // Create evidence record with CI metadata embedded
         const evidence = await this.prisma.evidenceRegistry.create({
             data: {
                 sessionId: dto.sessionId,
@@ -130,26 +144,11 @@ export class CIArtifactIngestionService {
                     pipelineName: dto.pipelineName,
                     branch: dto.branch,
                     commitSha: dto.commitSha,
+                    artifactType: dto.artifactType,
                     parsedData,
+                    status: 'INGESTED',
                     ingestedAt: new Date().toISOString(),
                 },
-            },
-        });
-
-        // Create CI artifact record for tracking
-        const ciArtifact = await this.prisma.cIArtifact.create({
-            data: {
-                evidenceId: evidence.id,
-                sessionId: dto.sessionId,
-                ciProvider: dto.ciProvider,
-                buildId: dto.buildId,
-                buildNumber: dto.buildNumber,
-                pipelineName: dto.pipelineName,
-                artifactType: dto.artifactType,
-                branch: dto.branch,
-                commitSha: dto.commitSha,
-                status: 'INGESTED',
-                parsedMetrics: parsedData as object,
             },
         });
 
@@ -159,7 +158,7 @@ export class CIArtifactIngestionService {
 
         return {
             evidenceId: evidence.id,
-            ciArtifactId: ciArtifact.id,
+            ciArtifactId: evidence.id, // Use evidence ID as artifact ID (metadata-embedded)
             artifactType: dto.artifactType,
             evidenceType: mapping.evidenceType,
             parsedData,
@@ -555,74 +554,91 @@ export class CIArtifactIngestionService {
      * Get CI artifacts for a session
      */
     async getSessionArtifacts(sessionId: string): Promise<CIArtifactSummary[]> {
-        const artifacts = await this.prisma.cIArtifact.findMany({
+        // Query evidence records and filter for CI artifacts in application code
+        const evidenceItems = await this.prisma.evidenceRegistry.findMany({
             where: { sessionId },
             orderBy: { createdAt: 'desc' },
-            include: {
-                evidence: {
-                    select: { verified: true, fileName: true },
-                },
-            },
         });
 
-        return artifacts.map(a => ({
-            id: a.id,
-            evidenceId: a.evidenceId,
-            ciProvider: a.ciProvider,
-            buildId: a.buildId,
-            buildNumber: a.buildNumber,
-            pipelineName: a.pipelineName,
-            artifactType: a.artifactType,
-            branch: a.branch,
-            commitSha: a.commitSha,
-            status: a.status,
-            verified: a.evidence?.verified || false,
-            fileName: a.evidence?.fileName || null,
-            createdAt: a.createdAt,
-        }));
+        // Filter and map evidence items that have CI artifact metadata
+        // Type assertion needed since Prisma doesn't type the JSON metadata field
+        type EvidenceWithMeta = typeof evidenceItems[0] & { metadata?: CIMetadata | null };
+
+        return (evidenceItems as EvidenceWithMeta[])
+            .filter((e) => {
+                const meta = e.metadata as CIMetadata | null;
+                return meta?.ciProvider && meta?.buildId;
+            })
+            .map((e) => {
+                const meta = e.metadata as CIMetadata;
+                return {
+                    id: e.id,
+                    evidenceId: e.id,
+                    ciProvider: meta.ciProvider,
+                    buildId: meta.buildId,
+                    buildNumber: meta.buildNumber || null,
+                    pipelineName: meta.pipelineName || null,
+                    artifactType: meta.artifactType || e.artifactType,
+                    branch: meta.branch || null,
+                    commitSha: meta.commitSha || null,
+                    status: meta.status || 'INGESTED',
+                    verified: e.verified,
+                    fileName: e.fileName || null,
+                    createdAt: e.createdAt,
+                };
+            });
     }
 
     /**
      * Get CI build summary for a session
      */
     async getBuildSummary(sessionId: string, buildId: string): Promise<BuildSummary> {
-        const artifacts = await this.prisma.cIArtifact.findMany({
-            where: { sessionId, buildId },
-            include: {
-                evidence: true,
-            },
+        // Query evidence records and filter by buildId in metadata
+        const evidenceItems = await this.prisma.evidenceRegistry.findMany({
+            where: { sessionId },
+        });
+
+        // Type assertion for metadata access
+        type EvidenceWithMeta = typeof evidenceItems[0] & { metadata?: CIMetadata | null };
+
+        // Filter to artifacts matching the build
+        const artifacts = (evidenceItems as EvidenceWithMeta[]).filter((e) => {
+            const meta = e.metadata as CIMetadata | null;
+            return meta?.buildId === buildId;
         });
 
         if (artifacts.length === 0) {
             throw new NotFoundException(`No artifacts found for build: ${buildId}`);
         }
 
-        const first = artifacts[0];
+        const firstMeta = artifacts[0].metadata as CIMetadata;
 
         // Aggregate metrics from parsed data
         const metrics: Record<string, unknown> = {};
 
         for (const artifact of artifacts) {
-            if (artifact.parsedMetrics) {
-                const parsed = artifact.parsedMetrics as { summary?: Record<string, unknown>; type?: string };
-                if (parsed.summary) {
-                    metrics[artifact.artifactType] = parsed.summary;
-                }
+            const meta = artifact.metadata as CIMetadata;
+            if (meta?.parsedData?.summary) {
+                const artifactType = meta.artifactType || artifact.artifactType;
+                metrics[artifactType] = meta.parsedData.summary;
             }
         }
 
         return {
-            buildId: first.buildId,
-            buildNumber: first.buildNumber,
-            pipelineName: first.pipelineName,
-            branch: first.branch,
-            commitSha: first.commitSha,
-            ciProvider: first.ciProvider,
+            buildId: firstMeta.buildId,
+            buildNumber: firstMeta.buildNumber || null,
+            pipelineName: firstMeta.pipelineName || null,
+            branch: firstMeta.branch || null,
+            commitSha: firstMeta.commitSha || null,
+            ciProvider: firstMeta.ciProvider,
             totalArtifacts: artifacts.length,
-            verifiedArtifacts: artifacts.filter(a => a.evidence?.verified).length,
-            artifactTypes: [...new Set(artifacts.map(a => a.artifactType))],
+            verifiedArtifacts: artifacts.filter((a) => a.verified).length,
+            artifactTypes: [...new Set(artifacts.map((a) => {
+                const meta = a.metadata as CIMetadata;
+                return meta?.artifactType || a.artifactType;
+            }))],
             metrics,
-            createdAt: first.createdAt,
+            createdAt: artifacts[0].createdAt,
         };
     }
 }

@@ -5,9 +5,9 @@ import { createHash } from 'crypto';
 
 // Helper to extract error message from unknown error type
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'Unknown error';
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    return 'Unknown error';
 }
 
 interface GitHubConfig {

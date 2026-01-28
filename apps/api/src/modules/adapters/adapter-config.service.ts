@@ -267,9 +267,9 @@ export class AdapterConfigService {
     /**
      * Get all supported adapter types
      */
-    getSupportedAdapterTypes(): Array<AdapterType & { info: ReturnType<typeof this.getAdapterTypeInfo> }> {
+    getSupportedAdapterTypes(): Array<{ type: AdapterType; info: Record<string, unknown> | undefined }> {
         const types: AdapterType[] = ['github', 'gitlab', 'jira', 'confluence', 'azure_devops'];
-        return types.map((type) => ({ type, info: this.getAdapterTypeInfo(type) })) as any;
+        return types.map((type) => ({ type, info: this.getAdapterTypeInfo(type) }));
     }
 
     // Private helper methods
@@ -308,7 +308,7 @@ export class AdapterConfigService {
                 }));
             }
         } catch (error) {
-            this.logger.warn(`Failed to load adapter configs from DB: ${error.message}`);
+            this.logger.warn(`Failed to load adapter configs from DB: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
 
         // Return default configs from environment
@@ -328,7 +328,7 @@ export class AdapterConfigService {
         DO UPDATE SET config = ${JSON.stringify(updated)}::jsonb, updated_at = NOW()
       `;
         } catch (error) {
-            this.logger.error(`Failed to save adapter config: ${error.message}`);
+            this.logger.error(`Failed to save adapter config: ${error instanceof Error ? error.message : 'Unknown error'}`);
             throw error;
         }
     }
@@ -344,7 +344,7 @@ export class AdapterConfigService {
         WHERE tenant_id = ${tenantId} AND key = 'adapter_configs'
       `;
         } catch (error) {
-            this.logger.error(`Failed to remove adapter config: ${error.message}`);
+            this.logger.error(`Failed to remove adapter config: ${error instanceof Error ? error.message : 'Unknown error'}`);
             throw error;
         }
     }

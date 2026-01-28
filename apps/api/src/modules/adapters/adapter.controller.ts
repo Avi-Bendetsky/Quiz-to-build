@@ -243,10 +243,11 @@ export class AdapterController {
                     throw new BadRequestException(`Unsupported adapter type: ${dto.type}`);
             }
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             return {
                 success: false,
-                message: `Connection failed: ${error.message}`,
-                error: error.message,
+                message: `Connection failed: ${errorMessage}`,
+                error: errorMessage,
             };
         }
     }
@@ -346,7 +347,8 @@ export class AdapterController {
             };
         } catch (error) {
             // Update sync status to error
-            await this.adapterConfigService.updateSyncStatus(tenantId, adapterId, 'error', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            await this.adapterConfigService.updateSyncStatus(tenantId, adapterId, 'error', errorMessage);
             throw error;
         }
     }
@@ -382,7 +384,7 @@ export class AdapterController {
                     adapterId: adapter.id,
                     adapterType: adapter.type,
                     success: false,
-                    error: error.message,
+                    error: error instanceof Error ? error.message : 'Unknown error',
                 });
             }
         }
