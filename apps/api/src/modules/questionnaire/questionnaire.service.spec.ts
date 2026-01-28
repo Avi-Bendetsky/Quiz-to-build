@@ -6,7 +6,7 @@ import { QuestionType } from '@prisma/client';
 
 describe('QuestionnaireService', () => {
   let service: QuestionnaireService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any; // Use any for mocked service
 
   const mockQuestionnaire = {
     id: 'questionnaire-1',

@@ -6,7 +6,7 @@ import { QuestionType, VisibilityAction } from '@prisma/client';
 
 describe('AdaptiveLogicService', () => {
   let service: AdaptiveLogicService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any; // Use any for mocked service
 
   const mockQuestion = {
     id: 'q-001',

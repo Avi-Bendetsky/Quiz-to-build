@@ -7,8 +7,8 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 describe('ScoringEngineService', () => {
     let service: ScoringEngineService;
-    let prismaService: jest.Mocked<PrismaService>;
-    let redisService: jest.Mocked<RedisService>;
+    let prismaService: any; // Use any for mocked service
+    let redisService: any; // Use any for mocked service
 
     // Test data
     const mockSessionId = 'session-uuid-123';
@@ -142,7 +142,7 @@ describe('ScoringEngineService', () => {
 
             const archSecDim = result.dimensions.find(d => d.dimensionKey === 'arch_sec');
             expect(archSecDim).toBeDefined();
-            expect(archSecDim.residualRisk).toBeCloseTo(0.357, 2);
+            expect(archSecDim!.residualRisk).toBeCloseTo(0.357, 2);
         });
 
         it('should calculate fully covered dimension with zero residual', async () => {
@@ -164,7 +164,7 @@ describe('ScoringEngineService', () => {
             const archSecDim = result.dimensions.find(d => d.dimensionKey === 'arch_sec');
 
             // Full coverage → R_d should be 0
-            expect(archSecDim.residualRisk).toBeCloseTo(0, 4);
+            expect(archSecDim!.residualRisk).toBeCloseTo(0, 4);
         });
 
         it('should calculate score = 100 × (1 - R)', async () => {
@@ -186,7 +186,7 @@ describe('ScoringEngineService', () => {
 
             // With full coverage on q1 and q2, arch_sec should have lower residual
             const archSecDim = result.dimensions.find(d => d.dimensionKey === 'arch_sec');
-            expect(archSecDim.residualRisk).toBeLessThan(0.357);
+            expect(archSecDim!.residualRisk).toBeLessThan(0.357);
         });
 
         it('should determine trend correctly', async () => {

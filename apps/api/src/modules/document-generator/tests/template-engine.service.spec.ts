@@ -6,7 +6,7 @@ import { DocumentCategory } from '@prisma/client';
 
 describe('TemplateEngineService', () => {
   let service: TemplateEngineService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any; // Use any for mocked service
 
   const mockDocumentType = {
     id: 'doc-type-1',

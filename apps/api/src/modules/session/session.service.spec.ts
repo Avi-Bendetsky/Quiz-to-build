@@ -12,7 +12,7 @@ import { SessionStatus, QuestionType } from '@prisma/client';
 
 describe('SessionService', () => {
   let service: SessionService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any; // Use any for mocked service
   let questionnaireService: jest.Mocked<QuestionnaireService>;
   let adaptiveLogicService: jest.Mocked<AdaptiveLogicService>;
 

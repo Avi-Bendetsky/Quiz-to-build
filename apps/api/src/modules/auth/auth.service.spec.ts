@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '@libs/database';
 import { RedisService } from '@libs/redis';
+import { NotificationService } from '../notifications/notification.service';
 import { UserRole } from '@prisma/client';
 
 jest.mock('bcrypt');
@@ -15,9 +16,9 @@ jest.mock('uuid', () => ({
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any; // Use any for mocked service to avoid TypeScript mock type conflicts
   let jwtService: jest.Mocked<JwtService>;
-  let redisService: jest.Mocked<RedisService>;
+  let redisService: any; // Use any for mocked service
 
   const mockUser = {
     id: 'user-123',
@@ -68,6 +69,12 @@ describe('AuthService', () => {
       del: jest.fn(),
     };
 
+    const mockNotificationService = {
+      sendEmail: jest.fn(),
+      sendPasswordResetEmail: jest.fn(),
+      sendEmailVerification: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -75,6 +82,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: NotificationService, useValue: mockNotificationService },
       ],
     }).compile();
 

@@ -7,7 +7,7 @@ import { QuestionType } from '@prisma/client';
 
 describe('AdminQuestionnaireService', () => {
   let service: AdminQuestionnaireService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let prismaService: any; // Use any for mocked service
   let auditService: jest.Mocked<AdminAuditService>;
 
   const mockUserId = 'user-123';
