@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
 import { PaymentService } from './payment.service';
 import { InvoiceResponseDto } from './dto/payment.dto';
+import { Prisma } from '@prisma/client';
 
 interface RecordPaymentParams {
     stripeInvoiceId: string;
@@ -18,6 +19,11 @@ interface RecordPaymentFailureParams {
     amount: number;
     currency: string;
     failureReason: string;
+}
+
+interface LineItem {
+    description?: string | null;
+    amount?: number | null;
 }
 
 /**
@@ -72,7 +78,7 @@ export class BillingService {
             amount: (upcoming.amount_due || 0) / 100,
             currency: (upcoming.currency || 'usd').toUpperCase(),
             dueDate: new Date((upcoming.next_payment_attempt || Date.now() / 1000) * 1000),
-            lineItems: (upcoming.lines?.data || []).map((line) => ({
+            lineItems: ((upcoming.lines?.data || []) as LineItem[]).map((line: LineItem) => ({
                 description: line.description || 'Subscription',
                 amount: (line.amount || 0) / 100,
             })),
@@ -125,7 +131,7 @@ export class BillingService {
                             currency: params.currency.toUpperCase(),
                             paidAt: params.paidAt.toISOString(),
                         },
-                    },
+                    } as unknown as Prisma.InputJsonValue,
                 },
             });
         }
@@ -173,7 +179,7 @@ export class BillingService {
                             failureReason: params.failureReason,
                             failedAt: new Date().toISOString(),
                         },
-                    },
+                    } as unknown as Prisma.InputJsonValue,
                 },
             });
         }
@@ -237,10 +243,12 @@ export class BillingService {
             },
         });
 
-        // Count sessions (responses)
+        // Count sessions (responses) - query through user's organization
         const responseCount = await this.prisma.session.count({
             where: {
-                organizationId,
+                user: {
+                    organizationId: organizationId,
+                },
             },
         });
 

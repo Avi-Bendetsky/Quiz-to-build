@@ -2,7 +2,7 @@
  * QPG Service - Main orchestration service for prompt generation
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@quiz-to-build/database';
+import { PrismaService } from '@libs/database';
 import { PromptTemplateService } from './services/prompt-template.service';
 import { ContextBuilderService } from './services/context-builder.service';
 import { PromptGeneratorService } from './services/prompt-generator.service';
@@ -56,11 +56,10 @@ export class QpgService {
         const dimensionsCovered = [...new Set(prompts.map((p) => p.dimensionKey))];
 
         // Get current score
-        const session = await this.prisma.questionnaireSession.findUnique({
+        const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
-            include: { scoringResults: { orderBy: { calculatedAt: 'desc' }, take: 1 } },
         });
-        const scoreAtGeneration = session?.scoringResults[0]?.score ?? 0;
+        const scoreAtGeneration = session?.readinessScore?.toNumber() ?? 0;
 
         const batch: PromptBatch = {
             id: `batch-${Date.now()}`,

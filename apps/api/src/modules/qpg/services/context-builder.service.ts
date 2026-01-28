@@ -3,7 +3,7 @@
  * Builds gap context from questionnaire session data
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@quiz-to-build/database';
+import { PrismaService } from '@libs/database';
 import { GapContext } from '../types';
 
 @Injectable()
@@ -19,11 +19,11 @@ export class ContextBuilderService {
     async buildGapContexts(sessionId: string): Promise<GapContext[]> {
         this.logger.log(`Building gap contexts for session: ${sessionId}`);
 
-        // Get session with answers and questions
-        const session = await this.prisma.questionnaireSession.findUnique({
+        // Get session with responses and questions
+        const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
-                answers: {
+                responses: {
                     include: {
                         question: {
                             include: {
@@ -42,31 +42,31 @@ export class ContextBuilderService {
 
         const gaps: GapContext[] = [];
 
-        for (const answer of session.answers) {
-            // Only include answers with coverage < 1.0 (gaps)
-            const coverage = answer.coverage ?? 0;
+        for (const response of session.responses) {
+            // Only include responses with coverage < 1.0 (gaps)
+            const coverage = response.coverage?.toNumber() ?? 0;
             if (coverage < 1.0) {
-                const question = answer.question;
+                const question = response.question;
                 const dimension = question.dimension;
 
                 // Calculate residual risk for this gap
-                const severity = question.severityWeight ?? 0.5;
+                const severity = question.severity?.toNumber() ?? 0.5;
                 const residualRisk = severity * (1 - coverage);
 
                 gaps.push({
                     sessionId,
-                    dimensionKey: dimension.key,
-                    dimensionName: dimension.name,
+                    dimensionKey: dimension?.key ?? 'unknown',
+                    dimensionName: dimension?.displayName ?? 'Unknown',
                     questionId: question.id,
-                    questionText: question.questionText,
+                    questionText: question.text,
                     currentCoverage: coverage,
                     severity,
                     residualRisk,
                     bestPractice: question.bestPractice ?? '',
                     practicalExplainer: question.practicalExplainer ?? '',
                     standardRefs: this.parseStandardRefs(question.standardRefs),
-                    userAnswer: answer.answerValue ?? undefined,
-                    userNotes: answer.notes ?? undefined,
+                    userAnswer: response.value as string | undefined,
+                    userNotes: response.rationale ?? undefined,
                 });
             }
         }

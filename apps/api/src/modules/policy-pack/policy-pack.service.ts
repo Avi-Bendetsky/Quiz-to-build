@@ -3,7 +3,7 @@
  * Main orchestration service for policy generation
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@quiz-to-build/database';
+import { PrismaService } from '@libs/database';
 import { PolicyGeneratorService } from './services/policy-generator.service';
 import { ControlMappingService } from './services/control-mapping.service';
 import { OpaPolicyService } from './services/opa-policy.service';
@@ -65,11 +65,10 @@ export class PolicyPackService {
         const terraformRulesContent = this.terraformRules.generateFeatureFile(terraformRulesArr);
 
         // Get score at generation
-        const session = await this.prisma.questionnaireSession.findUnique({
+        const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
-            include: { scoringResults: { orderBy: { calculatedAt: 'desc' }, take: 1 } },
         });
-        const scoreAtGeneration = session?.scoringResults[0]?.score ?? 0;
+        const scoreAtGeneration = session?.readinessScore?.toNumber() ?? 0;
 
         const bundle: PolicyPackBundle = {
             id: `pack-${uuidv4()}`,

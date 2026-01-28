@@ -65,7 +65,7 @@ export class PaymentService {
         }
 
         this.stripe = new Stripe(stripeKey, {
-            apiVersion: '2024-12-18.acacia',
+            apiVersion: '2025-12-15.clover',
         });
     }
 
@@ -95,7 +95,7 @@ export class PaymentService {
             throw new BadRequestException('Invalid tier for checkout');
         }
 
-        const priceId = tierConfig.priceId;
+        const priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
         if (!priceId) {
             throw new BadRequestException('Price ID not configured for tier');
         }
@@ -219,6 +219,11 @@ export class PaymentService {
             throw new BadRequestException('Invalid tier for upgrade');
         }
 
+        const priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
+        if (!priceId) {
+            throw new BadRequestException('Price ID not configured for tier');
+        }
+
         const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
         const itemId = subscription.items.data[0].id;
 
@@ -226,7 +231,7 @@ export class PaymentService {
             items: [
                 {
                     id: itemId,
-                    price: tierConfig.priceId,
+                    price: priceId,
                 },
             ],
             proration_behavior: 'create_prorations',
@@ -273,7 +278,7 @@ export class PaymentService {
         }
 
         try {
-            return await this.stripe.invoices.retrieveUpcoming({
+            return await this.stripe.invoices.createPreview({
                 customer: customerId,
             });
         } catch (error) {

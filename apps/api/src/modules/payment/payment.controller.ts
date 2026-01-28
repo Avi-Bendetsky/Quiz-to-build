@@ -188,7 +188,7 @@ export class PaymentController {
             stripeSubscriptionId: subscription.id,
             stripeCustomerId: customerId,
             status: subscription.status,
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd: new Date((subscription as { current_period_end?: number }).current_period_end! * 1000),
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
         });
     }

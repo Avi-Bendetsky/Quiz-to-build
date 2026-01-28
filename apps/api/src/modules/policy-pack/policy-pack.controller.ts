@@ -24,7 +24,7 @@ import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PolicyPackService } from './policy-pack.service';
 import { ContextBuilderService } from '../qpg/services/context-builder.service';
-import * as archiver from 'archiver';
+import archiver from 'archiver';
 
 @ApiTags('Policy Pack Generator')
 @ApiBearerAuth()

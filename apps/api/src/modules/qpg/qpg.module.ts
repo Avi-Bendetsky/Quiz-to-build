@@ -16,7 +16,7 @@ import { QpgService } from './qpg.service';
 import { PromptTemplateService } from './services/prompt-template.service';
 import { ContextBuilderService } from './services/context-builder.service';
 import { PromptGeneratorService } from './services/prompt-generator.service';
-import { PrismaModule } from '@quiz-to-build/database';
+import { PrismaModule } from '@libs/database';
 
 @Module({
     imports: [PrismaModule],

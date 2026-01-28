@@ -13,7 +13,7 @@ import { ControlMappingService } from './services/control-mapping.service';
 import { OpaPolicyService } from './services/opa-policy.service';
 import { TerraformRulesService } from './services/terraform-rules.service';
 import { PolicyExportService } from './services/policy-export.service';
-import { PrismaModule } from '@quiz-to-build/database';
+import { PrismaModule } from '@libs/database';
 
 @Module({
     imports: [PrismaModule],
