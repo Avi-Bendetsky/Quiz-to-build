@@ -17,6 +17,8 @@ import { EvidenceRegistryModule } from './modules/evidence-registry/evidence-reg
 import { DecisionLogModule } from './modules/decision-log/decision-log.module';
 import { HeatmapModule } from './modules/heatmap/heatmap.module';
 import { NotificationModule } from './modules/notifications/notification.module';
+import { QpgModule } from './modules/qpg/qpg.module';
+import { PolicyPackModule } from './modules/policy-pack/policy-pack.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -68,6 +70,8 @@ import configuration from './config/configuration';
     DecisionLogModule,
     HeatmapModule,
     NotificationModule,
+    QpgModule,
+    PolicyPackModule,
   ],
   controllers: [HealthController],
   providers: [

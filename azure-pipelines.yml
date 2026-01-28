@@ -134,7 +134,7 @@ stages:
               ArtifactName: 'terraform'
 
   # =============================================================================
-  # Stage 2: Security Scanning
+  # Stage 2: Security Scanning (BLOCKING - fails on HIGH/CRITICAL)
   # =============================================================================
   - stage: Security
     displayName: 'Security Scan'
@@ -146,24 +146,128 @@ stages:
         steps:
           - checkout: self
 
-          # Run npm audit
-          - script: npm audit --audit-level=high
-            displayName: 'NPM Audit'
-            continueOnError: true
+          # GitLeaks - Secret Detection (BLOCKING)
+          - script: |
+              curl -sSfL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_8.18.0_linux_x64.tar.gz | tar -xz
+              ./gitleaks detect --source=. --exit-code=1 --verbose
+            displayName: 'GitLeaks Secret Detection (BLOCKING)'
+            # exit-code 1 = fail pipeline if secrets detected
 
-          # Run Trivy for container scanning
+          # Install dependencies for scanning
+          - script: npm ci
+            displayName: 'Install dependencies'
+
+          # Run npm audit - BLOCKING on HIGH/CRITICAL
+          - script: npm audit --audit-level=high
+            displayName: 'NPM Audit (BLOCKING)'
+            # Removed continueOnError - pipeline fails on HIGH/CRITICAL CVEs
+
+          # Run Trivy for SAST/filesystem scanning - BLOCKING
           - script: |
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-              trivy fs --exit-code 0 --severity HIGH,CRITICAL --no-progress .
-            displayName: 'Trivy filesystem scan'
-            continueOnError: true
+              trivy fs --exit-code 1 --severity HIGH,CRITICAL --no-progress .
+            displayName: 'Trivy SAST Scan (BLOCKING)'
+            # exit-code 1 = fail pipeline on HIGH/CRITICAL findings
+
+          # Run Semgrep SAST
+          - script: |
+              pip install semgrep
+              semgrep --config=auto --error --severity=ERROR .
+            displayName: 'Semgrep SAST (BLOCKING)'
+            # --error flag fails on findings
+
+          # Generate SBOM (Software Bill of Materials) with Syft
+          - script: |
+              curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+              syft . -o cyclonedx-json=sbom-cyclonedx.json -o spdx-json=sbom-spdx.json
+            displayName: 'Generate SBOM (CycloneDX/SPDX)'
+
+          # Publish SBOM as artifact
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish SBOM artifact'
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/sbom-cyclonedx.json'
+              ArtifactName: 'sbom'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish SBOM SPDX artifact'
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/sbom-spdx.json'
+              ArtifactName: 'sbom'
 
   # =============================================================================
-  # Stage 3: Infrastructure (Terraform)
+  # Stage 3: Readiness Score Gate (Quiz2Biz Compliance)
+  # =============================================================================
+  - stage: ScoreGate
+    displayName: 'Readiness Score Gate'
+    dependsOn: Security
+    condition: succeeded()
+    jobs:
+      - job: CheckReadinessScore
+        displayName: 'Verify Readiness Score >= 95%'
+        steps:
+          - checkout: self
+
+          # Setup Node.js for API call
+          - task: NodeTool@0
+            displayName: 'Setup Node.js'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          # Check Readiness Score via API
+          - script: |
+              echo "Checking Quiz2Biz Readiness Score..."
+              # Get the API URL from environment or use localhost for testing
+              API_URL="${QUIZ2BIZ_API_URL:-http://localhost:3000}"
+              
+              # Fetch the current readiness score
+              SCORE_RESPONSE=$(curl -s "$API_URL/api/scoring/latest" \
+                -H "Authorization: Bearer $QUIZ2BIZ_API_TOKEN" || echo '{"score": 0}')
+              
+              # Extract score (default to 0 if not found)
+              SCORE=$(echo "$SCORE_RESPONSE" | jq -r '.score // 0')
+              
+              echo "Current Readiness Score: $SCORE"
+              echo "Required Minimum Score: 95"
+              
+              # Compare scores (using bc for decimal comparison)
+              if [ $(echo "$SCORE < 95" | bc -l) -eq 1 ]; then
+                echo "##[error]SCORE GATE FAILED: Readiness Score ($SCORE) is below 95%"
+                echo "##[error]Deployment blocked. Please improve coverage before deploying."
+                exit 1
+              else
+                echo "##[section]SCORE GATE PASSED: Readiness Score ($SCORE) meets threshold"
+              fi
+            displayName: 'Score Gate Check (BLOCKING)'
+            env:
+              QUIZ2BIZ_API_URL: $(QUIZ2BIZ_API_URL)
+              QUIZ2BIZ_API_TOKEN: $(QUIZ2BIZ_API_TOKEN)
+
+          # Publish score report
+          - script: |
+              echo "## Readiness Score Report" > score-report.md
+              echo "- **Score**: $(curl -s ${QUIZ2BIZ_API_URL:-http://localhost:3000}/api/scoring/latest | jq -r '.score // \"N/A\"')" >> score-report.md
+              echo "- **Threshold**: 95%" >> score-report.md
+              echo "- **Status**: PASSED" >> score-report.md
+              echo "- **Build**: $(Build.BuildId)" >> score-report.md
+            displayName: 'Generate Score Report'
+            condition: succeeded()
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Score Report'
+            inputs:
+              PathtoPublish: 'score-report.md'
+              ArtifactName: 'score-gate'
+            condition: succeededOrFailed()
+
+  # =============================================================================
+  # Stage 4: Infrastructure (Terraform)
   # =============================================================================
   - stage: Infrastructure
     displayName: 'Infrastructure'
-    dependsOn: Build
+    dependsOn: 
+      - Build
+      - ScoreGate
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - job: TerraformPlan
@@ -305,6 +409,24 @@ stages:
                     docker push $(acrName).azurecr.io/$(imageName):$(imageTag)
                     docker push $(acrName).azurecr.io/$(imageName):latest
                   displayName: 'Push to ACR'
+
+                # Sign container image with Sigstore cosign (keyless)
+                - script: |
+                    # Install cosign
+                    curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o /usr/local/bin/cosign
+                    chmod +x /usr/local/bin/cosign
+                    # Sign the image using keyless signing (OIDC/Fulcio)
+                    COSIGN_EXPERIMENTAL=1 cosign sign --yes $(acrName).azurecr.io/$(imageName):$(imageTag)
+                    COSIGN_EXPERIMENTAL=1 cosign sign --yes $(acrName).azurecr.io/$(imageName):latest
+                  displayName: 'Sign container with Sigstore cosign'
+                  env:
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+
+                # Verify container signature
+                - script: |
+                    COSIGN_EXPERIMENTAL=1 cosign verify $(acrName).azurecr.io/$(imageName):$(imageTag)
+                  displayName: 'Verify container signature'
 
                 # Deploy to Container Apps
                 - task: AzureCLI@2
@@ -524,7 +646,7 @@ stages:
               ArtifactName: 'terraform'
 
   # =============================================================================
-  # Stage 2: Security Scanning
+  # Stage 2: Security Scanning (BLOCKING - fails on HIGH/CRITICAL)
   # =============================================================================
   - stage: Security
     displayName: 'Security Scan'
@@ -536,24 +658,128 @@ stages:
         steps:
           - checkout: self
 
-          # Run npm audit
-          - script: npm audit --audit-level=high
-            displayName: 'NPM Audit'
-            continueOnError: true
+          # GitLeaks - Secret Detection (BLOCKING)
+          - script: |
+              curl -sSfL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_8.18.0_linux_x64.tar.gz | tar -xz
+              ./gitleaks detect --source=. --exit-code=1 --verbose
+            displayName: 'GitLeaks Secret Detection (BLOCKING)'
+            # exit-code 1 = fail pipeline if secrets detected
 
-          # Run Trivy for container scanning
+          # Install dependencies for scanning
+          - script: npm ci
+            displayName: 'Install dependencies'
+
+          # Run npm audit - BLOCKING on HIGH/CRITICAL
+          - script: npm audit --audit-level=high
+            displayName: 'NPM Audit (BLOCKING)'
+            # Removed continueOnError - pipeline fails on HIGH/CRITICAL CVEs
+
+          # Run Trivy for SAST/filesystem scanning - BLOCKING
           - script: |
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-              trivy fs --exit-code 0 --severity HIGH,CRITICAL --no-progress .
-            displayName: 'Trivy filesystem scan'
-            continueOnError: true
+              trivy fs --exit-code 1 --severity HIGH,CRITICAL --no-progress .
+            displayName: 'Trivy SAST Scan (BLOCKING)'
+            # exit-code 1 = fail pipeline on HIGH/CRITICAL findings
+
+          # Run Semgrep SAST
+          - script: |
+              pip install semgrep
+              semgrep --config=auto --error --severity=ERROR .
+            displayName: 'Semgrep SAST (BLOCKING)'
+            # --error flag fails on findings
+
+          # Generate SBOM (Software Bill of Materials) with Syft
+          - script: |
+              curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+              syft . -o cyclonedx-json=sbom-cyclonedx.json -o spdx-json=sbom-spdx.json
+            displayName: 'Generate SBOM (CycloneDX/SPDX)'
+
+          # Publish SBOM as artifact
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish SBOM artifact'
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/sbom-cyclonedx.json'
+              ArtifactName: 'sbom'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish SBOM SPDX artifact'
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/sbom-spdx.json'
+              ArtifactName: 'sbom'
 
   # =============================================================================
-  # Stage 3: Infrastructure (Terraform)
+  # Stage 3: Readiness Score Gate (Quiz2Biz Compliance)
+  # =============================================================================
+  - stage: ScoreGate
+    displayName: 'Readiness Score Gate'
+    dependsOn: Security
+    condition: succeeded()
+    jobs:
+      - job: CheckReadinessScore
+        displayName: 'Verify Readiness Score >= 95%'
+        steps:
+          - checkout: self
+
+          # Setup Node.js for API call
+          - task: NodeTool@0
+            displayName: 'Setup Node.js'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          # Check Readiness Score via API
+          - script: |
+              echo "Checking Quiz2Biz Readiness Score..."
+              # Get the API URL from environment or use localhost for testing
+              API_URL="${QUIZ2BIZ_API_URL:-http://localhost:3000}"
+              
+              # Fetch the current readiness score
+              SCORE_RESPONSE=$(curl -s "$API_URL/api/scoring/latest" \
+                -H "Authorization: Bearer $QUIZ2BIZ_API_TOKEN" || echo '{"score": 0}')
+              
+              # Extract score (default to 0 if not found)
+              SCORE=$(echo "$SCORE_RESPONSE" | jq -r '.score // 0')
+              
+              echo "Current Readiness Score: $SCORE"
+              echo "Required Minimum Score: 95"
+              
+              # Compare scores (using bc for decimal comparison)
+              if [ $(echo "$SCORE < 95" | bc -l) -eq 1 ]; then
+                echo "##[error]SCORE GATE FAILED: Readiness Score ($SCORE) is below 95%"
+                echo "##[error]Deployment blocked. Please improve coverage before deploying."
+                exit 1
+              else
+                echo "##[section]SCORE GATE PASSED: Readiness Score ($SCORE) meets threshold"
+              fi
+            displayName: 'Score Gate Check (BLOCKING)'
+            env:
+              QUIZ2BIZ_API_URL: $(QUIZ2BIZ_API_URL)
+              QUIZ2BIZ_API_TOKEN: $(QUIZ2BIZ_API_TOKEN)
+
+          # Publish score report
+          - script: |
+              echo "## Readiness Score Report" > score-report.md
+              echo "- **Score**: $(curl -s ${QUIZ2BIZ_API_URL:-http://localhost:3000}/api/scoring/latest | jq -r '.score // \"N/A\"')" >> score-report.md
+              echo "- **Threshold**: 95%" >> score-report.md
+              echo "- **Status**: PASSED" >> score-report.md
+              echo "- **Build**: $(Build.BuildId)" >> score-report.md
+            displayName: 'Generate Score Report'
+            condition: succeeded()
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Score Report'
+            inputs:
+              PathtoPublish: 'score-report.md'
+              ArtifactName: 'score-gate'
+            condition: succeededOrFailed()
+
+  # =============================================================================
+  # Stage 4: Infrastructure (Terraform)
   # =============================================================================
   - stage: Infrastructure
     displayName: 'Infrastructure'
-    dependsOn: Build
+    dependsOn: 
+      - Build
+      - ScoreGate
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - job: TerraformPlan
@@ -695,6 +921,24 @@ stages:
                     docker push $(acrName).azurecr.io/$(imageName):$(imageTag)
                     docker push $(acrName).azurecr.io/$(imageName):latest
                   displayName: 'Push to ACR'
+
+                # Sign container image with Sigstore cosign (keyless)
+                - script: |
+                    # Install cosign
+                    curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o /usr/local/bin/cosign
+                    chmod +x /usr/local/bin/cosign
+                    # Sign the image using keyless signing (OIDC/Fulcio)
+                    COSIGN_EXPERIMENTAL=1 cosign sign --yes $(acrName).azurecr.io/$(imageName):$(imageTag)
+                    COSIGN_EXPERIMENTAL=1 cosign sign --yes $(acrName).azurecr.io/$(imageName):latest
+                  displayName: 'Sign container with Sigstore cosign'
+                  env:
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+
+                # Verify container signature
+                - script: |
+                    COSIGN_EXPERIMENTAL=1 cosign verify $(acrName).azurecr.io/$(imageName):$(imageTag)
+                  displayName: 'Verify container signature'
 
                 # Deploy to Container Apps
                 - task: AzureCLI@2

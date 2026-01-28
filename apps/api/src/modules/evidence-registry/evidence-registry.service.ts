@@ -481,4 +481,370 @@ export class EvidenceRegistryService {
             createdAt: evidence.createdAt,
         };
     }
+
+    /**
+     * Bulk verify multiple evidence items
+     * Useful for batch processing verification workflows
+     */
+    async bulkVerifyEvidence(
+        evidenceIds: string[],
+        verifierId: string,
+        coverageValue?: number,
+    ): Promise<BulkVerificationResult> {
+        const results: BulkVerificationResult = {
+            successful: [],
+            failed: [],
+            totalProcessed: evidenceIds.length,
+        };
+
+        for (const evidenceId of evidenceIds) {
+            try {
+                const result = await this.verifyEvidence(
+                    { evidenceId, verified: true, coverageValue },
+                    verifierId,
+                );
+                results.successful.push(result.id);
+            } catch (error) {
+                results.failed.push({
+                    evidenceId,
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                });
+            }
+        }
+
+        this.logger.log(
+            `Bulk verification completed: ${results.successful.length} successful, ${results.failed.length} failed`,
+        );
+
+        return results;
+    }
+
+    /**
+     * Get evidence audit trail
+     * Returns the verification history for an evidence item
+     */
+    async getEvidenceAuditTrail(evidenceId: string): Promise<EvidenceAuditEntry[]> {
+        const evidence = await this.prisma.evidenceRegistry.findUnique({
+            where: { id: evidenceId },
+            include: {
+                verifier: {
+                    select: { id: true, email: true, firstName: true, lastName: true },
+                },
+            },
+        });
+
+        if (!evidence) {
+            throw new NotFoundException(`Evidence not found: ${evidenceId}`);
+        }
+
+        // Get related decision logs for this evidence
+        const auditLogs = await this.prisma.decisionLog.findMany({
+            where: {
+                relatedIds: {
+                    has: evidenceId,
+                },
+            },
+            orderBy: { createdAt: 'asc' },
+            select: {
+                id: true,
+                decisionType: true,
+                rationale: true,
+                createdAt: true,
+                metadata: true,
+            },
+        });
+
+        const auditTrail: EvidenceAuditEntry[] = [
+            {
+                action: 'UPLOADED',
+                timestamp: evidence.createdAt,
+                userId: null,
+                details: {
+                    fileName: evidence.fileName,
+                    fileSize: Number(evidence.fileSize),
+                    mimeType: evidence.mimeType,
+                    hashSignature: evidence.hashSignature,
+                },
+            },
+        ];
+
+        // Add verification event if verified
+        if (evidence.verified && evidence.verifiedAt) {
+            auditTrail.push({
+                action: 'VERIFIED',
+                timestamp: evidence.verifiedAt,
+                userId: evidence.verifierId,
+                userName: evidence.verifier
+                    ? `${evidence.verifier.firstName} ${evidence.verifier.lastName}`
+                    : null,
+                details: {},
+            });
+        }
+
+        // Add any logged decisions
+        auditLogs.forEach((log) => {
+            auditTrail.push({
+                action: log.decisionType as string,
+                timestamp: log.createdAt,
+                userId: null,
+                details: log.metadata as Record<string, unknown>,
+            });
+        });
+
+        // Sort by timestamp
+        auditTrail.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+        return auditTrail;
+    }
+
+    /**
+     * Check evidence integrity by re-computing hash
+     * Verifies the stored file matches the original hash
+     */
+    async verifyEvidenceIntegrity(evidenceId: string): Promise<IntegrityCheckResult> {
+        const evidence = await this.prisma.evidenceRegistry.findUnique({
+            where: { id: evidenceId },
+        });
+
+        if (!evidence) {
+            throw new NotFoundException(`Evidence not found: ${evidenceId}`);
+        }
+
+        if (!this.containerClient) {
+            throw new BadRequestException('File storage not configured');
+        }
+
+        try {
+            // Download the file from blob storage
+            const url = new URL(evidence.artifactUrl);
+            const blobName = url.pathname.split('/').slice(2).join('/');
+            const blockBlobClient = this.containerClient.getBlockBlobClient(blobName);
+
+            const downloadResponse = await blockBlobClient.download();
+            const chunks: Buffer[] = [];
+
+            if (downloadResponse.readableStreamBody) {
+                for await (const chunk of downloadResponse.readableStreamBody) {
+                    chunks.push(Buffer.from(chunk));
+                }
+            }
+
+            const fileBuffer = Buffer.concat(chunks);
+            const computedHash = this.computeSHA256(fileBuffer);
+
+            const isValid = computedHash === evidence.hashSignature;
+
+            return {
+                evidenceId,
+                storedHash: evidence.hashSignature || '',
+                computedHash,
+                isValid,
+                checkedAt: new Date(),
+            };
+        } catch (error) {
+            this.logger.error(`Failed to verify integrity for ${evidenceId}`, error);
+            throw new BadRequestException('Failed to verify file integrity');
+        }
+    }
+
+    /**
+     * Get evidence coverage summary for a session
+     * Shows how much evidence supports each dimension
+     */
+    async getEvidenceCoverageSummary(sessionId: string): Promise<EvidenceCoverageSummary> {
+        const evidence = await this.prisma.evidenceRegistry.findMany({
+            where: { sessionId },
+            include: {
+                question: {
+                    include: {
+                        dimension: true,
+                    },
+                },
+            },
+        });
+
+        const byDimension = new Map<string, DimensionEvidenceSummary>();
+        const byQuestion = new Map<string, QuestionEvidenceSummary>();
+
+        for (const e of evidence) {
+            const dimensionKey = e.question?.dimension?.key || 'unknown';
+            const dimensionName = e.question?.dimension?.displayName || dimensionKey;
+
+            // Update dimension summary
+            if (!byDimension.has(dimensionKey)) {
+                byDimension.set(dimensionKey, {
+                    dimensionKey,
+                    dimensionName,
+                    totalEvidence: 0,
+                    verifiedEvidence: 0,
+                    questionsCovered: new Set(),
+                });
+            }
+            const dimSummary = byDimension.get(dimensionKey)!;
+            dimSummary.totalEvidence++;
+            if (e.verified) dimSummary.verifiedEvidence++;
+            dimSummary.questionsCovered.add(e.questionId);
+
+            // Update question summary
+            if (!byQuestion.has(e.questionId)) {
+                byQuestion.set(e.questionId, {
+                    questionId: e.questionId,
+                    questionText: e.question?.text || '',
+                    totalEvidence: 0,
+                    verifiedEvidence: 0,
+                    evidenceTypes: new Set(),
+                });
+            }
+            const qSummary = byQuestion.get(e.questionId)!;
+            qSummary.totalEvidence++;
+            if (e.verified) qSummary.verifiedEvidence++;
+            qSummary.evidenceTypes.add(e.artifactType);
+        }
+
+        return {
+            sessionId,
+            totalEvidence: evidence.length,
+            verifiedEvidence: evidence.filter((e) => e.verified).length,
+            dimensionCoverage: Array.from(byDimension.values()).map((d) => ({
+                ...d,
+                questionsCovered: d.questionsCovered.size,
+            })),
+            questionCoverage: Array.from(byQuestion.values()).map((q) => ({
+                ...q,
+                evidenceTypes: Array.from(q.evidenceTypes),
+            })),
+        };
+    }
+
+    /**
+     * Generate signed URL for secure evidence download
+     * URL expires after specified duration
+     */
+    async generateSignedUrl(
+        evidenceId: string,
+        expirationMinutes: number = 15,
+    ): Promise<SignedUrlResult> {
+        const evidence = await this.prisma.evidenceRegistry.findUnique({
+            where: { id: evidenceId },
+        });
+
+        if (!evidence) {
+            throw new NotFoundException(`Evidence not found: ${evidenceId}`);
+        }
+
+        if (!this.containerClient) {
+            throw new BadRequestException('File storage not configured');
+        }
+
+        try {
+            const url = new URL(evidence.artifactUrl);
+            const blobName = url.pathname.split('/').slice(2).join('/');
+            const blockBlobClient = this.containerClient.getBlockBlobClient(blobName);
+
+            // Generate SAS token with read-only access
+            const expiresOn = new Date();
+            expiresOn.setMinutes(expiresOn.getMinutes() + expirationMinutes);
+
+            const sasUrl = await blockBlobClient.generateSasUrl({
+                permissions: { read: true } as unknown as import('@azure/storage-blob').BlobSASPermissions,
+                expiresOn,
+            });
+
+            return {
+                evidenceId,
+                signedUrl: sasUrl,
+                expiresAt: expiresOn,
+                fileName: evidence.fileName || 'download',
+            };
+        } catch (error) {
+            this.logger.error(`Failed to generate signed URL for ${evidenceId}`, error);
+            throw new BadRequestException('Failed to generate download URL');
+        }
+    }
+}
+
+/**
+ * Bulk verification result
+ */
+export interface BulkVerificationResult {
+    successful: string[];
+    failed: Array<{ evidenceId: string; error: string }>;
+    totalProcessed: number;
+}
+
+/**
+ * Evidence audit trail entry
+ */
+export interface EvidenceAuditEntry {
+    action: string;
+    timestamp: Date;
+    userId: string | null;
+    userName?: string | null;
+    details: Record<string, unknown>;
+}
+
+/**
+ * Integrity check result
+ */
+export interface IntegrityCheckResult {
+    evidenceId: string;
+    storedHash: string;
+    computedHash: string;
+    isValid: boolean;
+    checkedAt: Date;
+}
+
+/**
+ * Evidence coverage summary
+ */
+export interface EvidenceCoverageSummary {
+    sessionId: string;
+    totalEvidence: number;
+    verifiedEvidence: number;
+    dimensionCoverage: Array<{
+        dimensionKey: string;
+        dimensionName: string;
+        totalEvidence: number;
+        verifiedEvidence: number;
+        questionsCovered: number;
+    }>;
+    questionCoverage: Array<{
+        questionId: string;
+        questionText: string;
+        totalEvidence: number;
+        verifiedEvidence: number;
+        evidenceTypes: string[];
+    }>;
+}
+
+/**
+ * Internal dimension evidence summary (with Set)
+ */
+interface DimensionEvidenceSummary {
+    dimensionKey: string;
+    dimensionName: string;
+    totalEvidence: number;
+    verifiedEvidence: number;
+    questionsCovered: Set<string>;
+}
+
+/**
+ * Internal question evidence summary (with Set)
+ */
+interface QuestionEvidenceSummary {
+    questionId: string;
+    questionText: string;
+    totalEvidence: number;
+    verifiedEvidence: number;
+    evidenceTypes: Set<EvidenceType>;
+}
+
+/**
+ * Signed URL result
+ */
+export interface SignedUrlResult {
+    evidenceId: string;
+    signedUrl: string;
+    expiresAt: Date;
+    fileName: string;
 }

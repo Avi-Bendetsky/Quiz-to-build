@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
 import { RedisService } from '@libs/redis';
 import { Decimal } from '@prisma/client/runtime/library';
+import { CoverageLevel } from '@prisma/client';
 import {
     CalculateScoreDto,
     ReadinessScoreResult,
@@ -11,6 +12,38 @@ import {
     PrioritizedQuestion,
     QuestionCoverageInput,
 } from './dto';
+
+/**
+ * Coverage Level mapping to decimal values
+ * Provides 5-level discrete scale for evidence assessment
+ */
+export const COVERAGE_LEVEL_VALUES: Record<CoverageLevel, number> = {
+    NONE: 0.00,
+    PARTIAL: 0.25,
+    HALF: 0.50,
+    SUBSTANTIAL: 0.75,
+    FULL: 1.00,
+};
+
+/**
+ * Convert CoverageLevel enum to decimal value
+ */
+export function coverageLevelToDecimal(level: CoverageLevel | null): number {
+    if (!level) return 0;
+    return COVERAGE_LEVEL_VALUES[level] ?? 0;
+}
+
+/**
+ * Convert decimal value to nearest CoverageLevel
+ * Uses nearest-neighbor rounding to closest 0.25 increment
+ */
+export function decimalToCoverageLevel(value: number | null): CoverageLevel {
+    if (value === null || value < 0.125) return 'NONE';
+    if (value < 0.375) return 'PARTIAL';
+    if (value < 0.625) return 'HALF';
+    if (value < 0.875) return 'SUBSTANTIAL';
+    return 'FULL';
+}
 
 /**
  * Scoring Engine Service
@@ -302,28 +335,46 @@ export class ScoringEngineService {
 
     /**
      * Build coverage map from responses with optional overrides
+     * Prefers coverageLevel (discrete) over coverage (continuous) when available
      */
     private buildCoverageMap(
         questions: Array<{
             id: string;
-            responses: Array<{ coverage: Decimal | null }>;
+            responses: Array<{ 
+                coverage: Decimal | null;
+                coverageLevel?: CoverageLevel | null;
+            }>;
         }>,
         overrides?: QuestionCoverageInput[],
     ): Map<string, number> {
         const coverageMap = new Map<string, number>();
 
         // Initialize from actual responses
+        // Prefer coverageLevel (discrete) over coverage (continuous) for consistency
         questions.forEach((q) => {
             const response = q.responses[0];
-            const coverage = response?.coverage ? Number(response.coverage) : 0;
+            let coverage: number;
+            
+            if (response?.coverageLevel) {
+                // Use discrete coverage level (preferred)
+                coverage = coverageLevelToDecimal(response.coverageLevel);
+            } else if (response?.coverage) {
+                // Fall back to continuous coverage
+                coverage = Number(response.coverage);
+            } else {
+                coverage = 0;
+            }
+            
             coverageMap.set(q.id, coverage);
         });
 
-        // Apply overrides
+        // Apply overrides (validated to discrete levels)
         if (overrides) {
             overrides.forEach((override) => {
                 if (coverageMap.has(override.questionId)) {
-                    coverageMap.set(override.questionId, override.coverage);
+                    // Normalize override to discrete level
+                    const level = decimalToCoverageLevel(override.coverage);
+                    coverageMap.set(override.questionId, coverageLevelToDecimal(level));
                 }
             });
         }
@@ -511,4 +562,400 @@ export class ScoringEngineService {
 
         return results;
     }
+
+    /**
+     * Get score history for a session
+     * Returns historical score snapshots for trend analysis
+     */
+    async getScoreHistory(
+        sessionId: string,
+        limit: number = 10,
+    ): Promise<ScoreHistoryResult> {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            select: {
+                id: true,
+                readinessScore: true,
+                createdAt: true,
+                lastScoreCalculation: true,
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found: ${sessionId}`);
+        }
+
+        // Fetch score snapshots from decision log (if available)
+        const snapshots = await this.prisma.decisionLog.findMany({
+            where: {
+                sessionId,
+                decisionType: 'SCORE_CALCULATION',
+            },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            select: {
+                id: true,
+                createdAt: true,
+                metadata: true,
+            },
+        });
+
+        const history: ScoreSnapshot[] = snapshots.map((snapshot: { id: string; createdAt: Date; metadata: unknown }) => {
+            const metadata = snapshot.metadata as Record<string, unknown> || {};
+            return {
+                timestamp: snapshot.createdAt,
+                score: Number(metadata.score ?? 0),
+                portfolioResidual: Number(metadata.portfolioResidual ?? 0),
+                completionPercentage: Number(metadata.completionPercentage ?? 0),
+            };
+        });
+
+        // Add current score if different from last snapshot
+        const currentScore = session.readinessScore ? Number(session.readinessScore) : 0;
+        if (history.length === 0 || history[0].score !== currentScore) {
+            history.unshift({
+                timestamp: session.lastScoreCalculation || new Date(),
+                score: currentScore,
+                portfolioResidual: 0,
+                completionPercentage: 0,
+            });
+        }
+
+        // Calculate trend metrics
+        const trendAnalysis = this.calculateTrendAnalysis(history);
+
+        return {
+            sessionId,
+            currentScore,
+            history,
+            trend: trendAnalysis,
+        };
+    }
+
+    /**
+     * Get industry benchmark comparison
+     * Compares session score against industry averages
+     */
+    async getIndustryBenchmark(
+        sessionId: string,
+        industryCode?: string,
+    ): Promise<BenchmarkResult> {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: {
+                questionnaire: true,
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found: ${sessionId}`);
+        }
+
+        const currentScore = session.readinessScore ? Number(session.readinessScore) : 0;
+
+        // Get industry from session or use provided code
+        const industry = industryCode ||
+            (session.questionnaire?.metadata as Record<string, unknown>)?.industry as string ||
+            'general';
+
+        // Calculate aggregate statistics from all sessions in same industry
+        // Using parameterized query for security
+        const stats = await this.prisma.$queryRaw<Array<{
+            avg_score: number;
+            min_score: number;
+            max_score: number;
+            count: bigint;
+            percentile_25: number;
+            percentile_50: number;
+            percentile_75: number;
+        }>>`
+            WITH industry_sessions AS (
+                SELECT s.readiness_score
+                FROM sessions s
+                JOIN questionnaires q ON s.questionnaire_id = q.id
+                WHERE s.readiness_score IS NOT NULL
+                AND s.status = 'COMPLETED'
+                AND (
+                    q.metadata->>'industry' = ${industry}
+                    OR ${industry} = 'general'
+                )
+            )
+            SELECT 
+                COALESCE(AVG(readiness_score), 0) as avg_score,
+                COALESCE(MIN(readiness_score), 0) as min_score,
+                COALESCE(MAX(readiness_score), 0) as max_score,
+                COUNT(*) as count,
+                COALESCE(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY readiness_score), 0) as percentile_25,
+                COALESCE(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY readiness_score), 0) as percentile_50,
+                COALESCE(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY readiness_score), 0) as percentile_75
+            FROM industry_sessions
+        `;
+
+        const benchmarkStats = stats[0] || {
+            avg_score: 50,
+            min_score: 0,
+            max_score: 100,
+            count: BigInt(0),
+            percentile_25: 25,
+            percentile_50: 50,
+            percentile_75: 75,
+        };
+
+        // Calculate percentile rank
+        const percentileRank = await this.calculatePercentileRank(
+            currentScore,
+            industry,
+        );
+
+        // Determine performance category
+        let performanceCategory: 'LEADING' | 'ABOVE_AVERAGE' | 'AVERAGE' | 'BELOW_AVERAGE' | 'LAGGING';
+        if (currentScore >= Number(benchmarkStats.percentile_75)) {
+            performanceCategory = 'LEADING';
+        } else if (currentScore >= Number(benchmarkStats.percentile_50)) {
+            performanceCategory = 'ABOVE_AVERAGE';
+        } else if (currentScore >= Number(benchmarkStats.percentile_25)) {
+            performanceCategory = 'AVERAGE';
+        } else if (currentScore >= Number(benchmarkStats.min_score)) {
+            performanceCategory = 'BELOW_AVERAGE';
+        } else {
+            performanceCategory = 'LAGGING';
+        }
+
+        return {
+            sessionId,
+            currentScore,
+            industry,
+            benchmark: {
+                average: Math.round(Number(benchmarkStats.avg_score) * 100) / 100,
+                median: Math.round(Number(benchmarkStats.percentile_50) * 100) / 100,
+                min: Math.round(Number(benchmarkStats.min_score) * 100) / 100,
+                max: Math.round(Number(benchmarkStats.max_score) * 100) / 100,
+                percentile25: Math.round(Number(benchmarkStats.percentile_25) * 100) / 100,
+                percentile75: Math.round(Number(benchmarkStats.percentile_75) * 100) / 100,
+                sampleSize: Number(benchmarkStats.count),
+            },
+            percentileRank,
+            performanceCategory,
+            gapToMedian: Math.round((currentScore - Number(benchmarkStats.percentile_50)) * 100) / 100,
+            gapToLeading: Math.round((Number(benchmarkStats.percentile_75) - currentScore) * 100) / 100,
+        };
+    }
+
+    /**
+     * Calculate percentile rank for a score within an industry
+     */
+    private async calculatePercentileRank(
+        score: number,
+        industry: string,
+    ): Promise<number> {
+        const result = await this.prisma.$queryRaw<Array<{ percentile_rank: number }>>`
+            WITH industry_sessions AS (
+                SELECT s.readiness_score
+                FROM sessions s
+                JOIN questionnaires q ON s.questionnaire_id = q.id
+                WHERE s.readiness_score IS NOT NULL
+                AND s.status = 'COMPLETED'
+                AND (
+                    q.metadata->>'industry' = ${industry}
+                    OR ${industry} = 'general'
+                )
+            )
+            SELECT 
+                COALESCE(
+                    (COUNT(*) FILTER (WHERE readiness_score <= ${score})::float / 
+                    NULLIF(COUNT(*), 0) * 100),
+                    50
+                ) as percentile_rank
+            FROM industry_sessions
+        `;
+
+        return Math.round((result[0]?.percentile_rank ?? 50) * 10) / 10;
+    }
+
+    /**
+     * Calculate trend analysis from score history
+     */
+    private calculateTrendAnalysis(history: ScoreSnapshot[]): TrendAnalysis {
+        if (history.length < 2) {
+            return {
+                direction: 'STABLE',
+                averageChange: 0,
+                volatility: 0,
+                projectedScore: history[0]?.score ?? 0,
+            };
+        }
+
+        // Calculate changes between consecutive scores
+        const changes: number[] = [];
+        for (let i = 0; i < history.length - 1; i++) {
+            changes.push(history[i].score - history[i + 1].score);
+        }
+
+        const averageChange = changes.reduce((sum, c) => sum + c, 0) / changes.length;
+
+        // Calculate volatility (standard deviation of changes)
+        const squaredDiffs = changes.map((c) => Math.pow(c - averageChange, 2));
+        const volatility = Math.sqrt(
+            squaredDiffs.reduce((sum, d) => sum + d, 0) / changes.length,
+        );
+
+        // Determine direction
+        let direction: 'UP' | 'DOWN' | 'STABLE';
+        if (averageChange > 1) {
+            direction = 'UP';
+        } else if (averageChange < -1) {
+            direction = 'DOWN';
+        } else {
+            direction = 'STABLE';
+        }
+
+        // Project future score (simple linear projection)
+        const projectedScore = Math.max(
+            0,
+            Math.min(100, history[0].score + averageChange),
+        );
+
+        return {
+            direction,
+            averageChange: Math.round(averageChange * 100) / 100,
+            volatility: Math.round(volatility * 100) / 100,
+            projectedScore: Math.round(projectedScore * 100) / 100,
+        };
+    }
+
+    /**
+     * Get dimension-level benchmark comparison
+     */
+    async getDimensionBenchmarks(sessionId: string): Promise<DimensionBenchmarkResult[]> {
+        // First calculate current score to get dimension residuals
+        const currentResult = await this.calculateScore({ sessionId });
+
+        // Get industry averages per dimension
+        const dimensionAverages = await this.prisma.$queryRaw<Array<{
+            dimension_key: string;
+            avg_residual: number;
+            count: bigint;
+        }>>`
+            WITH dimension_scores AS (
+                SELECT 
+                    dl.metadata->>'dimensionKey' as dimension_key,
+                    (dl.metadata->>'residualRisk')::float as residual_risk
+                FROM decision_logs dl
+                WHERE dl.decision_type = 'SCORE_CALCULATION'
+                AND dl.metadata->>'dimensionKey' IS NOT NULL
+            )
+            SELECT 
+                dimension_key,
+                AVG(residual_risk) as avg_residual,
+                COUNT(*) as count
+            FROM dimension_scores
+            GROUP BY dimension_key
+        `;
+
+        const benchmarkMap = new Map<string, number>(
+            dimensionAverages.map((d: { dimension_key: string; avg_residual: number }) => [d.dimension_key, Number(d.avg_residual)]),
+        );
+
+        return currentResult.dimensions.map((dim) => {
+            const industryAvgResidual = Number(benchmarkMap.get(dim.dimensionKey) ?? 0.5);
+            const gapToAverage = dim.residualRisk - industryAvgResidual;
+
+            return {
+                dimensionKey: dim.dimensionKey,
+                displayName: dim.displayName,
+                currentResidual: dim.residualRisk,
+                industryAverageResidual: Math.round(industryAvgResidual * 10000) / 10000,
+                gapToAverage: Math.round(gapToAverage * 10000) / 10000,
+                performance: gapToAverage < -0.1 ? 'ABOVE' : gapToAverage > 0.1 ? 'BELOW' : 'AVERAGE',
+                recommendation: this.generateDimensionRecommendation(dim, gapToAverage),
+            };
+        });
+    }
+
+    /**
+     * Generate recommendation for dimension improvement
+     */
+    private generateDimensionRecommendation(
+        dim: DimensionResidual,
+        gapToAverage: number,
+    ): string {
+        if (gapToAverage < -0.1) {
+            return `${dim.displayName} is performing above industry average. Maintain current practices.`;
+        }
+
+        if (gapToAverage > 0.2) {
+            return `${dim.displayName} has significant gaps. Prioritize ${dim.questionCount - dim.answeredCount} unanswered questions to improve by ${Math.round(gapToAverage * 100)}%.`;
+        }
+
+        if (gapToAverage > 0.1) {
+            return `${dim.displayName} is slightly below average. Review ${dim.questionCount - dim.answeredCount} remaining questions for quick wins.`;
+        }
+
+        return `${dim.displayName} is performing at industry average. Focus on other dimensions for maximum impact.`;
+    }
+}
+
+/**
+ * Score history snapshot
+ */
+export interface ScoreSnapshot {
+    timestamp: Date;
+    score: number;
+    portfolioResidual: number;
+    completionPercentage: number;
+}
+
+/**
+ * Score history result
+ */
+export interface ScoreHistoryResult {
+    sessionId: string;
+    currentScore: number;
+    history: ScoreSnapshot[];
+    trend: TrendAnalysis;
+}
+
+/**
+ * Trend analysis result
+ */
+export interface TrendAnalysis {
+    direction: 'UP' | 'DOWN' | 'STABLE';
+    averageChange: number;
+    volatility: number;
+    projectedScore: number;
+}
+
+/**
+ * Industry benchmark result
+ */
+export interface BenchmarkResult {
+    sessionId: string;
+    currentScore: number;
+    industry: string;
+    benchmark: {
+        average: number;
+        median: number;
+        min: number;
+        max: number;
+        percentile25: number;
+        percentile75: number;
+        sampleSize: number;
+    };
+    percentileRank: number;
+    performanceCategory: 'LEADING' | 'ABOVE_AVERAGE' | 'AVERAGE' | 'BELOW_AVERAGE' | 'LAGGING';
+    gapToMedian: number;
+    gapToLeading: number;
+}
+
+/**
+ * Dimension benchmark comparison result
+ */
+export interface DimensionBenchmarkResult {
+    dimensionKey: string;
+    displayName: string;
+    currentResidual: number;
+    industryAverageResidual: number;
+    gapToAverage: number;
+    performance: 'ABOVE' | 'AVERAGE' | 'BELOW';
+    recommendation: string;
 }

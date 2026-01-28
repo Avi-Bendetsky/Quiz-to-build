@@ -34,7 +34,7 @@ export class DocumentGeneratorService {
     private readonly templateEngine: TemplateEngineService,
     private readonly documentBuilder: DocumentBuilderService,
     private readonly storage: StorageService,
-  ) {}
+  ) { }
 
   /**
    * Generate a document for a completed session
@@ -254,8 +254,8 @@ export class DocumentGeneratorService {
   ): Promise<string> {
     const document = await this.getDocument(id, userId);
 
-    if (document.status !== DocumentStatus.GENERATED && 
-        document.status !== DocumentStatus.APPROVED) {
+    if (document.status !== DocumentStatus.GENERATED &&
+      document.status !== DocumentStatus.APPROVED) {
       throw new BadRequestException(
         `Document is not available for download. Status: ${document.status}`,
       );
@@ -356,4 +356,303 @@ export class DocumentGeneratorService {
       },
     });
   }
+
+  /**
+   * Batch generate multiple documents for a session
+   */
+  async batchGenerateDocuments(
+    sessionId: string,
+    documentTypeIds: string[],
+    userId: string,
+  ): Promise<BatchGenerationResult> {
+    const results: BatchGenerationResult = {
+      sessionId,
+      successful: [],
+      failed: [],
+      totalRequested: documentTypeIds.length,
+    };
+
+    for (const documentTypeId of documentTypeIds) {
+      try {
+        const document = await this.generateDocument({
+          sessionId,
+          documentTypeId,
+          userId,
+        });
+        results.successful.push({
+          documentId: document.id,
+          documentTypeId,
+        });
+      } catch (error) {
+        results.failed.push({
+          documentTypeId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    this.logger.log(
+      `Batch generation for session ${sessionId}: ${results.successful.length} successful, ${results.failed.length} failed`,
+    );
+
+    return results;
+  }
+
+  /**
+   * Generate all available document types for a session
+   */
+  async generateAllDocuments(
+    sessionId: string,
+    userId: string,
+  ): Promise<BatchGenerationResult> {
+    const documentTypes = await this.listDocumentTypes();
+    const documentTypeIds = documentTypes.map((dt) => dt.id);
+    return this.batchGenerateDocuments(sessionId, documentTypeIds, userId);
+  }
+
+  /**
+   * Regenerate a document with updated data
+   */
+  async regenerateDocument(
+    documentId: string,
+    userId: string,
+  ): Promise<Document> {
+    const existingDocument = await this.getDocument(documentId, userId);
+
+    // Increment version
+    const newVersion = existingDocument.version + 1;
+
+    // Create new document record
+    const newDocument = await this.prisma.document.create({
+      data: {
+        sessionId: existingDocument.sessionId,
+        documentTypeId: existingDocument.documentTypeId,
+        status: DocumentStatus.PENDING,
+        format: existingDocument.format,
+        version: newVersion,
+        previousVersionId: documentId,
+      },
+    });
+
+    // Process generation
+    const documentType = existingDocument.documentType;
+    try {
+      await this.processDocumentGeneration(newDocument.id, documentType);
+    } catch (error) {
+      await this.prisma.document.update({
+        where: { id: newDocument.id },
+        data: {
+          status: DocumentStatus.FAILED,
+          generationMetadata: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            failedAt: new Date().toISOString(),
+          },
+        },
+      });
+      throw error;
+    }
+
+    // Archive the old version
+    await this.prisma.document.update({
+      where: { id: documentId },
+      data: { status: DocumentStatus.ARCHIVED },
+    });
+
+    this.logger.log(
+      `Document ${documentId} regenerated as ${newDocument.id} (v${newVersion})`,
+    );
+
+    return this.prisma.document.findUnique({
+      where: { id: newDocument.id },
+      include: { documentType: true },
+    }) as Promise<Document>;
+  }
+
+  /**
+   * Get document version history
+   */
+  async getDocumentHistory(
+    documentId: string,
+    userId: string,
+  ): Promise<DocumentHistoryEntry[]> {
+    const document = await this.getDocument(documentId, userId);
+
+    // Build version chain
+    const history: DocumentHistoryEntry[] = [];
+    let currentDoc: DocumentWithType | null = document;
+
+    // Walk backwards through version history
+    while (currentDoc) {
+      history.push({
+        documentId: currentDoc.id,
+        version: currentDoc.version,
+        status: currentDoc.status,
+        createdAt: currentDoc.createdAt,
+        generatedAt: currentDoc.generatedAt,
+        fileSize: currentDoc.fileSize ? Number(currentDoc.fileSize) : null,
+      });
+
+      if (currentDoc.previousVersionId) {
+        currentDoc = await this.prisma.document.findUnique({
+          where: { id: currentDoc.previousVersionId },
+          include: { documentType: true },
+        });
+      } else {
+        currentDoc = null;
+      }
+    }
+
+    // Sort by version (ascending)
+    history.sort((a, b) => a.version - b.version);
+
+    return history;
+  }
+
+  /**
+   * Clone document configuration for a new session
+   * Useful when creating similar assessments
+   */
+  async cloneDocumentsToSession(
+    sourceSessionId: string,
+    targetSessionId: string,
+    userId: string,
+  ): Promise<BatchGenerationResult> {
+    // Get document types used in source session
+    const sourceDocuments = await this.prisma.document.findMany({
+      where: { sessionId: sourceSessionId },
+      select: { documentTypeId: true },
+      distinct: ['documentTypeId'],
+    });
+
+    const documentTypeIds = sourceDocuments.map((d) => d.documentTypeId);
+
+    return this.batchGenerateDocuments(targetSessionId, documentTypeIds, userId);
+  }
+
+  /**
+   * Get document generation statistics
+   */
+  async getGenerationStats(sessionId?: string): Promise<GenerationStats> {
+    const where = sessionId ? { sessionId } : {};
+
+    const [total, byStatus, byType] = await Promise.all([
+      this.prisma.document.count({ where }),
+      this.prisma.document.groupBy({
+        by: ['status'],
+        where,
+        _count: { id: true },
+      }),
+      this.prisma.document.groupBy({
+        by: ['documentTypeId'],
+        where,
+        _count: { id: true },
+      }),
+    ]);
+
+    const statusCounts: Record<string, number> = {};
+    byStatus.forEach((s) => {
+      statusCounts[s.status] = s._count.id;
+    });
+
+    const typeCounts: Record<string, number> = {};
+    byType.forEach((t) => {
+      typeCounts[t.documentTypeId] = t._count.id;
+    });
+
+    return {
+      totalDocuments: total,
+      byStatus: statusCounts,
+      byType: typeCounts,
+      generated: statusCounts[DocumentStatus.GENERATED] || 0,
+      pending: statusCounts[DocumentStatus.PENDING] || 0,
+      failed: statusCounts[DocumentStatus.FAILED] || 0,
+    };
+  }
+
+  /**
+   * Export document list as CSV
+   */
+  async exportDocumentList(sessionId: string, userId: string): Promise<string> {
+    const documents = await this.getSessionDocuments(sessionId, userId);
+
+    const lines: string[] = [
+      'Document ID,Type,Status,Version,Format,File Size,Generated At,Created At',
+    ];
+
+    for (const doc of documents) {
+      lines.push(
+        [
+          doc.id,
+          doc.documentType.name,
+          doc.status,
+          doc.version,
+          doc.format,
+          doc.fileSize?.toString() || '',
+          doc.generatedAt?.toISOString() || '',
+          doc.createdAt.toISOString(),
+        ].join(','),
+      );
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Schedule document regeneration for stale documents
+   */
+  async scheduleStaleDocumentRegeneration(
+    maxAgeDays: number = 30,
+  ): Promise<string[]> {
+    const staleDate = new Date();
+    staleDate.setDate(staleDate.getDate() - maxAgeDays);
+
+    const staleDocuments = await this.prisma.document.findMany({
+      where: {
+        generatedAt: { lt: staleDate },
+        status: { in: [DocumentStatus.GENERATED, DocumentStatus.APPROVED] },
+      },
+      select: { id: true },
+    });
+
+    // Mark for regeneration (in a real implementation, this would queue jobs)
+    const ids = staleDocuments.map((d) => d.id);
+
+    this.logger.log(`Identified ${ids.length} stale documents for regeneration`);
+
+    return ids;
+  }
+}
+
+/**
+ * Batch generation result
+ */
+export interface BatchGenerationResult {
+  sessionId: string;
+  successful: Array<{ documentId: string; documentTypeId: string }>;
+  failed: Array<{ documentTypeId: string; error: string }>;
+  totalRequested: number;
+}
+
+/**
+ * Document history entry
+ */
+export interface DocumentHistoryEntry {
+  documentId: string;
+  version: number;
+  status: DocumentStatus;
+  createdAt: Date;
+  generatedAt: Date | null;
+  fileSize: number | null;
+}
+
+/**
+ * Generation statistics
+ */
+export interface GenerationStats {
+  totalDocuments: number;
+  byStatus: Record<string, number>;
+  byType: Record<string, number>;
+  generated: number;
+  pending: number;
+  failed: number;
 }

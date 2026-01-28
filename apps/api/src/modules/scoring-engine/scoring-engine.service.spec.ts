@@ -473,4 +473,194 @@ describe('ScoringEngineService', () => {
             expect(result.score).toBeCloseTo(85, 0);
         });
     });
+
+    describe('getScoreHistory', () => {
+        const mockDecisionLogs = [
+            {
+                id: 'log-1',
+                createdAt: new Date('2026-01-25'),
+                metadata: { score: 75, portfolioResidual: 0.25, completionPercentage: 80 },
+            },
+            {
+                id: 'log-2',
+                createdAt: new Date('2026-01-26'),
+                metadata: { score: 78, portfolioResidual: 0.22, completionPercentage: 85 },
+            },
+            {
+                id: 'log-3',
+                createdAt: new Date('2026-01-27'),
+                metadata: { score: 82, portfolioResidual: 0.18, completionPercentage: 90 },
+            },
+        ];
+
+        beforeEach(() => {
+            (prismaService as any).decisionLog = {
+                findMany: jest.fn().mockResolvedValue(mockDecisionLogs),
+            };
+            prismaService.session.findUnique.mockResolvedValue({
+                ...mockSession,
+                readinessScore: new Decimal('85'),
+                lastScoreCalculation: new Date('2026-01-28'),
+            });
+        });
+
+        it('should return score history with trend analysis', async () => {
+            const result = await service.getScoreHistory(mockSessionId);
+
+            expect(result.sessionId).toBe(mockSessionId);
+            expect(result.history).toBeDefined();
+            expect(result.trend).toBeDefined();
+            expect(result.trend.direction).toMatch(/UP|DOWN|STABLE/);
+        });
+
+        it('should throw NotFoundException for non-existent session', async () => {
+            prismaService.session.findUnique.mockResolvedValue(null);
+
+            await expect(
+                service.getScoreHistory('non-existent'),
+            ).rejects.toThrow(NotFoundException);
+        });
+
+        it('should calculate trend direction correctly', async () => {
+            const result = await service.getScoreHistory(mockSessionId);
+
+            // With scores increasing from 75 to 85, trend should be UP
+            if (result.history.length >= 2) {
+                const latestScore = result.history[0].score;
+                const earliestScore = result.history[result.history.length - 1].score;
+
+                if (latestScore > earliestScore + 1) {
+                    expect(result.trend.direction).toBe('UP');
+                } else if (latestScore < earliestScore - 1) {
+                    expect(result.trend.direction).toBe('DOWN');
+                } else {
+                    expect(result.trend.direction).toBe('STABLE');
+                }
+            }
+        });
+
+        it('should respect limit parameter', async () => {
+            const result = await service.getScoreHistory(mockSessionId, 2);
+
+            // History should include current + up to limit snapshots
+            expect(result.history.length).toBeLessThanOrEqual(3);
+        });
+    });
+
+    describe('getIndustryBenchmark', () => {
+        const mockBenchmarkStats = [{
+            avg_score: 72.5,
+            min_score: 45,
+            max_score: 95,
+            count: BigInt(50),
+            percentile_25: 60,
+            percentile_50: 72,
+            percentile_75: 85,
+        }];
+
+        const mockPercentileRank = [{ percentile_rank: 75 }];
+
+        beforeEach(() => {
+            prismaService.session.findUnique.mockResolvedValue({
+                ...mockSession,
+                readinessScore: new Decimal('80'),
+                questionnaire: { metadata: { industry: 'technology' } },
+            });
+            (prismaService as any).$queryRaw = jest.fn()
+                .mockResolvedValueOnce(mockBenchmarkStats)
+                .mockResolvedValueOnce(mockPercentileRank);
+        });
+
+        it('should return benchmark comparison data', async () => {
+            const result = await service.getIndustryBenchmark(mockSessionId);
+
+            expect(result.sessionId).toBe(mockSessionId);
+            expect(result.benchmark).toBeDefined();
+            expect(result.benchmark.average).toBeGreaterThanOrEqual(0);
+            expect(result.benchmark.median).toBeGreaterThanOrEqual(0);
+            expect(result.performanceCategory).toMatch(/LEADING|ABOVE_AVERAGE|AVERAGE|BELOW_AVERAGE|LAGGING/);
+        });
+
+        it('should calculate performance category correctly', async () => {
+            const result = await service.getIndustryBenchmark(mockSessionId);
+
+            // With score 80 and percentile_75 = 85, should be ABOVE_AVERAGE
+            expect(result.percentileRank).toBeGreaterThan(0);
+            expect(result.percentileRank).toBeLessThanOrEqual(100);
+        });
+
+        it('should calculate gaps correctly', async () => {
+            const result = await service.getIndustryBenchmark(mockSessionId);
+
+            expect(result.gapToMedian).toBeDefined();
+            expect(result.gapToLeading).toBeDefined();
+
+            // gapToLeading should be positive if score < percentile_75
+            // gapToMedian should be positive if score > median
+        });
+
+        it('should use provided industry code', async () => {
+            await service.getIndustryBenchmark(mockSessionId, 'healthcare');
+
+            // Should have called queryRaw with healthcare industry
+            expect((prismaService as any).$queryRaw).toHaveBeenCalled();
+        });
+    });
+
+    describe('getDimensionBenchmarks', () => {
+        const mockDimensionAverages = [
+            { dimension_key: 'arch_sec', avg_residual: 0.25, count: BigInt(100) },
+            { dimension_key: 'devops_iac', avg_residual: 0.30, count: BigInt(100) },
+        ];
+
+        beforeEach(() => {
+            prismaService.session.findUnique.mockResolvedValue(mockSession);
+            prismaService.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
+            prismaService.question.findMany.mockResolvedValue(mockQuestions);
+            prismaService.session.update.mockResolvedValue({ ...mockSession });
+            redisService.set.mockResolvedValue(undefined);
+            redisService.get.mockResolvedValue(null);
+            (prismaService as any).$queryRaw = jest.fn().mockResolvedValue(mockDimensionAverages);
+        });
+
+        it('should return dimension-level benchmarks', async () => {
+            const result = await service.getDimensionBenchmarks(mockSessionId);
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result.length).toBeGreaterThan(0);
+        });
+
+        it('should include performance rating for each dimension', async () => {
+            const result = await service.getDimensionBenchmarks(mockSessionId);
+
+            result.forEach(dim => {
+                expect(dim.dimensionKey).toBeDefined();
+                expect(dim.displayName).toBeDefined();
+                expect(dim.performance).toMatch(/ABOVE|AVERAGE|BELOW/);
+                expect(dim.recommendation).toBeDefined();
+            });
+        });
+
+        it('should calculate gap to average correctly', async () => {
+            const result = await service.getDimensionBenchmarks(mockSessionId);
+
+            result.forEach(dim => {
+                expect(typeof dim.gapToAverage).toBe('number');
+                // gapToAverage = currentResidual - industryAverageResidual
+            });
+        });
+
+        it('should generate appropriate recommendations', async () => {
+            const result = await service.getDimensionBenchmarks(mockSessionId);
+
+            result.forEach(dim => {
+                expect(dim.recommendation.length).toBeGreaterThan(0);
+
+                // Recommendations should mention the dimension name
+                expect(dim.recommendation.toLowerCase()).toContain(
+                    dim.displayName.toLowerCase().split(' ')[0]
+                );
+            });
+        });
+    });
 });

@@ -91,7 +91,7 @@ export class SessionService {
     private readonly questionnaireService: QuestionnaireService,
     @Inject(forwardRef(() => AdaptiveLogicService))
     private readonly adaptiveLogicService: AdaptiveLogicService,
-  ) {}
+  ) { }
 
   async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
     // Get questionnaire
@@ -444,7 +444,7 @@ export class SessionService {
 
     // Find next unanswered questions
     const nextQuestions: QuestionResponse[] = [];
-    
+
     if (!isComplete && session.currentQuestionId) {
       const currentIndex = visibleQuestions.findIndex(
         (q) => q.id === session.currentQuestionId,
@@ -680,4 +680,377 @@ export class SessionService {
 
     return null;
   }
+
+  /**
+   * Clone a session (for retaking assessments)
+   * Creates a new session with same questionnaire but no responses
+   */
+  async cloneSession(
+    sourceSessionId: string,
+    userId: string,
+    options?: { copyResponses?: boolean; industry?: string },
+  ): Promise<SessionResponse> {
+    const sourceSession = await this.getSessionWithValidation(sourceSessionId, userId);
+
+    const dto: CreateSessionDto = {
+      questionnaireId: sourceSession.questionnaireId,
+      industry: options?.industry ?? sourceSession.industry ?? undefined,
+    };
+
+    const newSession = await this.create(userId, dto);
+
+    // Optionally copy responses
+    if (options?.copyResponses) {
+      const responses = await this.prisma.response.findMany({
+        where: { sessionId: sourceSessionId },
+      });
+
+      await this.prisma.response.createMany({
+        data: responses.map((r) => ({
+          sessionId: newSession.id,
+          questionId: r.questionId,
+          value: r.value,
+          isValid: r.isValid,
+          validationErrors: r.validationErrors,
+        })),
+      });
+
+      // Recalculate progress
+      const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
+        sourceSession.questionnaireId,
+      );
+      const progress = this.calculateProgress(responses.length, totalQuestions);
+
+      await this.prisma.session.update({
+        where: { id: newSession.id },
+        data: {
+          progress: {
+            percentage: progress.percentage,
+            answered: progress.answeredQuestions,
+            total: progress.totalQuestions,
+          },
+        },
+      });
+    }
+
+    return this.findById(newSession.id, userId);
+  }
+
+  /**
+   * Archive a session (soft delete)
+   */
+  async archiveSession(sessionId: string, userId: string): Promise<void> {
+    await this.getSessionWithValidation(sessionId, userId);
+
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: { status: SessionStatus.ARCHIVED },
+    });
+  }
+
+  /**
+   * Restore an archived session
+   */
+  async restoreSession(sessionId: string, userId: string): Promise<SessionResponse> {
+    const session = await this.getSessionWithValidation(sessionId, userId);
+
+    if (session.status !== SessionStatus.ARCHIVED) {
+      throw new BadRequestException('Only archived sessions can be restored');
+    }
+
+    const updatedSession = await this.prisma.session.update({
+      where: { id: sessionId },
+      data: { status: SessionStatus.IN_PROGRESS },
+      include: { currentSection: true },
+    });
+
+    const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
+      session.questionnaireId,
+    );
+
+    return this.mapToSessionResponse(updatedSession, totalQuestions);
+  }
+
+  /**
+   * Get session analytics
+   */
+  async getSessionAnalytics(sessionId: string, userId: string): Promise<SessionAnalytics> {
+    await this.getSessionWithValidation(sessionId, userId);
+
+    const responses = await this.prisma.response.findMany({
+      where: { sessionId },
+      include: {
+        question: {
+          include: {
+            section: true,
+            dimension: true,
+          },
+        },
+      },
+    });
+
+    // Calculate time statistics
+    const timesSpent = responses
+      .filter((r) => r.timeSpentSeconds != null)
+      .map((r) => Number(r.timeSpentSeconds));
+    const totalTimeSpent = timesSpent.reduce((sum, t) => sum + t, 0);
+    const avgTimePerQuestion = timesSpent.length > 0
+      ? totalTimeSpent / timesSpent.length
+      : 0;
+
+    // Group by section
+    const bySection: Record<string, { answered: number; total: number; avgTime: number }> = {};
+    const sectionTimes: Record<string, number[]> = {};
+
+    responses.forEach((r) => {
+      const sectionId = r.question.section?.id || 'unknown';
+      const sectionName = r.question.section?.name || 'Unknown';
+
+      if (!bySection[sectionName]) {
+        bySection[sectionName] = { answered: 0, total: 0, avgTime: 0 };
+        sectionTimes[sectionName] = [];
+      }
+      bySection[sectionName].answered++;
+      if (r.timeSpentSeconds) {
+        sectionTimes[sectionName].push(Number(r.timeSpentSeconds));
+      }
+    });
+
+    // Calculate avg time per section
+    Object.keys(bySection).forEach((section) => {
+      const times = sectionTimes[section];
+      bySection[section].avgTime = times.length > 0
+        ? times.reduce((a, b) => a + b, 0) / times.length
+        : 0;
+    });
+
+    // Group by dimension
+    const byDimension: Record<string, { answered: number; coverage: number }> = {};
+    responses.forEach((r) => {
+      const dimKey = r.question.dimension?.key || 'unknown';
+      if (!byDimension[dimKey]) {
+        byDimension[dimKey] = { answered: 0, coverage: 0 };
+      }
+      byDimension[dimKey].answered++;
+      if (r.coverage) {
+        byDimension[dimKey].coverage += Number(r.coverage);
+      }
+    });
+
+    // Calculate avg coverage per dimension
+    Object.keys(byDimension).forEach((dim) => {
+      if (byDimension[dim].answered > 0) {
+        byDimension[dim].coverage /= byDimension[dim].answered;
+      }
+    });
+
+    // Validation statistics
+    const validResponses = responses.filter((r) => r.isValid).length;
+    const invalidResponses = responses.length - validResponses;
+
+    return {
+      sessionId,
+      totalResponses: responses.length,
+      validResponses,
+      invalidResponses,
+      totalTimeSpent,
+      averageTimePerQuestion: Math.round(avgTimePerQuestion),
+      bySection,
+      byDimension,
+      completionRate: responses.length > 0 ? 100 : 0,
+      analyzedAt: new Date(),
+    };
+  }
+
+  /**
+   * Get aggregate statistics across all sessions for a user
+   */
+  async getUserSessionStats(userId: string): Promise<UserSessionStats> {
+    const sessions = await this.prisma.session.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        readinessScore: true,
+      },
+    });
+
+    const completed = sessions.filter((s) => s.status === SessionStatus.COMPLETED);
+    const inProgress = sessions.filter((s) => s.status === SessionStatus.IN_PROGRESS);
+    const archived = sessions.filter((s) => s.status === SessionStatus.ARCHIVED);
+
+    const scores = completed
+      .filter((s) => s.readinessScore != null)
+      .map((s) => Number(s.readinessScore));
+    const avgScore = scores.length > 0
+      ? scores.reduce((a, b) => a + b, 0) / scores.length
+      : 0;
+    const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
+    const lowestScore = scores.length > 0 ? Math.min(...scores) : 0;
+
+    // Calculate completion times
+    const completionTimes = completed
+      .filter((s) => s.completedAt && s.startedAt)
+      .map((s) => s.completedAt!.getTime() - s.startedAt.getTime());
+    const avgCompletionTime = completionTimes.length > 0
+      ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
+      : 0;
+
+    return {
+      userId,
+      totalSessions: sessions.length,
+      completedSessions: completed.length,
+      inProgressSessions: inProgress.length,
+      archivedSessions: archived.length,
+      averageScore: Math.round(avgScore * 100) / 100,
+      highestScore: Math.round(highestScore * 100) / 100,
+      lowestScore: Math.round(lowestScore * 100) / 100,
+      averageCompletionTimeMs: Math.round(avgCompletionTime),
+      scoreImprovement: scores.length >= 2
+        ? Math.round((scores[scores.length - 1] - scores[0]) * 100) / 100
+        : 0,
+      analyzedAt: new Date(),
+    };
+  }
+
+  /**
+   * Export session data (for backup/migration)
+   */
+  async exportSession(sessionId: string, userId: string): Promise<SessionExport> {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        questionnaire: { select: { id: true, name: true, version: true } },
+        responses: true,
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return {
+      exportVersion: '1.0',
+      exportedAt: new Date(),
+      session: {
+        id: session.id,
+        questionnaireId: session.questionnaireId,
+        questionnaireName: session.questionnaire.name,
+        questionnaireVersion: session.questionnaireVersion,
+        status: session.status,
+        industry: session.industry,
+        startedAt: session.startedAt,
+        completedAt: session.completedAt,
+        readinessScore: session.readinessScore ? Number(session.readinessScore) : null,
+        progress: session.progress as Record<string, unknown>,
+      },
+      responses: session.responses.map((r) => ({
+        questionId: r.questionId,
+        value: r.value,
+        coverage: r.coverage ? Number(r.coverage) : null,
+        isValid: r.isValid,
+        answeredAt: r.answeredAt,
+        timeSpentSeconds: r.timeSpentSeconds,
+      })),
+    };
+  }
+
+  /**
+   * Bulk delete sessions (for cleanup)
+   */
+  async bulkDeleteSessions(
+    userId: string,
+    sessionIds: string[],
+  ): Promise<{ deleted: number; failed: string[] }> {
+    const result = { deleted: 0, failed: [] as string[] };
+
+    for (const sessionId of sessionIds) {
+      try {
+        await this.getSessionWithValidation(sessionId, userId);
+
+        // Delete responses first
+        await this.prisma.response.deleteMany({
+          where: { sessionId },
+        });
+
+        // Delete session
+        await this.prisma.session.delete({
+          where: { id: sessionId },
+        });
+
+        result.deleted++;
+      } catch {
+        result.failed.push(sessionId);
+      }
+    }
+
+    return result;
+  }
+}
+
+/**
+ * Session analytics result
+ */
+export interface SessionAnalytics {
+  sessionId: string;
+  totalResponses: number;
+  validResponses: number;
+  invalidResponses: number;
+  totalTimeSpent: number;
+  averageTimePerQuestion: number;
+  bySection: Record<string, { answered: number; total: number; avgTime: number }>;
+  byDimension: Record<string, { answered: number; coverage: number }>;
+  completionRate: number;
+  analyzedAt: Date;
+}
+
+/**
+ * User session statistics
+ */
+export interface UserSessionStats {
+  userId: string;
+  totalSessions: number;
+  completedSessions: number;
+  inProgressSessions: number;
+  archivedSessions: number;
+  averageScore: number;
+  highestScore: number;
+  lowestScore: number;
+  averageCompletionTimeMs: number;
+  scoreImprovement: number;
+  analyzedAt: Date;
+}
+
+/**
+ * Session export format
+ */
+export interface SessionExport {
+  exportVersion: string;
+  exportedAt: Date;
+  session: {
+    id: string;
+    questionnaireId: string;
+    questionnaireName: string;
+    questionnaireVersion: number;
+    status: SessionStatus;
+    industry: string | null;
+    startedAt: Date;
+    completedAt: Date | null;
+    readinessScore: number | null;
+    progress: Record<string, unknown>;
+  };
+  responses: Array<{
+    questionId: string;
+    value: unknown;
+    coverage: number | null;
+    isValid: boolean;
+    answeredAt: Date;
+    timeSpentSeconds: number | null;
+  }>;
 }

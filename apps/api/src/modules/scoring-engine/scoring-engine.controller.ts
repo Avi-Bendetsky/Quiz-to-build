@@ -4,6 +4,7 @@ import {
     Get,
     Body,
     Param,
+    Query,
     HttpCode,
     HttpStatus,
     UseGuards,
@@ -14,8 +15,9 @@ import {
     ApiResponse,
     ApiBearerAuth,
     ApiParam,
+    ApiQuery,
 } from '@nestjs/swagger';
-import { ScoringEngineService } from './scoring-engine.service';
+import { ScoringEngineService, ScoreHistoryResult, BenchmarkResult, DimensionBenchmarkResult } from './scoring-engine.service';
 import {
     CalculateScoreDto,
     ReadinessScoreResult,
@@ -154,5 +156,114 @@ Questions are ranked by expected score lift with rationale explaining the priori
         @Param('sessionId') sessionId: string,
     ): Promise<void> {
         await this.scoringService.invalidateScoreCache(sessionId);
+    }
+
+    /**
+     * Get score history for a session
+     */
+    @Get(':sessionId/history')
+    @ApiOperation({
+        summary: 'Get score history',
+        description: 'Returns historical score snapshots for trend analysis and progress tracking.',
+    })
+    @ApiParam({
+        name: 'sessionId',
+        description: 'Session UUID',
+    })
+    @ApiQuery({
+        name: 'limit',
+        description: 'Maximum number of history entries to return',
+        required: false,
+        type: Number,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Score history retrieved successfully',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Session not found',
+    })
+    async getScoreHistory(
+        @Param('sessionId') sessionId: string,
+        @Query('limit') limit?: number,
+    ): Promise<ScoreHistoryResult> {
+        return this.scoringService.getScoreHistory(sessionId, limit);
+    }
+
+    /**
+     * Get industry benchmark comparison
+     */
+    @Get(':sessionId/benchmark')
+    @ApiOperation({
+        summary: 'Get industry benchmark',
+        description: `
+Compares the session score against industry averages and percentiles.
+
+Returns:
+- Industry average, median, min, max scores
+- Percentile ranking within industry
+- Performance category (Leading, Above Average, Average, Below Average, Lagging)
+- Gap analysis to median and leading performers
+        `,
+    })
+    @ApiParam({
+        name: 'sessionId',
+        description: 'Session UUID',
+    })
+    @ApiQuery({
+        name: 'industry',
+        description: 'Industry code for comparison (defaults to session industry)',
+        required: false,
+        type: String,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Benchmark data retrieved successfully',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Session not found',
+    })
+    async getIndustryBenchmark(
+        @Param('sessionId') sessionId: string,
+        @Query('industry') industry?: string,
+    ): Promise<BenchmarkResult> {
+        return this.scoringService.getIndustryBenchmark(sessionId, industry);
+    }
+
+    /**
+     * Get dimension-level benchmarks
+     */
+    @Get(':sessionId/benchmark/dimensions')
+    @ApiOperation({
+        summary: 'Get dimension benchmarks',
+        description: `
+Compares each dimension's residual risk against industry averages.
+
+Returns per-dimension:
+- Current residual risk
+- Industry average residual
+- Gap to average
+- Performance rating (Above, Average, Below)
+- Improvement recommendations
+        `,
+    })
+    @ApiParam({
+        name: 'sessionId',
+        description: 'Session UUID',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Dimension benchmarks retrieved successfully',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Session not found',
+    })
+    async getDimensionBenchmarks(
+        @Param('sessionId') sessionId: string,
+    ): Promise<DimensionBenchmarkResult[]> {
+        return this.scoringService.getDimensionBenchmarks(sessionId);
     }
 }

@@ -108,6 +108,16 @@ enum DecisionStatus {
   SUPERSEDED
 }
 
+// 5-Level Coverage Scale for Evidence Assessment
+// Maps to discrete values: NONE=0.0, PARTIAL=0.25, HALF=0.5, SUBSTANTIAL=0.75, FULL=1.0
+enum CoverageLevel {
+  NONE        // 0.00 - No evidence, no coverage
+  PARTIAL     // 0.25 - Some evidence exists but incomplete
+  HALF        // 0.50 - Moderate coverage, work in progress
+  SUBSTANTIAL // 0.75 - Most requirements met, minor gaps
+  FULL        // 1.00 - Complete coverage with verified evidence
+}
+
 // =============================================================================
 // ORGANIZATION & USER MODELS
 // =============================================================================
@@ -369,7 +379,8 @@ model Response {
   revision         Int      @default(1)
   
   // Quiz2Biz Coverage Tracking Fields
-  coverage         Decimal? @default(0) @db.Decimal(3, 2) @map("coverage") // 0.00 to 1.00 based on evidence
+  coverage         Decimal?      @default(0) @db.Decimal(3, 2) @map("coverage") // 0.00 to 1.00 based on evidence
+  coverageLevel    CoverageLevel @default(NONE) @map("coverage_level")          // Discrete 5-level scale
   rationale        String?  @db.Text @map("rationale")                     // Explanation of coverage assessment
   evidenceCount    Int      @default(0) @map("evidence_count")             // Number of attached evidence items
   
@@ -384,6 +395,7 @@ model Response {
   @@index([questionId])
   @@index([answeredAt])
   @@index([coverage])
+  @@index([coverageLevel])
   @@map("responses")
 }
 
@@ -432,6 +444,7 @@ model EvidenceRegistry {
   verifierId    String?      @map("verifier_id")
   verifiedAt    DateTime?    @map("verified_at")
   hashSignature String?      @map("hash_signature")        // SHA-256 or signature/provenance
+  coverageValue CoverageLevel @default(NONE) @map("coverage_value") // Coverage contribution when verified
   
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
