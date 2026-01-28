@@ -20,6 +20,7 @@ import { NotificationModule } from './modules/notifications/notification.module'
 import { QpgModule } from './modules/qpg/qpg.module';
 import { PolicyPackModule } from './modules/policy-pack/policy-pack.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { AdaptersModule } from './modules/adapters/adapters.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -74,6 +75,7 @@ import configuration from './config/configuration';
     QpgModule,
     PolicyPackModule,
     PaymentModule,
+    AdaptersModule,
   ],
   controllers: [HealthController],
   providers: [

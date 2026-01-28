@@ -19,9 +19,9 @@ import { offlineCommand } from './commands/offline';
 const program = new Command();
 
 program
-  .name('quiz2biz')
-  .description('Quiz2Biz Readiness Assessment CLI Tool')
-  .version('1.0.0');
+    .name('quiz2biz')
+    .description('Quiz2Biz Readiness Assessment CLI Tool')
+    .version('1.0.0');
 
 // Register commands
 program.addCommand(scoreCommand);
