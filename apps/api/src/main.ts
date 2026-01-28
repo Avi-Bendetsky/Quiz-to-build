@@ -1,3 +1,8 @@
+// Initialize Application Insights FIRST (before any other imports)
+// This ensures proper instrumentation of all dependencies
+import { initializeAppInsights, shutdown as shutdownAppInsights, createRequestTrackingMiddleware } from './config/appinsights.config';
+initializeAppInsights();
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -7,6 +12,10 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { initializeSentry, captureException } from './config/sentry.config';
+
+// Initialize Sentry after Application Insights
+initializeSentry();
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
@@ -19,6 +28,9 @@ async function bootstrap(): Promise<void> {
 
   // Security middleware
   app.use(helmet());
+
+  // Application Insights request tracking
+  app.use(createRequestTrackingMiddleware());
 
   // CORS configuration
   app.enableCors({
@@ -82,6 +94,17 @@ async function bootstrap(): Promise<void> {
   // Graceful shutdown
   app.enableShutdownHooks();
 
+  // Handle graceful shutdown for Application Insights
+  process.on('SIGTERM', async () => {
+    logger.log('SIGTERM received, flushing telemetry...');
+    await shutdownAppInsights();
+  });
+
+  process.on('SIGINT', async () => {
+    logger.log('SIGINT received, flushing telemetry...');
+    await shutdownAppInsights();
+  });
+
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}/${apiPrefix}`);
   logger.log(`Environment: ${nodeEnv}`);
@@ -90,5 +113,9 @@ async function bootstrap(): Promise<void> {
 bootstrap().catch((error) => {
   const logger = new Logger('Bootstrap');
   logger.error('Failed to start application', error);
+  
+  // Capture bootstrap errors in Sentry
+  captureException(error, { context: 'bootstrap' });
+  
   process.exit(1);
 });
