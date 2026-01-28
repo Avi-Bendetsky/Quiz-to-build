@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "moduleResolution": "node",
     "strict": true,
     "strictNullChecks": true,
@@ -22,17 +24,35 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@app/*": ["apps/api/src/*"],
-      "@libs/database": ["libs/database/dist"],
-      "@libs/database/*": ["libs/database/dist/*"],
-      "@libs/redis": ["libs/redis/dist"],
-      "@libs/redis/*": ["libs/redis/dist/*"],
-      "@libs/shared": ["libs/shared/dist"],
-      "@libs/shared/*": ["libs/shared/dist/*"]
+      "@app/*": [
+        "apps/api/src/*"
+      ],
+      "@libs/database": [
+        "libs/database/src"
+      ],
+      "@libs/database/*": [
+        "libs/database/src/*"
+      ],
+      "@libs/redis": [
+        "libs/redis/src"
+      ],
+      "@libs/redis/*": [
+        "libs/redis/src/*"
+      ],
+      "@libs/shared": [
+        "libs/shared/src"
+      ],
+      "@libs/shared/*": [
+        "libs/shared/src/*"
+      ]
     },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "dist", "coverage"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage"
+  ]
 }

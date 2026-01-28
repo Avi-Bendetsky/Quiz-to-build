@@ -33,6 +33,7 @@
     "prepare": "echo husky disabled for OneDrive path compatibility"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.0",
     "@swc/cli": "^0.5.2",
     "@swc/core": "^1.15.10",
     "@types/archiver": "^7.0.0",

@@ -240,7 +240,7 @@ export class SessionService {
     for (let i = currentIndex; i < visibleQuestions.length && nextQuestions.length < count; i++) {
       const question = visibleQuestions[i];
       // Skip already answered questions
-      if (!responseMap.has(question.id)) {
+      if (question && !responseMap.has(question.id)) {
         nextQuestions.push(this.mapQuestionToResponse(question));
       }
     }

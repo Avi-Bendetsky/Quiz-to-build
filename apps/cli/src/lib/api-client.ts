@@ -64,6 +64,20 @@ export class ApiClient {
       value: answer,
     });
   }
+
+  /**
+   * Generic GET method for arbitrary endpoints
+   */
+  async get<T = any>(url: string, config?: any): Promise<{ data: T }> {
+    return this.client.get(url, config);
+  }
+
+  /**
+   * Generic POST method for arbitrary endpoints
+   */
+  async post<T = any>(url: string, data?: any, config?: any): Promise<{ data: T }> {
+    return this.client.post(url, data, config);
+  }
 }
 
 interface ScoreResponse {
