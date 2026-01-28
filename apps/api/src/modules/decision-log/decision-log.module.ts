@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { DecisionLogService } from './decision-log.service';
 import { DecisionLogController } from './decision-log.controller';
+import { ApprovalWorkflowService } from './approval-workflow.service';
+import { ApprovalGuard } from './decorators/require-approval.decorator';
 import { PrismaModule } from '@libs/database';
 
 /**
@@ -10,12 +12,13 @@ import { PrismaModule } from '@libs/database';
  * - Status workflow: DRAFT -> LOCKED -> (AMENDED/SUPERSEDED)
  * - Append-only enforcement at service layer
  * - Supersession tracking for decision amendments
+ * - Two-person rule via ApprovalWorkflowService
  * - Audit export for compliance
  */
 @Module({
     imports: [PrismaModule],
     controllers: [DecisionLogController],
-    providers: [DecisionLogService],
-    exports: [DecisionLogService],
+    providers: [DecisionLogService, ApprovalWorkflowService, ApprovalGuard],
+    exports: [DecisionLogService, ApprovalWorkflowService],
 })
 export class DecisionLogModule { }
