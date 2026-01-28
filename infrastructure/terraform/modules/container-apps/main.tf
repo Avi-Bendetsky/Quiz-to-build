@@ -16,7 +16,7 @@ resource "azurerm_container_app" "api" {
   name                         = "ca-${var.project_name}-api-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = var.resource_group_name
-  revision_mode                = "Single"
+  revision_mode                = var.enable_canary_deployment ? "Multiple" : "Single"
 
   identity {
     type = "SystemAssigned"
@@ -144,8 +144,20 @@ resource "azurerm_container_app" "api" {
     target_port      = 3000
     transport        = "auto"
 
+    # Stable revision traffic weight
+    dynamic "traffic_weight" {
+      for_each = var.enable_canary_deployment && var.stable_revision_name != "" ? [1] : []
+      content {
+        label           = "stable"
+        revision_suffix = var.stable_revision_name
+        percentage      = 100 - var.canary_traffic_percentage
+      }
+    }
+
+    # Canary revision traffic weight (latest)
     traffic_weight {
-      percentage      = 100
+      label           = var.enable_canary_deployment ? "canary" : null
+      percentage      = var.enable_canary_deployment ? var.canary_traffic_percentage : 100
       latest_revision = true
     }
   }

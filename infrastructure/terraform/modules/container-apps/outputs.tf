@@ -37,3 +37,19 @@ output "api_latest_revision_name" {
   description = "Name of the latest revision"
   value       = azurerm_container_app.api.latest_revision_name
 }
+
+# Canary Deployment Outputs
+output "api_revision_mode" {
+  description = "Revision mode of the API Container App"
+  value       = azurerm_container_app.api.revision_mode
+}
+
+output "canary_deployment_enabled" {
+  description = "Whether canary deployment is enabled"
+  value       = var.enable_canary_deployment
+}
+
+output "canary_traffic_percentage" {
+  description = "Current percentage of traffic routed to canary"
+  value       = var.canary_traffic_percentage
+}

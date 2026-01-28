@@ -120,3 +120,27 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# Canary Deployment Variables
+variable "enable_canary_deployment" {
+  description = "Enable canary deployment with multiple revisions"
+  type        = bool
+  default     = false
+}
+
+variable "stable_revision_name" {
+  description = "Name suffix of the stable revision for canary deployment"
+  type        = string
+  default     = ""
+}
+
+variable "canary_traffic_percentage" {
+  description = "Percentage of traffic to route to canary revision (5, 25, 50, or 100)"
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = contains([0, 5, 25, 50, 100], var.canary_traffic_percentage)
+    error_message = "Canary traffic percentage must be 0, 5, 25, 50, or 100."
+  }
+}
