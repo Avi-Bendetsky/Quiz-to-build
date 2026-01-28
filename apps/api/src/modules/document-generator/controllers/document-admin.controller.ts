@@ -40,7 +40,7 @@ export class DocumentAdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documentGeneratorService: DocumentGeneratorService,
-  ) {}
+  ) { }
 
   // ==========================================================================
   // DOCUMENT TYPE MANAGEMENT
@@ -93,7 +93,15 @@ export class DocumentAdminController {
       throw new Error(`Document type with ID ${id} not found`);
     }
 
-    return documentType;
+    return {
+      id: documentType.id,
+      name: documentType.name,
+      slug: documentType.slug,
+      description: documentType.description ?? undefined,
+      category: documentType.category,
+      estimatedPages: documentType.estimatedPages ?? undefined,
+      isActive: documentType.isActive,
+    };
   }
 
   @Post('document-types')
@@ -103,7 +111,7 @@ export class DocumentAdminController {
   async createDocumentType(
     @Body() dto: CreateDocumentTypeDto,
   ): Promise<DocumentTypeResponseDto> {
-    return this.prisma.documentType.create({
+    const documentType = await this.prisma.documentType.create({
       data: {
         name: dto.name,
         slug: dto.slug,
@@ -116,6 +124,15 @@ export class DocumentAdminController {
         isActive: dto.isActive ?? true,
       },
     });
+    return {
+      id: documentType.id,
+      name: documentType.name,
+      slug: documentType.slug,
+      description: documentType.description ?? undefined,
+      category: documentType.category,
+      estimatedPages: documentType.estimatedPages ?? undefined,
+      isActive: documentType.isActive,
+    };
   }
 
   @Patch('document-types/:id')
@@ -127,7 +144,7 @@ export class DocumentAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateDocumentTypeDto,
   ): Promise<DocumentTypeResponseDto> {
-    return this.prisma.documentType.update({
+    const documentType = await this.prisma.documentType.update({
       where: { id },
       data: {
         name: dto.name,
@@ -141,6 +158,15 @@ export class DocumentAdminController {
         isActive: dto.isActive,
       },
     });
+    return {
+      id: documentType.id,
+      name: documentType.name,
+      slug: documentType.slug,
+      description: documentType.description ?? undefined,
+      category: documentType.category,
+      estimatedPages: documentType.estimatedPages ?? undefined,
+      isActive: documentType.isActive,
+    };
   }
 
   // ==========================================================================

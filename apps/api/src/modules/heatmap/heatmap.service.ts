@@ -304,7 +304,7 @@ export class HeatmapService {
     }
 
     private generateCells(
-        dimensions: Array<{ id: string; key: string; displayName: string }>,
+        dimensions: Array<{ key: string; displayName: string }>,
         questions: Array<{ id: string; dimensionKey: string | null; severity: any }>,
         responses: Array<{ questionId: string; coverage: any }>,
     ): HeatmapCellDto[] {
@@ -328,7 +328,7 @@ export class HeatmapService {
                 }
 
                 cells.push(new HeatmapCellDto({
-                    dimensionId: dimension.id,
+                    dimensionId: dimension.key, // Use key as identifier
                     dimensionKey: dimension.key,
                     severityBucket: bucket,
                     cellValue: Math.round(cellValue * 10000) / 10000,

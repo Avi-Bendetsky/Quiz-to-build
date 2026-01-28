@@ -33,7 +33,7 @@ import {
 export class DocumentController {
   constructor(
     private readonly documentGeneratorService: DocumentGeneratorService,
-  ) {}
+  ) { }
 
   @Post('generate')
   @ApiOperation({ summary: 'Request document generation for a session' })
@@ -57,7 +57,16 @@ export class DocumentController {
   @ApiOperation({ summary: 'List available document types' })
   @ApiResponse({ status: 200, description: 'List of document types', type: [DocumentTypeResponseDto] })
   async listDocumentTypes(): Promise<DocumentTypeResponseDto[]> {
-    return this.documentGeneratorService.listDocumentTypes();
+    const types = await this.documentGeneratorService.listDocumentTypes();
+    return types.map((dt) => ({
+      id: dt.id,
+      name: dt.name,
+      slug: dt.slug,
+      description: dt.description ?? undefined,
+      category: dt.category,
+      estimatedPages: dt.estimatedPages ?? undefined,
+      isActive: dt.isActive,
+    }));
   }
 
   @Get('session/:sessionId')
@@ -148,14 +157,14 @@ export class DocumentController {
       updatedAt: document.updatedAt,
       documentType: document.documentType
         ? {
-            id: document.documentType.id,
-            name: document.documentType.name,
-            slug: document.documentType.slug,
-            description: document.documentType.description ?? undefined,
-            category: document.documentType.category as DocumentTypeResponseDto['category'],
-            estimatedPages: document.documentType.estimatedPages ?? undefined,
-            isActive: document.documentType.isActive,
-          }
+          id: document.documentType.id,
+          name: document.documentType.name,
+          slug: document.documentType.slug,
+          description: document.documentType.description ?? undefined,
+          category: document.documentType.category as DocumentTypeResponseDto['category'],
+          estimatedPages: document.documentType.estimatedPages ?? undefined,
+          isActive: document.documentType.isActive,
+        }
         : undefined,
     };
   }

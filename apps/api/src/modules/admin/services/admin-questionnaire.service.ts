@@ -9,6 +9,7 @@ import {
   Section,
   Question,
   VisibilityRule,
+  Prisma,
 } from '@prisma/client';
 import { PaginationDto } from '@libs/shared';
 import { AdminAuditService } from './admin-audit.service';
@@ -46,7 +47,7 @@ export class AdminQuestionnaireService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AdminAuditService,
-  ) {}
+  ) { }
 
   // ============================================================================
   // QUESTIONNAIRE CRUD
@@ -113,7 +114,7 @@ export class AdminQuestionnaireService {
         industry: dto.industry,
         isDefault: dto.isDefault ?? false,
         estimatedTime: dto.estimatedTime,
-        metadata: dto.metadata ?? {},
+        metadata: JSON.parse(JSON.stringify(dto.metadata ?? {})),
         createdById: userId,
       },
     });
@@ -151,7 +152,7 @@ export class AdminQuestionnaireService {
         isDefault: dto.isDefault,
         isActive: dto.isActive,
         estimatedTime: dto.estimatedTime,
-        metadata: dto.metadata,
+        metadata: dto.metadata ? JSON.parse(JSON.stringify(dto.metadata)) : undefined,
       },
     });
 
@@ -226,7 +227,7 @@ export class AdminQuestionnaireService {
         icon: dto.icon,
         estimatedTime: dto.estimatedTime,
         orderIndex,
-        metadata: dto.metadata ?? {},
+        metadata: JSON.parse(JSON.stringify(dto.metadata ?? {})),
       },
     });
 
@@ -260,7 +261,7 @@ export class AdminQuestionnaireService {
         icon: dto.icon,
         estimatedTime: dto.estimatedTime,
         orderIndex: dto.orderIndex,
-        metadata: dto.metadata,
+        metadata: dto.metadata ? JSON.parse(JSON.stringify(dto.metadata)) : undefined,
       },
     });
 
@@ -371,14 +372,14 @@ export class AdminQuestionnaireService {
         explanation: dto.explanation,
         placeholder: dto.placeholder,
         isRequired: dto.isRequired ?? false,
-        options: dto.options,
-        validationRules: dto.validationRules,
-        defaultValue: dto.defaultValue,
-        suggestedAnswer: dto.suggestedAnswer,
+        options: dto.options ? JSON.parse(JSON.stringify(dto.options)) : undefined,
+        validationRules: dto.validationRules ? JSON.parse(JSON.stringify(dto.validationRules)) : undefined,
+        defaultValue: dto.defaultValue ? JSON.parse(JSON.stringify(dto.defaultValue)) : undefined,
+        suggestedAnswer: dto.suggestedAnswer ? JSON.parse(JSON.stringify(dto.suggestedAnswer)) : undefined,
         industryTags: dto.industryTags ?? [],
-        documentMappings: dto.documentMappings,
+        documentMappings: dto.documentMappings ? JSON.parse(JSON.stringify(dto.documentMappings)) : undefined,
         orderIndex,
-        metadata: dto.metadata ?? {},
+        metadata: JSON.parse(JSON.stringify(dto.metadata ?? {})),
       },
     });
 
@@ -413,14 +414,14 @@ export class AdminQuestionnaireService {
         explanation: dto.explanation,
         placeholder: dto.placeholder,
         isRequired: dto.isRequired,
-        options: dto.options,
-        validationRules: dto.validationRules,
-        defaultValue: dto.defaultValue,
-        suggestedAnswer: dto.suggestedAnswer,
+        options: dto.options ? JSON.parse(JSON.stringify(dto.options)) : undefined,
+        validationRules: dto.validationRules ? JSON.parse(JSON.stringify(dto.validationRules)) : undefined,
+        defaultValue: dto.defaultValue ? JSON.parse(JSON.stringify(dto.defaultValue)) : undefined,
+        suggestedAnswer: dto.suggestedAnswer ? JSON.parse(JSON.stringify(dto.suggestedAnswer)) : undefined,
         industryTags: dto.industryTags,
-        documentMappings: dto.documentMappings,
+        documentMappings: dto.documentMappings ? JSON.parse(JSON.stringify(dto.documentMappings)) : undefined,
         orderIndex: dto.orderIndex,
-        metadata: dto.metadata,
+        metadata: dto.metadata ? JSON.parse(JSON.stringify(dto.metadata)) : undefined,
       },
     });
 
@@ -530,7 +531,7 @@ export class AdminQuestionnaireService {
     const rule = await this.prisma.visibilityRule.create({
       data: {
         questionId,
-        condition: dto.condition,
+        condition: JSON.parse(JSON.stringify(dto.condition)) as Prisma.InputJsonValue,
         action: dto.action,
         targetQuestionIds: dto.targetQuestionIds,
         priority: dto.priority ?? 0,
@@ -565,7 +566,7 @@ export class AdminQuestionnaireService {
     const rule = await this.prisma.visibilityRule.update({
       where: { id },
       data: {
-        condition: dto.condition,
+        condition: dto.condition ? JSON.parse(JSON.stringify(dto.condition)) as Prisma.InputJsonValue : undefined,
         action: dto.action,
         targetQuestionIds: dto.targetQuestionIds,
         priority: dto.priority,

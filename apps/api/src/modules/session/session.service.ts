@@ -7,7 +7,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import { Session, SessionStatus, Question, Response as PrismaResponse } from '@prisma/client';
+import { Session, SessionStatus, Question, Response as PrismaResponse, Prisma } from '@prisma/client';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitResponseDto } from './dto/submit-response.dto';
 import { QuestionnaireService, QuestionResponse } from '../questionnaire/questionnaire.service';
@@ -303,15 +303,15 @@ export class SessionService {
       create: {
         sessionId,
         questionId: dto.questionId,
-        value: dto.value,
+        value: JSON.parse(JSON.stringify(dto.value)),
         isValid: validation.isValid,
-        validationErrors: validation.errors ? { errors: validation.errors } : null,
+        validationErrors: validation.errors ? { errors: validation.errors } : Prisma.JsonNull,
         timeSpentSeconds: dto.timeSpentSeconds,
       },
       update: {
-        value: dto.value,
+        value: JSON.parse(JSON.stringify(dto.value)),
         isValid: validation.isValid,
-        validationErrors: validation.errors ? { errors: validation.errors } : null,
+        validationErrors: validation.errors ? { errors: validation.errors } : Prisma.JsonNull,
         timeSpentSeconds: dto.timeSpentSeconds,
         revision: { increment: 1 },
       },
@@ -753,9 +753,9 @@ export class SessionService {
         data: responses.map((r) => ({
           sessionId: newSession.id,
           questionId: r.questionId,
-          value: r.value,
+          value: r.value ?? Prisma.JsonNull,
           isValid: r.isValid,
-          validationErrors: r.validationErrors,
+          validationErrors: r.validationErrors ?? Prisma.JsonNull,
         })),
       });
 
@@ -788,7 +788,7 @@ export class SessionService {
 
     await this.prisma.session.update({
       where: { id: sessionId },
-      data: { status: SessionStatus.ARCHIVED },
+      data: { status: SessionStatus.ABANDONED },
     });
   }
 
@@ -798,7 +798,7 @@ export class SessionService {
   async restoreSession(sessionId: string, userId: string): Promise<SessionResponse> {
     const session = await this.getSessionWithValidation(sessionId, userId);
 
-    if (session.status !== SessionStatus.ARCHIVED) {
+    if (session.status !== SessionStatus.ABANDONED) {
       throw new BadRequestException('Only archived sessions can be restored');
     }
 
@@ -923,7 +923,7 @@ export class SessionService {
 
     const completed = sessions.filter((s) => s.status === SessionStatus.COMPLETED);
     const inProgress = sessions.filter((s) => s.status === SessionStatus.IN_PROGRESS);
-    const archived = sessions.filter((s) => s.status === SessionStatus.ARCHIVED);
+    const archived = sessions.filter((s) => s.status === SessionStatus.ABANDONED);
 
     const scores = completed
       .filter((s) => s.readinessScore != null)

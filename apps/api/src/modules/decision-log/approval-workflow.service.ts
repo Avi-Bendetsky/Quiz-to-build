@@ -523,7 +523,7 @@ export class ApprovalWorkflowService {
                 action,
                 resourceType,
                 resourceId,
-                changes: changes || {},
+                changes: changes ? JSON.parse(JSON.stringify(changes)) : {},
             },
         });
     }

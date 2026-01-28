@@ -242,10 +242,10 @@ export function isFeatureAvailable(
     feature: keyof typeof FEATURE_TIER_MATRIX,
 ): boolean {
     const featureConfig = FEATURE_TIER_MATRIX[feature];
-    const value = featureConfig[tier];
+    const value = featureConfig[tier] as number | boolean | readonly string[];
 
     if (typeof value === 'boolean') return value;
-    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'number') return value > 0 || value === -1;
     if (Array.isArray(value)) return value.length > 0;
 
     return true;
@@ -257,6 +257,6 @@ export function isFeatureAvailable(
 export function getFeatureLimit(
     tier: SubscriptionTier,
     feature: keyof typeof FEATURE_TIER_MATRIX,
-): number | boolean | string[] {
+): number | boolean | readonly string[] {
     return FEATURE_TIER_MATRIX[feature][tier];
 }

@@ -5,14 +5,33 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@libs/database": ["../../libs/database/dist"],
-      "@libs/database/*": ["../../libs/database/dist/*"],
-      "@libs/redis": ["../../libs/redis/dist"],
-      "@libs/redis/*": ["../../libs/redis/dist/*"],
-      "@libs/shared": ["../../libs/shared/dist"],
-      "@libs/shared/*": ["../../libs/shared/dist/*"]
+      "@libs/database": [
+        "../../libs/database/dist"
+      ],
+      "@libs/database/*": [
+        "../../libs/database/dist/*"
+      ],
+      "@libs/redis": [
+        "../../libs/redis/dist"
+      ],
+      "@libs/redis/*": [
+        "../../libs/redis/dist/*"
+      ],
+      "@libs/shared": [
+        "../../libs/shared/dist"
+      ],
+      "@libs/shared/*": [
+        "../../libs/shared/dist/*"
+      ]
     }
   },
-  "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "test/**/*"
+  ]
 }

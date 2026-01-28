@@ -124,12 +124,19 @@ export class OAuthService {
                 throw new UnauthorizedException('Failed to fetch Microsoft profile');
             }
 
-            const msProfile = await response.json();
+            const msProfile = await response.json() as {
+                id: string;
+                mail?: string;
+                userPrincipalName?: string;
+                displayName?: string;
+                givenName?: string;
+                surname?: string;
+            };
 
             const profile: OAuthProfile = {
                 provider: 'microsoft',
                 providerId: msProfile.id,
-                email: msProfile.mail || msProfile.userPrincipalName,
+                email: msProfile.mail || msProfile.userPrincipalName || '',
                 emailVerified: true, // Microsoft verifies emails
                 name: msProfile.displayName,
                 givenName: msProfile.givenName,

@@ -11,6 +11,7 @@ import {
     NextQuestionsResult,
     PrioritizedQuestion,
     QuestionCoverageInput,
+    CoverageLevelDto,
 } from './dto';
 
 /**
@@ -293,6 +294,7 @@ export class ScoringEngineService {
                 dimensionName: question.dimension?.displayName || dimensionKey,
                 severity,
                 currentCoverage,
+                currentCoverageLevel: decimalToCoverageLevel(currentCoverage) as CoverageLevelDto,
                 expectedScoreLift: Math.round(deltaScore * 100) / 100,
                 rationale: this.generateRationale(
                     deltaScore,
@@ -576,7 +578,7 @@ export class ScoringEngineService {
             select: {
                 id: true,
                 readinessScore: true,
-                createdAt: true,
+                startedAt: true,
                 lastScoreCalculation: true,
             },
         });
@@ -585,41 +587,16 @@ export class ScoringEngineService {
             throw new NotFoundException(`Session not found: ${sessionId}`);
         }
 
-        // Fetch score snapshots from decision log (if available)
-        const snapshots = await this.prisma.decisionLog.findMany({
-            where: {
-                sessionId,
-                decisionType: 'SCORE_CALCULATION',
-            },
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-            select: {
-                id: true,
-                createdAt: true,
-                metadata: true,
-            },
-        });
-
-        const history: ScoreSnapshot[] = snapshots.map((snapshot: { id: string; createdAt: Date; metadata: unknown }) => {
-            const metadata = snapshot.metadata as Record<string, unknown> || {};
-            return {
-                timestamp: snapshot.createdAt,
-                score: Number(metadata.score ?? 0),
-                portfolioResidual: Number(metadata.portfolioResidual ?? 0),
-                completionPercentage: Number(metadata.completionPercentage ?? 0),
-            };
-        });
-
-        // Add current score if different from last snapshot
+        // Since DecisionLog doesn't have metadata/decisionType fields,
+        // we'll build history from session data
         const currentScore = session.readinessScore ? Number(session.readinessScore) : 0;
-        if (history.length === 0 || history[0].score !== currentScore) {
-            history.unshift({
-                timestamp: session.lastScoreCalculation || new Date(),
-                score: currentScore,
-                portfolioResidual: 0,
-                completionPercentage: 0,
-            });
-        }
+
+        const history: ScoreSnapshot[] = [{
+            timestamp: session.lastScoreCalculation || session.startedAt,
+            score: currentScore,
+            portfolioResidual: 0,
+            completionPercentage: 0,
+        }];
 
         // Calculate trend metrics
         const trendAnalysis = this.calculateTrendAnalysis(history);

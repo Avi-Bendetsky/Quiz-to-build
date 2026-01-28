@@ -295,7 +295,17 @@ export class DecisionLogService {
 
         // Walk back through supersession chain
         while (currentId) {
-            const decision = await this.prisma.decisionLog.findUnique({
+            const decision: {
+                id: string;
+                sessionId: string;
+                statement: string;
+                assumptions: string | null;
+                references: string | null;
+                ownerId: string;
+                status: DecisionStatus;
+                supersedesDecisionId: string | null;
+                createdAt: Date;
+            } | null = await this.prisma.decisionLog.findUnique({
                 where: { id: currentId },
             });
 
@@ -366,7 +376,7 @@ export class DecisionLogService {
                 action: `DECISION_${action}`,
                 resourceType: 'DecisionLog',
                 resourceId: decisionId,
-                changes: metadata || {},
+                changes: metadata ? JSON.parse(JSON.stringify(metadata)) : {},
             },
         });
     }

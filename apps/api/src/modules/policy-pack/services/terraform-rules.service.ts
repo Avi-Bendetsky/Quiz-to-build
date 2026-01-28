@@ -4,7 +4,7 @@
  */
 import { Injectable, Logger } from '@nestjs/common';
 
-interface TerraformRule {
+export interface TerraformRule {
     name: string;
     description: string;
     dimensionKey: string;
