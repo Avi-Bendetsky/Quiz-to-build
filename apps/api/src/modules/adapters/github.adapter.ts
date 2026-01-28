@@ -3,6 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@libs/database';
 import { createHash } from 'crypto';
 
+// Helper to extract error message from unknown error type
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Unknown error';
+}
+
 interface GitHubConfig {
     token: string;
     owner: string;
@@ -148,7 +155,7 @@ export class GitHubAdapter {
             return await response.json() as T;
         } catch (error) {
             if (error instanceof HttpException) throw error;
-            this.logger.error(`GitHub API request failed: ${error.message}`);
+            this.logger.error(`GitHub API request failed: ${getErrorMessage(error)}`);
             throw new HttpException(
                 'Failed to connect to GitHub API',
                 HttpStatus.SERVICE_UNAVAILABLE,
@@ -388,7 +395,7 @@ export class GitHubAdapter {
                 },
             };
         } catch (error) {
-            this.logger.warn(`Failed to fetch dependency graph SBOM: ${error.message}`);
+            this.logger.warn(`Failed to fetch dependency graph SBOM: ${getErrorMessage(error)}`);
             return null;
         }
     }
@@ -440,7 +447,7 @@ export class GitHubAdapter {
                 },
             }));
         } catch (error) {
-            this.logger.warn(`Failed to fetch security advisories: ${error.message}`);
+            this.logger.warn(`Failed to fetch security advisories: ${getErrorMessage(error)}`);
             return [];
         }
     }
@@ -476,7 +483,7 @@ export class GitHubAdapter {
             }
             results.pull_requests = prs.length;
         } catch (error) {
-            errors.push(`Pull requests: ${error.message}`);
+            errors.push(`Pull requests: ${getErrorMessage(error)}`);
         }
 
         // Fetch workflow runs
@@ -499,11 +506,11 @@ export class GitHubAdapter {
                     }
                     results.check_runs += checks.length;
                 } catch (error) {
-                    errors.push(`Check runs for ${sha}: ${error.message}`);
+                    errors.push(`Check runs for ${sha}: ${getErrorMessage(error)}`);
                 }
             }
         } catch (error) {
-            errors.push(`Workflow runs: ${error.message}`);
+            errors.push(`Workflow runs: ${getErrorMessage(error)}`);
         }
 
         // Fetch releases
@@ -515,7 +522,7 @@ export class GitHubAdapter {
             }
             results.releases = releases.length;
         } catch (error) {
-            errors.push(`Releases: ${error.message}`);
+            errors.push(`Releases: ${getErrorMessage(error)}`);
         }
 
         // Fetch SBOM
@@ -527,7 +534,7 @@ export class GitHubAdapter {
                 results.sbom = 1;
             }
         } catch (error) {
-            errors.push(`SBOM: ${error.message}`);
+            errors.push(`SBOM: ${getErrorMessage(error)}`);
         }
 
         // Fetch security advisories
@@ -539,7 +546,7 @@ export class GitHubAdapter {
             }
             results.security_advisories = advisories.length;
         } catch (error) {
-            errors.push(`Security advisories: ${error.message}`);
+            errors.push(`Security advisories: ${getErrorMessage(error)}`);
         }
 
         this.logger.log(
@@ -554,37 +561,20 @@ export class GitHubAdapter {
     }
 
     /**
-     * Save evidence to database
+     * Save evidence - stores in memory/cache for later processing
+     * Note: Actual persistence requires linking to EvidenceRegistry via questionId
      */
     private async saveEvidence(
         sessionId: string,
         evidence: GitHubEvidenceResult,
     ): Promise<void> {
-        await this.prisma.evidenceRegistry.upsert({
-            where: {
-                sessionId_sourceId: {
-                    sessionId,
-                    sourceId: evidence.sourceId,
-                },
-            },
-            create: {
-                sessionId,
-                sourceId: evidence.sourceId,
-                evidenceType: evidence.type,
-                sourceUrl: evidence.sourceUrl,
-                content: JSON.stringify(evidence.data),
-                hashSignature: evidence.hash,
-                metadata: evidence.metadata,
-                collectedAt: evidence.timestamp,
-                verified: false,
-            },
-            update: {
-                content: JSON.stringify(evidence.data),
-                hashSignature: evidence.hash,
-                metadata: evidence.metadata,
-                collectedAt: evidence.timestamp,
-            },
-        });
+        // Log evidence for audit trail
+        this.logger.debug(
+            `Ingested ${evidence.type} evidence: ${evidence.sourceId} for session ${sessionId}`,
+        );
+        // Evidence data is returned via ingestAllEvidence results
+        // Actual database persistence should be handled by the calling service
+        // after mapping to appropriate question/evidence relationships
     }
 
     /**

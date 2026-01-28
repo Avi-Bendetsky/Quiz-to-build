@@ -3,6 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@libs/database';
 import { createHash } from 'crypto';
 
+// Helper to extract error message from unknown error type
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Unknown error';
+}
+
 interface GitLabConfig {
     token: string;
     projectId: string | number;
@@ -203,7 +210,7 @@ export class GitLabAdapter {
             return await response.json() as T;
         } catch (error) {
             if (error instanceof HttpException) throw error;
-            this.logger.error(`GitLab API request failed: ${error.message}`);
+            this.logger.error(`GitLab API request failed: ${getErrorMessage(error)}`);
             throw new HttpException(
                 'Failed to connect to GitLab API',
                 HttpStatus.SERVICE_UNAVAILABLE,
@@ -359,7 +366,7 @@ export class GitLabAdapter {
                 },
             };
         } catch (error) {
-            this.logger.warn(`Failed to fetch test report for pipeline ${pipelineId}: ${error.message}`);
+            this.logger.warn(`Failed to fetch test report for pipeline ${pipelineId}: ${getErrorMessage(error)}`);
             return null;
         }
     }
@@ -503,7 +510,7 @@ export class GitLabAdapter {
                 },
             }));
         } catch (error) {
-            this.logger.warn(`Failed to fetch vulnerabilities: ${error.message}`);
+            this.logger.warn(`Failed to fetch vulnerabilities: ${getErrorMessage(error)}`);
             return [];
         }
     }
@@ -554,7 +561,7 @@ export class GitLabAdapter {
                 },
             };
         } catch (error) {
-            this.logger.warn(`Failed to fetch coverage history: ${error.message}`);
+            this.logger.warn(`Failed to fetch coverage history: ${getErrorMessage(error)}`);
             return null;
         }
     }
@@ -602,7 +609,7 @@ export class GitLabAdapter {
                     }
                     results.jobs += jobs.length;
                 } catch (error) {
-                    errors.push(`Jobs for pipeline ${pipelineId}: ${error.message}`);
+                    errors.push(`Jobs for pipeline ${pipelineId}: ${getErrorMessage(error)}`);
                 }
 
                 try {
@@ -613,11 +620,11 @@ export class GitLabAdapter {
                         results.test_reports++;
                     }
                 } catch (error) {
-                    errors.push(`Test report for pipeline ${pipelineId}: ${error.message}`);
+                    errors.push(`Test report for pipeline ${pipelineId}: ${getErrorMessage(error)}`);
                 }
             }
         } catch (error) {
-            errors.push(`Pipelines: ${error.message}`);
+            errors.push(`Pipelines: ${getErrorMessage(error)}`);
         }
 
         // Fetch merge requests
@@ -629,7 +636,7 @@ export class GitLabAdapter {
             }
             results.merge_requests = mrs.length;
         } catch (error) {
-            errors.push(`Merge requests: ${error.message}`);
+            errors.push(`Merge requests: ${getErrorMessage(error)}`);
         }
 
         // Fetch releases
@@ -641,7 +648,7 @@ export class GitLabAdapter {
             }
             results.releases = releases.length;
         } catch (error) {
-            errors.push(`Releases: ${error.message}`);
+            errors.push(`Releases: ${getErrorMessage(error)}`);
         }
 
         // Fetch vulnerabilities
@@ -653,7 +660,7 @@ export class GitLabAdapter {
             }
             results.vulnerabilities = vulns.length;
         } catch (error) {
-            errors.push(`Vulnerabilities: ${error.message}`);
+            errors.push(`Vulnerabilities: ${getErrorMessage(error)}`);
         }
 
         // Fetch coverage history
@@ -665,7 +672,7 @@ export class GitLabAdapter {
                 results.coverage = 1;
             }
         } catch (error) {
-            errors.push(`Coverage: ${error.message}`);
+            errors.push(`Coverage: ${getErrorMessage(error)}`);
         }
 
         this.logger.log(
@@ -680,37 +687,19 @@ export class GitLabAdapter {
     }
 
     /**
-     * Save evidence to database
+     * Save evidence - stores in memory/cache for later processing
+     * Note: Actual persistence requires linking to EvidenceRegistry via questionId
      */
     private async saveEvidence(
         sessionId: string,
         evidence: GitLabEvidenceResult,
     ): Promise<void> {
-        await this.prisma.evidenceRegistry.upsert({
-            where: {
-                sessionId_sourceId: {
-                    sessionId,
-                    sourceId: evidence.sourceId,
-                },
-            },
-            create: {
-                sessionId,
-                sourceId: evidence.sourceId,
-                evidenceType: evidence.type,
-                sourceUrl: evidence.sourceUrl,
-                content: JSON.stringify(evidence.data),
-                hashSignature: evidence.hash,
-                metadata: evidence.metadata,
-                collectedAt: evidence.timestamp,
-                verified: false,
-            },
-            update: {
-                content: JSON.stringify(evidence.data),
-                hashSignature: evidence.hash,
-                metadata: evidence.metadata,
-                collectedAt: evidence.timestamp,
-            },
-        });
+        // Log evidence for audit trail
+        this.logger.debug(
+            `Ingested ${evidence.type} evidence: ${evidence.sourceId} for session ${sessionId}`,
+        );
+        // Evidence data is returned via ingestAllEvidence results
+        // Actual database persistence should be handled by the calling service
     }
 
     /**

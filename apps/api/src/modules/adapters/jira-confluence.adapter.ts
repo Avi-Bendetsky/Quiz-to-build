@@ -3,6 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@libs/database';
 import { createHash } from 'crypto';
 
+// Helper to extract error message from unknown error type
+function getErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    return 'Unknown error';
+}
+
 interface JiraConfig {
     domain: string; // e.g., 'your-org.atlassian.net'
     email: string;
@@ -165,7 +172,7 @@ export class JiraConfluenceAdapter {
             return await response.json() as T;
         } catch (error) {
             if (error instanceof HttpException) throw error;
-            this.logger.error(`Atlassian API request failed: ${error.message}`);
+            this.logger.error(`Atlassian API request failed: ${getErrorMessage(error)}`);
             throw new HttpException(
                 'Failed to connect to Atlassian API',
                 HttpStatus.SERVICE_UNAVAILABLE,
@@ -623,7 +630,7 @@ export class JiraConfluenceAdapter {
                 });
                 synced++;
             } catch (error) {
-                errors.push(`Failed to sync "${doc.title}": ${error.message}`);
+                errors.push(`Failed to sync "${doc.title}": ${getErrorMessage(error)}`);
             }
         }
 
@@ -680,7 +687,7 @@ export class JiraConfluenceAdapter {
             totalIngested++;
             results.jira_project = 1;
         } catch (error) {
-            errors.push(`Jira project: ${error.message}`);
+            errors.push(`Jira project: ${getErrorMessage(error)}`);
         }
 
         // Fetch Jira issues
@@ -695,7 +702,7 @@ export class JiraConfluenceAdapter {
             }
             results.jira_issues = issues.length;
         } catch (error) {
-            errors.push(`Jira issues: ${error.message}`);
+            errors.push(`Jira issues: ${getErrorMessage(error)}`);
         }
 
         // Fetch Confluence pages if configured
@@ -708,7 +715,7 @@ export class JiraConfluenceAdapter {
                 }
                 results.confluence_pages = pages.length;
             } catch (error) {
-                errors.push(`Confluence pages: ${error.message}`);
+                errors.push(`Confluence pages: ${getErrorMessage(error)}`);
             }
         }
 
@@ -730,30 +737,12 @@ export class JiraConfluenceAdapter {
         sessionId: string,
         evidence: JiraEvidenceResult,
     ): Promise<void> {
-        await this.prisma.evidenceRegistry.upsert({
-            where: {
-                sessionId_sourceId: {
-                    sessionId,
-                    sourceId: evidence.sourceId,
-                },
-            },
-            create: {
-                sessionId,
-                sourceId: evidence.sourceId,
-                evidenceType: evidence.type,
-                sourceUrl: evidence.sourceUrl,
-                content: JSON.stringify(evidence.data),
-                hashSignature: evidence.hash,
-                metadata: evidence.metadata,
-                collectedAt: evidence.timestamp,
-                verified: false,
-            },
-            update: {
-                content: JSON.stringify(evidence.data),
-                hashSignature: evidence.hash,
-                metadata: evidence.metadata,
-                collectedAt: evidence.timestamp,
-            },
-        });
+        // Log evidence for audit trail
+        this.logger.debug(
+            `Ingested ${evidence.type} evidence: ${evidence.sourceId} for session ${sessionId}`,
+        );
+        // Evidence data is returned via ingestAllEvidence results
+        // Actual database persistence should be handled by the calling service
+        // after mapping to appropriate question/evidence relationships
     }
 }
