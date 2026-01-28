@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@libs/database';
-import { EvidenceType, Prisma } from '@prisma/client';
+import { EvidenceType, CoverageLevel, Prisma } from '@prisma/client';
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 import * as crypto from 'crypto';
 
@@ -17,6 +17,61 @@ interface MulterFile {
     originalname: string;
     mimetype: string;
     size: number;
+}
+
+/**
+ * Coverage Level mapping to decimal values
+ * Provides 5-level discrete scale for evidence assessment
+ */
+export const COVERAGE_LEVEL_VALUES: Record<CoverageLevel, number> = {
+    NONE: 0.00,
+    PARTIAL: 0.25,
+    HALF: 0.50,
+    SUBSTANTIAL: 0.75,
+    FULL: 1.00,
+};
+
+/**
+ * Valid coverage level transitions
+ * Enforces that coverage can only increase, never decrease
+ */
+export const VALID_COVERAGE_TRANSITIONS: Record<CoverageLevel, CoverageLevel[]> = {
+    NONE: ['NONE', 'PARTIAL', 'HALF', 'SUBSTANTIAL', 'FULL'],
+    PARTIAL: ['PARTIAL', 'HALF', 'SUBSTANTIAL', 'FULL'],
+    HALF: ['HALF', 'SUBSTANTIAL', 'FULL'],
+    SUBSTANTIAL: ['SUBSTANTIAL', 'FULL'],
+    FULL: ['FULL'],
+};
+
+/**
+ * Convert CoverageLevel enum to decimal value
+ */
+export function coverageLevelToDecimal(level: CoverageLevel | null): number {
+    if (!level) return 0;
+    return COVERAGE_LEVEL_VALUES[level] ?? 0;
+}
+
+/**
+ * Convert decimal value to nearest CoverageLevel
+ * Uses nearest-neighbor rounding to closest 0.25 increment
+ */
+export function decimalToCoverageLevel(value: number | null): CoverageLevel {
+    if (value === null || value < 0.125) return 'NONE';
+    if (value < 0.375) return 'PARTIAL';
+    if (value < 0.625) return 'HALF';
+    if (value < 0.875) return 'SUBSTANTIAL';
+    return 'FULL';
+}
+
+/**
+ * Validate coverage level transition
+ * Returns true if transition from current to target is valid
+ */
+export function isValidCoverageTransition(
+    current: CoverageLevel,
+    target: CoverageLevel,
+): boolean {
+    return VALID_COVERAGE_TRANSITIONS[current].includes(target);
 }
 
 import {
@@ -434,17 +489,44 @@ export class EvidenceRegistryService {
     }
 
     /**
-     * Update coverage value on response
+     * Update coverage level on response
+     * Validates coverage level transition and updates both level and decimal
      */
     private async updateResponseCoverage(
         sessionId: string,
         questionId: string,
         coverage: number,
     ): Promise<void> {
+        // Get current response to check existing coverage level
+        const existingResponse = await this.prisma.response.findFirst({
+            where: { sessionId, questionId },
+            select: { coverageLevel: true },
+        });
+
+        // Convert decimal to coverage level
+        const targetLevel = decimalToCoverageLevel(coverage);
+        const currentLevel = existingResponse?.coverageLevel ?? 'NONE';
+
+        // Validate transition (coverage can only increase)
+        if (!isValidCoverageTransition(currentLevel as CoverageLevel, targetLevel)) {
+            throw new BadRequestException(
+                `Invalid coverage transition from ${currentLevel} to ${targetLevel}. ` +
+                `Coverage can only increase.`,
+            );
+        }
+
+        // Update both coverage (decimal) and coverageLevel (enum)
         await this.prisma.response.updateMany({
             where: { sessionId, questionId },
-            data: { coverage },
+            data: {
+                coverage: coverageLevelToDecimal(targetLevel),
+                coverageLevel: targetLevel,
+            },
         });
+
+        this.logger.log(
+            `Coverage updated for session ${sessionId}, question ${questionId}: ${currentLevel} → ${targetLevel}`,
+        );
     }
 
     /**

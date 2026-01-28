@@ -1,4 +1,9 @@
 import { PrismaClient, QuestionType, Persona } from '@prisma/client';
+import { ctoQuestions, CTOQuestion } from './cto-questions.seed';
+import { cfoQuestions, CFOQuestion } from './cfo-questions.seed';
+import { ceoQuestions, CEOQuestion } from './ceo-questions.seed';
+import { baQuestions, BAQuestion } from './ba-questions.seed';
+import { policyQuestions, PolicyQuestion } from './policy-questions.seed';
 
 const prisma = new PrismaClient();
 
@@ -861,6 +866,326 @@ export async function seedReadinessQuestions(): Promise<void> {
     }
 
     console.log(`\n✅ Seeded ${questions.length} readiness questions (${created} created, ${updated} updated)`);
+
+    // Seed CTO-specific questions (Architecture, Security, Platform)
+    console.log('\n🔧 Seeding CTO questions (Architecture, Security, Platform)...');
+    let ctoCreated = 0;
+    let ctoUpdated = 0;
+
+    for (const question of ctoQuestions) {
+        const sectionId = dimensionSections[question.dimensionKey];
+
+        if (!sectionId) {
+            console.warn(`  ⚠ No section for dimension: ${question.dimensionKey}`);
+            continue;
+        }
+
+        const existing = await prisma.question.findUnique({
+            where: { id: question.id },
+        });
+
+        await prisma.question.upsert({
+            where: { id: question.id },
+            update: {
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+            },
+            create: {
+                id: question.id,
+                sectionId,
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+                metadata: {},
+            },
+        });
+
+        if (existing) {
+            ctoUpdated++;
+        } else {
+            ctoCreated++;
+        }
+    }
+
+    console.log(`✅ Seeded ${ctoQuestions.length} CTO questions (${ctoCreated} created, ${ctoUpdated} updated)`);
+
+    // Seed CFO-specific questions (Unit Economics, Runway, Spend Governance)
+    console.log('\n💰 Seeding CFO questions (Unit Economics, Runway, Spend Governance)...');
+    let cfoCreated = 0;
+    let cfoUpdated = 0;
+
+    for (const question of cfoQuestions) {
+        const sectionId = dimensionSections[question.dimensionKey];
+
+        if (!sectionId) {
+            console.warn(`  ⚠ No section for dimension: ${question.dimensionKey}`);
+            continue;
+        }
+
+        const existing = await prisma.question.findUnique({
+            where: { id: question.id },
+        });
+
+        await prisma.question.upsert({
+            where: { id: question.id },
+            update: {
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+            },
+            create: {
+                id: question.id,
+                sectionId,
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+                metadata: {},
+            },
+        });
+
+        if (existing) {
+            cfoUpdated++;
+        } else {
+            cfoCreated++;
+        }
+    }
+
+    console.log(`✅ Seeded ${cfoQuestions.length} CFO questions (${cfoCreated} created, ${cfoUpdated} updated)`);
+
+    // Seed CEO-specific questions (Strategy, Value, Risk)
+    console.log('\n👔 Seeding CEO questions (Strategy, Value, Risk)...');
+    let ceoCreated = 0;
+    let ceoUpdated = 0;
+
+    for (const question of ceoQuestions) {
+        const sectionId = dimensionSections[question.dimensionKey];
+
+        if (!sectionId) {
+            console.warn(`  ⚠ No section for dimension: ${question.dimensionKey}`);
+            continue;
+        }
+
+        const existing = await prisma.question.findUnique({
+            where: { id: question.id },
+        });
+
+        await prisma.question.upsert({
+            where: { id: question.id },
+            update: {
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+            },
+            create: {
+                id: question.id,
+                sectionId,
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+                metadata: {},
+            },
+        });
+
+        if (existing) {
+            ceoUpdated++;
+        } else {
+            ceoCreated++;
+        }
+    }
+
+    console.log(`✅ Seeded ${ceoQuestions.length} CEO questions (${ceoCreated} created, ${ceoUpdated} updated)`);
+
+    // Seed BA-specific questions (Requirements, UX, Policy-to-Control)
+    console.log('\n📋 Seeding BA questions (Requirements, UX, Policy-to-Control)...');
+    let baCreated = 0;
+    let baUpdated = 0;
+
+    for (const question of baQuestions) {
+        const sectionId = dimensionSections[question.dimensionKey];
+
+        if (!sectionId) {
+            console.warn(`  ⚠ No section for dimension: ${question.dimensionKey}`);
+            continue;
+        }
+
+        const existing = await prisma.question.findUnique({
+            where: { id: question.id },
+        });
+
+        await prisma.question.upsert({
+            where: { id: question.id },
+            update: {
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+            },
+            create: {
+                id: question.id,
+                sectionId,
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+                metadata: {},
+            },
+        });
+
+        if (existing) {
+            baUpdated++;
+        } else {
+            baCreated++;
+        }
+    }
+
+    console.log(`✅ Seeded ${baQuestions.length} BA questions (${baCreated} created, ${baUpdated} updated)`);
+
+    // Seed Policy-specific questions (Compliance, Auditability, Governance)
+    console.log('\n📜 Seeding Policy Writer questions (Compliance, Auditability, Governance)...');
+    let policyCreated = 0;
+    let policyUpdated = 0;
+
+    for (const question of policyQuestions) {
+        const sectionId = dimensionSections[question.dimensionKey];
+
+        if (!sectionId) {
+            console.warn(`  ⚠ No section for dimension: ${question.dimensionKey}`);
+            continue;
+        }
+
+        const existing = await prisma.question.findUnique({
+            where: { id: question.id },
+        });
+
+        await prisma.question.upsert({
+            where: { id: question.id },
+            update: {
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+            },
+            create: {
+                id: question.id,
+                sectionId,
+                text: question.text,
+                type: question.type,
+                persona: question.persona,
+                dimensionKey: question.dimensionKey,
+                severity: question.severity,
+                bestPractice: question.bestPractice,
+                practicalExplainer: question.practicalExplainer,
+                standardRefs: question.standardRefs,
+                acceptance: question.acceptance,
+                helpText: question.helpText,
+                options: question.options,
+                isRequired: question.isRequired ?? true,
+                orderIndex: question.orderIndex,
+                metadata: {},
+            },
+        });
+
+        if (existing) {
+            policyUpdated++;
+        } else {
+            policyCreated++;
+        }
+    }
+
+    console.log(`✅ Seeded ${policyQuestions.length} Policy questions (${policyCreated} created, ${policyUpdated} updated)`);
+
+    // Summary
+    const totalQuestions = questions.length + ctoQuestions.length + cfoQuestions.length +
+        ceoQuestions.length + baQuestions.length + policyQuestions.length;
+    console.log(`\n🎉 Total: ${totalQuestions} questions seeded across all personas!`);
 }
 
 // Allow running standalone

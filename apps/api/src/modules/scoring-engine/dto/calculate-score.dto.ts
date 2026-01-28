@@ -1,20 +1,88 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsOptional, IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+    IsUUID,
+    IsOptional,
+    IsArray,
+    ValidateNested,
+    IsNumber,
+    Min,
+    Max,
+    IsEnum,
+    ValidateIf,
+} from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+
+/**
+ * Valid coverage levels for the 5-level evidence scale
+ * Maps to discrete values: NONE=0.0, PARTIAL=0.25, HALF=0.5, SUBSTANTIAL=0.75, FULL=1.0
+ */
+export enum CoverageLevelDto {
+    NONE = 'NONE',           // 0.00 - No evidence
+    PARTIAL = 'PARTIAL',     // 0.25 - Some evidence exists
+    HALF = 'HALF',           // 0.50 - Moderate coverage
+    SUBSTANTIAL = 'SUBSTANTIAL', // 0.75 - Most requirements met
+    FULL = 'FULL',           // 1.00 - Complete coverage
+}
+
+/**
+ * Mapping of CoverageLevelDto to decimal values
+ */
+export const COVERAGE_LEVEL_VALUES: Record<CoverageLevelDto, number> = {
+    [CoverageLevelDto.NONE]: 0.00,
+    [CoverageLevelDto.PARTIAL]: 0.25,
+    [CoverageLevelDto.HALF]: 0.50,
+    [CoverageLevelDto.SUBSTANTIAL]: 0.75,
+    [CoverageLevelDto.FULL]: 1.00,
+};
+
+/**
+ * Convert decimal to nearest coverage level
+ */
+export function decimalToCoverageLevel(value: number): CoverageLevelDto {
+    if (value < 0.125) return CoverageLevelDto.NONE;
+    if (value < 0.375) return CoverageLevelDto.PARTIAL;
+    if (value < 0.625) return CoverageLevelDto.HALF;
+    if (value < 0.875) return CoverageLevelDto.SUBSTANTIAL;
+    return CoverageLevelDto.FULL;
+}
 
 /**
  * Response coverage input for a single question
+ * Supports both discrete level (preferred) and decimal value
  */
 export class QuestionCoverageInput {
     @ApiProperty({ description: 'Question ID' })
     @IsUUID()
     questionId: string;
 
-    @ApiProperty({
-        description: 'Coverage value C_i ∈ [0,1] based on evidence verification',
+    @ApiPropertyOptional({
+        description: 'Coverage level (5-level discrete scale) - PREFERRED over numeric coverage',
+        enum: CoverageLevelDto,
+        example: 'SUBSTANTIAL'
+    })
+    @IsOptional()
+    @IsEnum(CoverageLevelDto, {
+        message: 'coverageLevel must be one of: NONE, PARTIAL, HALF, SUBSTANTIAL, FULL'
+    })
+    coverageLevel?: CoverageLevelDto;
+
+    @ApiPropertyOptional({
+        description: 'Coverage value C_i ∈ [0,1] - will be normalized to nearest discrete level',
         minimum: 0,
         maximum: 1,
         example: 0.75
+    })
+    @ValidateIf((o: QuestionCoverageInput) => o.coverageLevel === undefined)
+    @IsNumber()
+    @Min(0, { message: 'coverage must be at least 0' })
+    @Max(1, { message: 'coverage must be at most 1' })
+    @Transform(({ value, obj }: { value: number; obj: QuestionCoverageInput }) => {
+        // If coverageLevel is provided, use its value instead
+        if (obj.coverageLevel) {
+            return COVERAGE_LEVEL_VALUES[obj.coverageLevel as CoverageLevelDto];
+        }
+        // Otherwise normalize the decimal to nearest level
+        return COVERAGE_LEVEL_VALUES[decimalToCoverageLevel(value)];
     })
     coverage: number;
 }
@@ -169,11 +237,17 @@ export class PrioritizedQuestion {
     severity: number;
 
     @ApiProperty({
-        description: 'Current coverage C_i',
+        description: 'Current coverage C_i (decimal)',
         minimum: 0,
         maximum: 1
     })
     currentCoverage: number;
+
+    @ApiProperty({
+        description: 'Current coverage level (5-level discrete scale)',
+        enum: CoverageLevelDto
+    })
+    currentCoverageLevel: CoverageLevelDto;
 
     @ApiProperty({
         description: 'Expected score improvement if C_i reaches 1.0 (ΔScore)',

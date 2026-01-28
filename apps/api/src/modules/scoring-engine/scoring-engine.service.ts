@@ -340,7 +340,7 @@ export class ScoringEngineService {
     private buildCoverageMap(
         questions: Array<{
             id: string;
-            responses: Array<{ 
+            responses: Array<{
                 coverage: Decimal | null;
                 coverageLevel?: CoverageLevel | null;
             }>;
@@ -354,7 +354,7 @@ export class ScoringEngineService {
         questions.forEach((q) => {
             const response = q.responses[0];
             let coverage: number;
-            
+
             if (response?.coverageLevel) {
                 // Use discrete coverage level (preferred)
                 coverage = coverageLevelToDecimal(response.coverageLevel);
@@ -364,7 +364,7 @@ export class ScoringEngineService {
             } else {
                 coverage = 0;
             }
-            
+
             coverageMap.set(q.id, coverage);
         });
 
