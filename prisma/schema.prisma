@@ -145,6 +145,8 @@ model User {
   email               String    @unique
   emailVerified       Boolean   @default(false) @map("email_verified")
   passwordHash        String?   @map("password_hash")
+  name                String?
+  avatar              String?
   role                UserRole  @default(CLIENT)
   profile             Json      @default("{}")
   preferences         Json      @default("{}")
@@ -163,6 +165,7 @@ model User {
   auditLogs      AuditLog[]
   apiKeys        ApiKey[]
   refreshTokens  RefreshToken[]
+  oauthAccounts  OAuthAccount[]
   createdQuestionnaires Questionnaire[] @relation("QuestionnaireCreator")
   approvedDocuments     Document[]      @relation("DocumentApprover")
   
@@ -211,6 +214,29 @@ model ApiKey {
   @@index([userId])
   @@index([keyPrefix])
   @@map("api_keys")
+}
+
+model OAuthAccount {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  provider     String                          // google, microsoft, github
+  providerId   String    @map("provider_id")   // Provider's unique user ID
+  email        String?
+  name         String?
+  picture      String?
+  accessToken  String?   @map("access_token")  // For API access (encrypted)
+  refreshToken String?   @map("refresh_token") // For token refresh (encrypted)
+  expiresAt    DateTime? @map("expires_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@index([provider])
+  @@map("oauth_accounts")
 }
 
 // =============================================================================

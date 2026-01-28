@@ -19,6 +19,7 @@ import { HeatmapModule } from './modules/heatmap/heatmap.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { QpgModule } from './modules/qpg/qpg.module';
 import { PolicyPackModule } from './modules/policy-pack/policy-pack.module';
+import { PaymentModule } from './modules/payment/payment.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -72,6 +73,7 @@ import configuration from './config/configuration';
     NotificationModule,
     QpgModule,
     PolicyPackModule,
+    PaymentModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MainLayout, AuthLayout } from './components/layout';
 import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/auth';
 import { DashboardPage } from './pages/dashboard';
+import { BillingPage, InvoicesPage, UpgradePage } from './pages/billing';
 import { useAuthStore } from './stores/auth';
 import type { ReactNode } from 'react';
 
@@ -89,6 +90,9 @@ export default function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="billing" element={<BillingPage />} />
+            <Route path="billing/invoices" element={<InvoicesPage />} />
+            <Route path="billing/upgrade" element={<UpgradePage />} />
             {/* Add more protected routes here */}
           </Route>
 
