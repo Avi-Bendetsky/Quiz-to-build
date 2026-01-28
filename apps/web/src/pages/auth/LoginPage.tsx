@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../stores/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { OAuthButtons } from '../../components/auth/OAuthButtons';
 
 const loginSchema = z.object({
     email: z.string().email('Invalid email address'),
@@ -130,6 +131,13 @@ export function LoginPage() {
                     )}
                 </button>
             </form>
+
+            <div className="mt-6">
+                <OAuthButtons
+                    mode="login"
+                    onError={(err) => setError(err)}
+                />
+            </div>
 
             <div className="mt-6">
                 <div className="relative">

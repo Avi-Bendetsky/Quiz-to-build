@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../stores/auth';
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { OAuthButtons } from '../../components/auth/OAuthButtons';
 
 const registerSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -193,6 +194,13 @@ export function RegisterPage() {
                     )}
                 </button>
             </form>
+
+            <div className="mt-6">
+                <OAuthButtons
+                    mode="register"
+                    onError={(err) => setError(err)}
+                />
+            </div>
 
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
