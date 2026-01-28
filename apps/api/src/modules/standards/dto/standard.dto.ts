@@ -74,6 +74,9 @@ export class DocumentTypeMappingDto {
 }
 
 export class StandardWithMappingsDto extends StandardResponseDto {
-  @ApiProperty({ description: 'Document types this standard is mapped to', type: [DocumentTypeMappingDto] })
+  @ApiProperty({
+    description: 'Document types this standard is mapped to',
+    type: [DocumentTypeMappingDto],
+  })
   documentTypes: DocumentTypeMappingDto[];
 }

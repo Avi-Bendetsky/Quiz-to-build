@@ -7,20 +7,20 @@ import { OpaPolicy, PolicySeverity, OpaPolicyTest } from '../types';
 
 @Injectable()
 export class OpaPolicyService {
-    private readonly logger = new Logger(OpaPolicyService.name);
+  private readonly logger = new Logger(OpaPolicyService.name);
 
-    /**
-     * OPA policy templates by dimension
-     */
-    private readonly policyTemplates: Record<string, OpaPolicy[]> = {
-        arch_sec: [
-            {
-                name: 'require_https',
-                packageName: 'quiz2biz.security',
-                description: 'Require HTTPS for all ingress resources',
-                severity: PolicySeverity.HIGH,
-                resourceTypes: ['kubernetes_ingress', 'azurerm_application_gateway'],
-                regoCode: `package quiz2biz.security
+  /**
+   * OPA policy templates by dimension
+   */
+  private readonly policyTemplates: Record<string, OpaPolicy[]> = {
+    arch_sec: [
+      {
+        name: 'require_https',
+        packageName: 'quiz2biz.security',
+        description: 'Require HTTPS for all ingress resources',
+        severity: PolicySeverity.HIGH,
+        resourceTypes: ['kubernetes_ingress', 'azurerm_application_gateway'],
+        regoCode: `package quiz2biz.security
 
 deny[msg] {
   input.kind == "Ingress"
@@ -34,18 +34,26 @@ deny[msg] {
   listener.protocol != "Https"
   msg := "Application Gateway must use HTTPS listener"
 }`,
-                tests: [
-                    { name: 'deny_http_ingress', input: { kind: 'Ingress', metadata: { name: 'test' }, spec: {} }, expected: false },
-                    { name: 'allow_https_ingress', input: { kind: 'Ingress', metadata: { name: 'test' }, spec: { tls: [{}] } }, expected: true },
-                ],
-            },
-            {
-                name: 'no_public_storage',
-                packageName: 'quiz2biz.security',
-                description: 'Deny publicly accessible storage accounts',
-                severity: PolicySeverity.CRITICAL,
-                resourceTypes: ['azurerm_storage_account', 'aws_s3_bucket'],
-                regoCode: `package quiz2biz.security
+        tests: [
+          {
+            name: 'deny_http_ingress',
+            input: { kind: 'Ingress', metadata: { name: 'test' }, spec: {} },
+            expected: false,
+          },
+          {
+            name: 'allow_https_ingress',
+            input: { kind: 'Ingress', metadata: { name: 'test' }, spec: { tls: [{}] } },
+            expected: true,
+          },
+        ],
+      },
+      {
+        name: 'no_public_storage',
+        packageName: 'quiz2biz.security',
+        description: 'Deny publicly accessible storage accounts',
+        severity: PolicySeverity.CRITICAL,
+        resourceTypes: ['azurerm_storage_account', 'aws_s3_bucket'],
+        regoCode: `package quiz2biz.security
 
 deny[msg] {
   input.resource_type == "azurerm_storage_account"
@@ -59,17 +67,24 @@ deny[msg] {
   acl == "public-read"
   msg := "S3 bucket must not be publicly readable"
 }`,
-                tests: [
-                    { name: 'deny_public_storage', input: { resource_type: 'azurerm_storage_account', resource: { public_network_access_enabled: true } }, expected: false },
-                ],
+        tests: [
+          {
+            name: 'deny_public_storage',
+            input: {
+              resource_type: 'azurerm_storage_account',
+              resource: { public_network_access_enabled: true },
             },
-            {
-                name: 'encryption_at_rest',
-                packageName: 'quiz2biz.security',
-                description: 'Require encryption at rest for databases',
-                severity: PolicySeverity.HIGH,
-                resourceTypes: ['azurerm_postgresql_flexible_server', 'azurerm_mssql_database'],
-                regoCode: `package quiz2biz.security
+            expected: false,
+          },
+        ],
+      },
+      {
+        name: 'encryption_at_rest',
+        packageName: 'quiz2biz.security',
+        description: 'Require encryption at rest for databases',
+        severity: PolicySeverity.HIGH,
+        resourceTypes: ['azurerm_postgresql_flexible_server', 'azurerm_mssql_database'],
+        regoCode: `package quiz2biz.security
 
 deny[msg] {
   input.resource_type == "azurerm_mssql_database"
@@ -83,18 +98,18 @@ deny[msg] {
   not input.resource.geo_redundant_backup_enabled
   msg := "PostgreSQL server must have geo-redundant backup for data protection"
 }`,
-                tests: [],
-            },
-        ],
+        tests: [],
+      },
+    ],
 
-        devops_iac: [
-            {
-                name: 'require_tags',
-                packageName: 'quiz2biz.governance',
-                description: 'Require mandatory tags on all resources',
-                severity: PolicySeverity.MEDIUM,
-                resourceTypes: ['*'],
-                regoCode: `package quiz2biz.governance
+    devops_iac: [
+      {
+        name: 'require_tags',
+        packageName: 'quiz2biz.governance',
+        description: 'Require mandatory tags on all resources',
+        severity: PolicySeverity.MEDIUM,
+        resourceTypes: ['*'],
+        regoCode: `package quiz2biz.governance
 
 required_tags := ["environment", "owner", "cost-center"]
 
@@ -104,18 +119,24 @@ deny[msg] {
   not resource.tags[tag]
   msg := sprintf("Resource missing required tag: %v", [tag])
 }`,
-                tests: [
-                    { name: 'deny_missing_tags', input: { resource: { tags: {} } }, expected: false },
-                    { name: 'allow_all_tags', input: { resource: { tags: { environment: 'prod', owner: 'team', 'cost-center': '123' } } }, expected: true },
-                ],
+        tests: [
+          { name: 'deny_missing_tags', input: { resource: { tags: {} } }, expected: false },
+          {
+            name: 'allow_all_tags',
+            input: {
+              resource: { tags: { environment: 'prod', owner: 'team', 'cost-center': '123' } },
             },
-            {
-                name: 'no_hardcoded_secrets',
-                packageName: 'quiz2biz.security',
-                description: 'Prevent hardcoded secrets in configuration',
-                severity: PolicySeverity.CRITICAL,
-                resourceTypes: ['*'],
-                regoCode: `package quiz2biz.security
+            expected: true,
+          },
+        ],
+      },
+      {
+        name: 'no_hardcoded_secrets',
+        packageName: 'quiz2biz.security',
+        description: 'Prevent hardcoded secrets in configuration',
+        severity: PolicySeverity.CRITICAL,
+        resourceTypes: ['*'],
+        regoCode: `package quiz2biz.security
 
 secret_patterns := ["password", "secret", "api_key", "token", "credential"]
 
@@ -129,18 +150,18 @@ deny[msg] {
   not startswith(resource[key], "data.")
   msg := sprintf("Possible hardcoded secret found in key: %v", [key])
 }`,
-                tests: [],
-            },
-        ],
+        tests: [],
+      },
+    ],
 
-        compliance_policy: [
-            {
-                name: 'audit_logging_enabled',
-                packageName: 'quiz2biz.compliance',
-                description: 'Require audit logging on all resources',
-                severity: PolicySeverity.HIGH,
-                resourceTypes: ['azurerm_key_vault', 'azurerm_storage_account'],
-                regoCode: `package quiz2biz.compliance
+    compliance_policy: [
+      {
+        name: 'audit_logging_enabled',
+        packageName: 'quiz2biz.compliance',
+        description: 'Require audit logging on all resources',
+        severity: PolicySeverity.HIGH,
+        resourceTypes: ['azurerm_key_vault', 'azurerm_storage_account'],
+        regoCode: `package quiz2biz.compliance
 
 deny[msg] {
   input.resource_type == "azurerm_key_vault"
@@ -153,74 +174,73 @@ deny[msg] {
   not input.resource.blob_properties[_].logging
   msg := "Storage account must have blob logging enabled"
 }`,
-                tests: [],
-            },
-        ],
+        tests: [],
+      },
+    ],
+  };
+
+  /**
+   * Get OPA policies for a dimension
+   */
+  getPoliciesForDimension(dimensionKey: string): OpaPolicy[] {
+    return this.policyTemplates[dimensionKey] || [];
+  }
+
+  /**
+   * Get all available OPA policies
+   */
+  getAllPolicies(): OpaPolicy[] {
+    const policies: OpaPolicy[] = [];
+    for (const dimension of Object.values(this.policyTemplates)) {
+      policies.push(...dimension);
+    }
+    return policies;
+  }
+
+  /**
+   * Generate combined Rego policy file
+   */
+  generateCombinedRegoFile(policies: OpaPolicy[]): string {
+    const lines: string[] = [
+      '# Quiz2Biz Auto-Generated OPA Policies',
+      '# Generated at: ' + new Date().toISOString(),
+      '',
+    ];
+
+    for (const policy of policies) {
+      lines.push(`# Policy: ${policy.name}`);
+      lines.push(`# Description: ${policy.description}`);
+      lines.push(`# Severity: ${policy.severity}`);
+      lines.push('');
+      lines.push(policy.regoCode);
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Validate Rego syntax (basic check)
+   */
+  validateRegoSyntax(regoCode: string): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    // Basic syntax checks
+    if (!regoCode.includes('package ')) {
+      errors.push('Missing package declaration');
+    }
+
+    const hasRule =
+      regoCode.includes('deny[') || regoCode.includes('allow[') || regoCode.includes('violation[');
+    if (!hasRule) {
+      errors.push('No deny, allow, or violation rule found');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
     };
-
-    /**
-     * Get OPA policies for a dimension
-     */
-    getPoliciesForDimension(dimensionKey: string): OpaPolicy[] {
-        return this.policyTemplates[dimensionKey] || [];
-    }
-
-    /**
-     * Get all available OPA policies
-     */
-    getAllPolicies(): OpaPolicy[] {
-        const policies: OpaPolicy[] = [];
-        for (const dimension of Object.values(this.policyTemplates)) {
-            policies.push(...dimension);
-        }
-        return policies;
-    }
-
-    /**
-     * Generate combined Rego policy file
-     */
-    generateCombinedRegoFile(policies: OpaPolicy[]): string {
-        const lines: string[] = [
-            '# Quiz2Biz Auto-Generated OPA Policies',
-            '# Generated at: ' + new Date().toISOString(),
-            '',
-        ];
-
-        for (const policy of policies) {
-            lines.push(`# Policy: ${policy.name}`);
-            lines.push(`# Description: ${policy.description}`);
-            lines.push(`# Severity: ${policy.severity}`);
-            lines.push('');
-            lines.push(policy.regoCode);
-            lines.push('');
-            lines.push('---');
-            lines.push('');
-        }
-
-        return lines.join('\n');
-    }
-
-    /**
-     * Validate Rego syntax (basic check)
-     */
-    validateRegoSyntax(regoCode: string): { valid: boolean; errors: string[] } {
-        const errors: string[] = [];
-
-        // Basic syntax checks
-        if (!regoCode.includes('package ')) {
-            errors.push('Missing package declaration');
-        }
-
-        const hasRule = regoCode.includes('deny[') ||
-            regoCode.includes('allow[') ||
-            regoCode.includes('violation[');
-        if (!hasRule) {
-            errors.push('No deny, allow, or violation rule found');
-        }
-
-        return {
-            valid: errors.length === 0,
-            errors,
-        };
-    }
+  }
 }

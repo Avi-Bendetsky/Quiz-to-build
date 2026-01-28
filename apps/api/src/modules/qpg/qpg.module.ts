@@ -1,9 +1,9 @@
 /**
  * QPG (Qoder Prompt Generator) Module
- * 
+ *
  * Converts readiness gaps identified by the Quiz2Biz scoring engine
  * into actionable Quest-Mode prompts for automated remediation.
- * 
+ *
  * Core Functionality:
  * - Gap-to-prompt mapping based on dimension and severity
  * - Structured prompt generation (Goal → Tasks → Acceptance → Constraints → Deliverables)
@@ -19,14 +19,9 @@ import { PromptGeneratorService } from './services/prompt-generator.service';
 import { PrismaModule } from '@libs/database';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [QpgController],
-    providers: [
-        QpgService,
-        PromptTemplateService,
-        ContextBuilderService,
-        PromptGeneratorService,
-    ],
-    exports: [QpgService],
+  imports: [PrismaModule],
+  controllers: [QpgController],
+  providers: [QpgService, PromptTemplateService, ContextBuilderService, PromptGeneratorService],
+  exports: [QpgService],
 })
-export class QpgModule { }
+export class QpgModule {}

@@ -1,6 +1,6 @@
 /**
  * Policy Pack Module
- * 
+ *
  * Generates compliance-ready policy documents from readiness gaps.
  * Creates Policy → Standard → Procedure hierarchy aligned with
  * ISO 27001, NIST CSF, and OWASP ASVS frameworks.
@@ -16,16 +16,16 @@ import { PolicyExportService } from './services/policy-export.service';
 import { PrismaModule } from '@libs/database';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [PolicyPackController],
-    providers: [
-        PolicyPackService,
-        PolicyGeneratorService,
-        ControlMappingService,
-        OpaPolicyService,
-        TerraformRulesService,
-        PolicyExportService,
-    ],
-    exports: [PolicyPackService],
+  imports: [PrismaModule],
+  controllers: [PolicyPackController],
+  providers: [
+    PolicyPackService,
+    PolicyGeneratorService,
+    ControlMappingService,
+    OpaPolicyService,
+    TerraformRulesService,
+    PolicyExportService,
+  ],
+  exports: [PolicyPackService],
 })
-export class PolicyPackModule { }
+export class PolicyPackModule {}

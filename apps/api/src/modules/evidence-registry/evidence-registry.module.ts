@@ -7,7 +7,7 @@ import { PrismaModule } from '@libs/database';
 
 /**
  * Evidence Registry Module
- * 
+ *
  * Implements Quiz2Biz evidence management:
  * - File uploads with SHA-256 hashing
  * - Azure Blob Storage integration
@@ -18,17 +18,9 @@ import { PrismaModule } from '@libs/database';
  * - CI artifact automatic ingestion
  */
 @Module({
-    imports: [PrismaModule],
-    controllers: [EvidenceRegistryController],
-    providers: [
-        EvidenceRegistryService,
-        EvidenceIntegrityService,
-        CIArtifactIngestionService,
-    ],
-    exports: [
-        EvidenceRegistryService,
-        EvidenceIntegrityService,
-        CIArtifactIngestionService,
-    ],
+  imports: [PrismaModule],
+  controllers: [EvidenceRegistryController],
+  providers: [EvidenceRegistryService, EvidenceIntegrityService, CIArtifactIngestionService],
+  exports: [EvidenceRegistryService, EvidenceIntegrityService, CIArtifactIngestionService],
 })
-export class EvidenceRegistryModule { }
+export class EvidenceRegistryModule {}

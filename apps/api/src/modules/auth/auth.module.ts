@@ -28,4 +28,4 @@ import { OAuthController } from './oauth/oauth.controller';
   providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, OAuthService],
   exports: [AuthService, JwtAuthGuard, RolesGuard, OAuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

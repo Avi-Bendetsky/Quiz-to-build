@@ -15,7 +15,7 @@ export interface AuditLogParams {
 export class AdminAuditService {
   private readonly logger = new Logger(AdminAuditService.name);
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async log(params: AuditLogParams): Promise<void> {
     const { userId, action, resourceType, resourceId, changes, request } = params;
@@ -30,13 +30,11 @@ export class AdminAuditService {
           changes: changes ? JSON.parse(JSON.stringify(changes)) : null,
           ipAddress: request?.ip ?? request?.socket?.remoteAddress ?? null,
           userAgent: request?.headers?.['user-agent'] ?? null,
-          requestId: request?.headers?.['x-request-id'] as string ?? null,
+          requestId: (request?.headers?.['x-request-id'] as string) ?? null,
         },
       });
 
-      this.logger.log(
-        `Audit: ${action} on ${resourceType}:${resourceId} by user ${userId}`,
-      );
+      this.logger.log(`Audit: ${action} on ${resourceType}:${resourceId} by user ${userId}`);
     } catch (error) {
       this.logger.error(
         `Failed to create audit log: ${error instanceof Error ? error.message : 'Unknown error'}`,

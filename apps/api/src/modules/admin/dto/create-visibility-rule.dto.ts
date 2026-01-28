@@ -15,9 +15,7 @@ export class CreateVisibilityRuleDto {
   @ApiProperty({
     example: {
       type: 'AND',
-      conditions: [
-        { questionId: '123', operator: 'equals', value: 'yes' },
-      ],
+      conditions: [{ questionId: '123', operator: 'equals', value: 'yes' }],
     },
     description: 'JSON condition structure',
   })

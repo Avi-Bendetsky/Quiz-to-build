@@ -218,11 +218,7 @@ export class AuthService {
     const refreshToken = uuidv4();
 
     // Store refresh token in Redis
-    await this.redisService.set(
-      `refresh:${refreshToken}`,
-      user.id,
-      this.refreshTokenTtlSeconds,
-    );
+    await this.redisService.set(`refresh:${refreshToken}`, user.id, this.refreshTokenTtlSeconds);
 
     // Also store in database for audit
     await this.prisma.refreshToken.create({
@@ -302,11 +298,7 @@ export class AuthService {
     const token = this.generateSecureToken();
 
     // Store token in Redis with expiry
-    await this.redisService.set(
-      `verify:${token}`,
-      userId,
-      this.verificationTokenExpiry,
-    );
+    await this.redisService.set(`verify:${token}`, userId, this.verificationTokenExpiry);
 
     const userName = name || email.split('@')[0];
 
@@ -403,11 +395,7 @@ export class AuthService {
     const token = this.generateSecureToken();
 
     // Store token in Redis with expiry
-    await this.redisService.set(
-      `reset:${token}`,
-      user.id,
-      this.passwordResetTokenExpiry,
-    );
+    await this.redisService.set(`reset:${token}`, user.id, this.passwordResetTokenExpiry);
 
     const profile = user.profile as Record<string, unknown> | null;
     const userName = (profile?.name as string) || email.split('@')[0];

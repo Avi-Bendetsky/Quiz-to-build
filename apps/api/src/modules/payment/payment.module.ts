@@ -8,7 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 
 /**
  * Payment Module - Stripe integration for subscriptions and billing
- * 
+ *
  * Features:
  * - Stripe checkout session creation
  * - Webhook handling for subscription events
@@ -16,9 +16,9 @@ import { ConfigModule } from '@nestjs/config';
  * - Billing history and invoice retrieval
  */
 @Module({
-    imports: [PrismaModule, ConfigModule],
-    controllers: [PaymentController],
-    providers: [PaymentService, SubscriptionService, BillingService],
-    exports: [PaymentService, SubscriptionService, BillingService],
+  imports: [PrismaModule, ConfigModule],
+  controllers: [PaymentController],
+  providers: [PaymentService, SubscriptionService, BillingService],
+  exports: [PaymentService, SubscriptionService, BillingService],
 })
-export class PaymentModule { }
+export class PaymentModule {}

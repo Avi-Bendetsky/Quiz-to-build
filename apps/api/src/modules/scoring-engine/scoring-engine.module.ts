@@ -6,7 +6,7 @@ import { RedisModule } from '@libs/redis';
 
 /**
  * Scoring Engine Module
- * 
+ *
  * Implements Quiz2Biz risk-weighted readiness scoring with explicit formulas:
  * - Coverage: C_i ∈ [0,1] per question
  * - Dimension Residual: R_d = Σ(S_i × (1-C_i)) / (Σ S_i + ε)
@@ -14,9 +14,9 @@ import { RedisModule } from '@libs/redis';
  * - Readiness Score: Score = 100 × (1 - R)
  */
 @Module({
-    imports: [PrismaModule, RedisModule],
-    controllers: [ScoringEngineController],
-    providers: [ScoringEngineService],
-    exports: [ScoringEngineService],
+  imports: [PrismaModule, RedisModule],
+  controllers: [ScoringEngineController],
+  providers: [ScoringEngineService],
+  exports: [ScoringEngineService],
 })
-export class ScoringEngineModule { }
+export class ScoringEngineModule {}

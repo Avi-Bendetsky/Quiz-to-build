@@ -4,56 +4,56 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * Email template definitions for transactional emails
  */
 export interface EmailTemplateData {
-    /** User's name for personalization */
-    userName?: string;
-    /** Action URL (verification link, reset link, etc.) */
-    actionUrl?: string;
-    /** Token for verification or password reset */
-    token?: string;
-    /** Session ID for session-related emails */
-    sessionId?: string;
-    /** Document names for document-related emails */
-    documentNames?: string[];
-    /** Questionnaire name */
-    questionnaireName?: string;
-    /** Progress percentage */
-    progressPercentage?: number;
-    /** Expiration time for tokens */
-    expiresIn?: string;
-    /** Custom data fields */
-    [key: string]: unknown;
+  /** User's name for personalization */
+  userName?: string;
+  /** Action URL (verification link, reset link, etc.) */
+  actionUrl?: string;
+  /** Token for verification or password reset */
+  token?: string;
+  /** Session ID for session-related emails */
+  sessionId?: string;
+  /** Document names for document-related emails */
+  documentNames?: string[];
+  /** Questionnaire name */
+  questionnaireName?: string;
+  /** Progress percentage */
+  progressPercentage?: number;
+  /** Expiration time for tokens */
+  expiresIn?: string;
+  /** Custom data fields */
+  [key: string]: unknown;
 }
 
 export class EmailTemplateDto {
-    @ApiProperty({ description: 'Template identifier' })
-    id: string;
+  @ApiProperty({ description: 'Template identifier' })
+  id: string;
 
-    @ApiProperty({ description: 'Template name' })
-    name: string;
+  @ApiProperty({ description: 'Template name' })
+  name: string;
 
-    @ApiProperty({ description: 'Subject line template (supports variables)' })
-    subject: string;
+  @ApiProperty({ description: 'Subject line template (supports variables)' })
+  subject: string;
 
-    @ApiProperty({ description: 'HTML content template' })
-    htmlTemplate: string;
+  @ApiProperty({ description: 'HTML content template' })
+  htmlTemplate: string;
 
-    @ApiPropertyOptional({ description: 'Plain text template' })
-    textTemplate?: string;
+  @ApiPropertyOptional({ description: 'Plain text template' })
+  textTemplate?: string;
 
-    @ApiPropertyOptional({ description: 'Required variables for this template' })
-    requiredVariables?: string[];
+  @ApiPropertyOptional({ description: 'Required variables for this template' })
+  requiredVariables?: string[];
 }
 
 /**
  * Predefined email templates
  */
 export const EMAIL_TEMPLATES: Record<string, EmailTemplateDto> = {
-    verification: {
-        id: 'verification',
-        name: 'Email Verification',
-        subject: 'Verify your Quiz2Biz email address',
-        requiredVariables: ['userName', 'actionUrl', 'expiresIn'],
-        htmlTemplate: `
+  verification: {
+    id: 'verification',
+    name: 'Email Verification',
+    subject: 'Verify your Quiz2Biz email address',
+    requiredVariables: ['userName', 'actionUrl', 'expiresIn'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -78,7 +78,7 @@ export const EMAIL_TEMPLATES: Record<string, EmailTemplateDto> = {
     </div>
 </body>
 </html>`,
-        textTemplate: `Welcome to Quiz2Biz, {{userName}}!
+    textTemplate: `Welcome to Quiz2Biz, {{userName}}!
 
 Please verify your email address by clicking the link below:
 {{actionUrl}}
@@ -86,14 +86,14 @@ Please verify your email address by clicking the link below:
 This link will expire in {{expiresIn}}.
 
 If you didn't create an account, you can safely ignore this email.`,
-    },
+  },
 
-    password_reset: {
-        id: 'password_reset',
-        name: 'Password Reset',
-        subject: 'Reset your Quiz2Biz password',
-        requiredVariables: ['userName', 'actionUrl', 'expiresIn'],
-        htmlTemplate: `
+  password_reset: {
+    id: 'password_reset',
+    name: 'Password Reset',
+    subject: 'Reset your Quiz2Biz password',
+    requiredVariables: ['userName', 'actionUrl', 'expiresIn'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -119,7 +119,7 @@ If you didn't create an account, you can safely ignore this email.`,
     </div>
 </body>
 </html>`,
-        textTemplate: `Password Reset Request
+    textTemplate: `Password Reset Request
 
 Hi {{userName}},
 
@@ -129,14 +129,14 @@ We received a request to reset your password. Click the link below to create a n
 This link will expire in {{expiresIn}}.
 
 If you didn't request a password reset, please ignore this email.`,
-    },
+  },
 
-    welcome: {
-        id: 'welcome',
-        name: 'Welcome Email',
-        subject: 'Welcome to Quiz2Biz - Get Started with Your Assessment',
-        requiredVariables: ['userName'],
-        htmlTemplate: `
+  welcome: {
+    id: 'welcome',
+    name: 'Welcome Email',
+    subject: 'Welcome to Quiz2Biz - Get Started with Your Assessment',
+    requiredVariables: ['userName'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -166,7 +166,7 @@ If you didn't request a password reset, please ignore this email.`,
     </div>
 </body>
 </html>`,
-        textTemplate: `Welcome to Quiz2Biz, {{userName}}!
+    textTemplate: `Welcome to Quiz2Biz, {{userName}}!
 
 Your account is now active and you're ready to begin your business readiness assessment.
 
@@ -178,14 +178,14 @@ What's Next?
 Start here: {{actionUrl}}
 
 Need help? Reply to this email or visit our help center.`,
-    },
+  },
 
-    session_reminder: {
-        id: 'session_reminder',
-        name: 'Session Reminder',
-        subject: 'Continue your Quiz2Biz assessment - {{progressPercentage}}% complete',
-        requiredVariables: ['userName', 'actionUrl', 'questionnaireName', 'progressPercentage'],
-        htmlTemplate: `
+  session_reminder: {
+    id: 'session_reminder',
+    name: 'Session Reminder',
+    subject: 'Continue your Quiz2Biz assessment - {{progressPercentage}}% complete',
+    requiredVariables: ['userName', 'actionUrl', 'questionnaireName', 'progressPercentage'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -215,21 +215,21 @@ Need help? Reply to this email or visit our help center.`,
     </div>
 </body>
 </html>`,
-        textTemplate: `Don't lose your progress!
+    textTemplate: `Don't lose your progress!
 
 Hi {{userName}},
 
 You're {{progressPercentage}}% through your "{{questionnaireName}}" assessment. 
 
 Continue here: {{actionUrl}}`,
-    },
+  },
 
-    documents_ready: {
-        id: 'documents_ready',
-        name: 'Documents Ready',
-        subject: 'Your Quiz2Biz documents are ready for download',
-        requiredVariables: ['userName', 'actionUrl', 'documentNames'],
-        htmlTemplate: `
+  documents_ready: {
+    id: 'documents_ready',
+    name: 'Documents Ready',
+    subject: 'Your Quiz2Biz documents are ready for download',
+    requiredVariables: ['userName', 'actionUrl', 'documentNames'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -258,7 +258,7 @@ Continue here: {{actionUrl}}`,
     </div>
 </body>
 </html>`,
-        textTemplate: `Your Documents Are Ready!
+    textTemplate: `Your Documents Are Ready!
 
 Hi {{userName}},
 
@@ -268,14 +268,14 @@ Your documents have been generated:
 {{/each}}
 
 Download here: {{actionUrl}}`,
-    },
+  },
 
-    documents_approved: {
-        id: 'documents_approved',
-        name: 'Documents Approved',
-        subject: 'Your Quiz2Biz documents have been approved',
-        requiredVariables: ['userName', 'actionUrl', 'documentNames'],
-        htmlTemplate: `
+  documents_approved: {
+    id: 'documents_approved',
+    name: 'Documents Approved',
+    subject: 'Your Quiz2Biz documents have been approved',
+    requiredVariables: ['userName', 'actionUrl', 'documentNames'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -303,7 +303,7 @@ Download here: {{actionUrl}}`,
     </div>
 </body>
 </html>`,
-        textTemplate: `Documents Approved!
+    textTemplate: `Documents Approved!
 
 Congratulations {{userName}}!
 
@@ -313,14 +313,14 @@ Your documents have been reviewed and approved:
 {{/each}}
 
 Download here: {{actionUrl}}`,
-    },
+  },
 
-    review_pending: {
-        id: 'review_pending',
-        name: 'Review Pending (Admin)',
-        subject: '[Action Required] New documents pending review',
-        requiredVariables: ['userName', 'actionUrl', 'documentNames'],
-        htmlTemplate: `
+  review_pending: {
+    id: 'review_pending',
+    name: 'Review Pending (Admin)',
+    subject: '[Action Required] New documents pending review',
+    requiredVariables: ['userName', 'actionUrl', 'documentNames'],
+    htmlTemplate: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -349,7 +349,7 @@ Download here: {{actionUrl}}`,
     </div>
 </body>
 </html>`,
-        textTemplate: `New Documents Pending Review
+    textTemplate: `New Documents Pending Review
 
 Hi {{userName}},
 
@@ -359,5 +359,5 @@ The following documents are awaiting your review:
 {{/each}}
 
 Review here: {{actionUrl}}`,
-    },
+  },
 };

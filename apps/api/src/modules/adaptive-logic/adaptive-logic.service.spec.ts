@@ -161,9 +161,27 @@ describe('AdaptiveLogicService', () => {
   describe('getVisibleQuestions', () => {
     it('should return all questions when no visibility rules', async () => {
       const mockQuestions = [
-        { ...mockQuestion, id: 'q-001', orderIndex: 1, visibilityRules: [], section: { orderIndex: 1 } },
-        { ...mockQuestion, id: 'q-002', orderIndex: 2, visibilityRules: [], section: { orderIndex: 1 } },
-        { ...mockQuestion, id: 'q-003', orderIndex: 3, visibilityRules: [], section: { orderIndex: 1 } },
+        {
+          ...mockQuestion,
+          id: 'q-001',
+          orderIndex: 1,
+          visibilityRules: [],
+          section: { orderIndex: 1 },
+        },
+        {
+          ...mockQuestion,
+          id: 'q-002',
+          orderIndex: 2,
+          visibilityRules: [],
+          section: { orderIndex: 1 },
+        },
+        {
+          ...mockQuestion,
+          id: 'q-003',
+          orderIndex: 3,
+          visibilityRules: [],
+          section: { orderIndex: 1 },
+        },
       ];
 
       (prismaService.question.findMany as jest.Mock).mockResolvedValue(mockQuestions);
@@ -177,7 +195,13 @@ describe('AdaptiveLogicService', () => {
 
     it('should filter out hidden questions', async () => {
       const mockQuestions = [
-        { ...mockQuestion, id: 'q-001', orderIndex: 1, visibilityRules: [], section: { orderIndex: 1 } },
+        {
+          ...mockQuestion,
+          id: 'q-001',
+          orderIndex: 1,
+          visibilityRules: [],
+          section: { orderIndex: 1 },
+        },
         {
           ...mockQuestion,
           id: 'q-002',
@@ -193,7 +217,13 @@ describe('AdaptiveLogicService', () => {
             },
           ],
         },
-        { ...mockQuestion, id: 'q-003', orderIndex: 3, visibilityRules: [], section: { orderIndex: 1 } },
+        {
+          ...mockQuestion,
+          id: 'q-003',
+          orderIndex: 3,
+          visibilityRules: [],
+          section: { orderIndex: 1 },
+        },
       ];
 
       (prismaService.question.findMany as jest.Mock).mockResolvedValue(mockQuestions);

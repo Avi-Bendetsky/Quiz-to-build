@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { SessionProgress } from '../../types';
 import { ProgressDisplay } from './ProgressDisplay';
 
@@ -71,7 +71,7 @@ export const ScoreDashboard: React.FC<ScoreDashboardProps> = ({
   }, [scoreData]);
 
   // Refresh function
-  const refreshScore = async () => {
+  const refreshScore = useCallback(async () => {
     if (!onRefresh) {
       return;
     }
@@ -86,7 +86,7 @@ export const ScoreDashboard: React.FC<ScoreDashboardProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onRefresh]);
 
   // Auto-refresh interval
   useEffect(() => {
@@ -96,7 +96,7 @@ export const ScoreDashboard: React.FC<ScoreDashboardProps> = ({
 
     const interval = setInterval(() => void refreshScore(), refreshInterval);
     return () => clearInterval(interval);
-  }, [refreshInterval, onRefresh]);
+  }, [refreshInterval, onRefresh, refreshScore]);
 
   // Get trend icon
   const getTrendIcon = () => {

@@ -135,10 +135,12 @@ describe('AdminQuestionnaireService', () => {
     it('should return questionnaire with details', async () => {
       const questionnaireWithDetails = {
         ...mockQuestionnaire,
-        sections: [{
-          ...mockSection,
-          questions: [{ ...mockQuestion, visibilityRules: [] }],
-        }],
+        sections: [
+          {
+            ...mockSection,
+            questions: [{ ...mockQuestion, visibilityRules: [] }],
+          },
+        ],
         _count: { sessions: 5 },
       };
       prismaService.questionnaire.findUnique.mockResolvedValue(questionnaireWithDetails);
@@ -153,9 +155,7 @@ describe('AdminQuestionnaireService', () => {
     it('should throw NotFoundException when questionnaire not found', async () => {
       prismaService.questionnaire.findUnique.mockResolvedValue(null);
 
-      await expect(service.findQuestionnaireById('invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findQuestionnaireById('invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 

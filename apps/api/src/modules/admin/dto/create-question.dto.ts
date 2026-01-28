@@ -57,12 +57,18 @@ export class CreateQuestionDto {
   @IsBoolean()
   isRequired?: boolean;
 
-  @ApiPropertyOptional({ type: [QuestionOptionDto], description: 'Options for choice-based questions' })
+  @ApiPropertyOptional({
+    type: [QuestionOptionDto],
+    description: 'Options for choice-based questions',
+  })
   @IsOptional()
   @IsArray()
   options?: QuestionOptionDto[];
 
-  @ApiPropertyOptional({ example: { minLength: 2, maxLength: 200 }, description: 'Validation rules' })
+  @ApiPropertyOptional({
+    example: { minLength: 2, maxLength: 200 },
+    description: 'Validation rules',
+  })
   @IsOptional()
   @IsObject()
   validationRules?: Record<string, unknown>;

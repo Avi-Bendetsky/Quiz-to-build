@@ -84,10 +84,7 @@ describe('TemplateEngineService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TemplateEngineService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [TemplateEngineService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<TemplateEngineService>(TemplateEngineService);
@@ -123,9 +120,9 @@ describe('TemplateEngineService', () => {
     it('should throw NotFoundException for invalid document type slug', async () => {
       prismaService.documentType.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.assembleTemplateData('session-1', 'invalid-slug'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.assembleTemplateData('session-1', 'invalid-slug')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should handle empty responses', async () => {
@@ -207,10 +204,7 @@ describe('TemplateEngineService', () => {
         },
       };
 
-      const result = service.validateRequiredFields(data, [
-        'company.name',
-        'market.size',
-      ]);
+      const result = service.validateRequiredFields(data, ['company.name', 'market.size']);
 
       expect(result.valid).toBe(true);
       expect(result.missingFields).toHaveLength(0);

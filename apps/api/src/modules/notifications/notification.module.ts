@@ -6,8 +6,8 @@ import { TeamsWebhookController } from './teams-webhook.controller';
 
 @Global()
 @Module({
-    controllers: [NotificationController, TeamsWebhookController],
-    providers: [NotificationService, AdaptiveCardService],
-    exports: [NotificationService, AdaptiveCardService],
+  controllers: [NotificationController, TeamsWebhookController],
+  providers: [NotificationService, AdaptiveCardService],
+  exports: [NotificationService, AdaptiveCardService],
 })
-export class NotificationModule { }
+export class NotificationModule {}

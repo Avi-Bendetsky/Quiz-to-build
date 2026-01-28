@@ -24,17 +24,14 @@ export class StorageService {
   private readonly accountKey: string;
 
   constructor(private readonly configService: ConfigService) {
-    const connectionString = this.configService.get<string>(
-      'AZURE_STORAGE_CONNECTION_STRING',
-    );
+    const connectionString = this.configService.get<string>('AZURE_STORAGE_CONNECTION_STRING');
     this.containerName = this.configService.get<string>(
       'AZURE_STORAGE_CONTAINER_NAME',
       'documents',
     );
 
     if (connectionString) {
-      this.blobServiceClient =
-        BlobServiceClient.fromConnectionString(connectionString);
+      this.blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
 
       // Extract account name and key from connection string for SAS generation
       const accountNameMatch = connectionString.match(/AccountName=([^;]+)/);
@@ -62,11 +59,7 @@ export class StorageService {
   /**
    * Upload a document buffer to Azure Blob Storage
    */
-  async upload(
-    buffer: Buffer,
-    fileName: string,
-    category: string,
-  ): Promise<UploadResult> {
+  async upload(buffer: Buffer, fileName: string, category: string): Promise<UploadResult> {
     const containerClient = this.getContainerClient();
 
     // Ensure container exists
@@ -82,8 +75,7 @@ export class StorageService {
 
     await blockBlobClient.uploadData(buffer, {
       blobHTTPHeaders: {
-        blobContentType:
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        blobContentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       },
     });
 
@@ -97,10 +89,7 @@ export class StorageService {
   /**
    * Generate a secure SAS URL for document download
    */
-  async getDownloadUrl(
-    storageUrl: string,
-    expiresInMinutes: number = 60,
-  ): Promise<string> {
+  async getDownloadUrl(storageUrl: string, expiresInMinutes: number = 60): Promise<string> {
     if (!this.accountName || !this.accountKey) {
       throw new Error('Azure Storage credentials not configured');
     }
@@ -112,10 +101,7 @@ export class StorageService {
     const containerClient = this.getContainerClient();
     const blobClient = containerClient.getBlobClient(blobPath);
 
-    const sharedKeyCredential = new StorageSharedKeyCredential(
-      this.accountName,
-      this.accountKey,
-    );
+    const sharedKeyCredential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
 
     const startsOn = new Date();
     const expiresOn = new Date(startsOn.getTime() + expiresInMinutes * 60000);

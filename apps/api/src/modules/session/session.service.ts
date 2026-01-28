@@ -7,7 +7,13 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import { Session, SessionStatus, Question, Response as PrismaResponse, Prisma } from '@prisma/client';
+import {
+  Session,
+  SessionStatus,
+  Question,
+  Response as PrismaResponse,
+  Prisma,
+} from '@prisma/client';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitResponseDto } from './dto/submit-response.dto';
 import { QuestionnaireService, QuestionResponse } from '../questionnaire/questionnaire.service';
@@ -96,7 +102,7 @@ export class SessionService {
     private readonly questionnaireService: QuestionnaireService,
     @Inject(forwardRef(() => AdaptiveLogicService))
     private readonly adaptiveLogicService: AdaptiveLogicService,
-  ) { }
+  ) {}
 
   async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
     // Get questionnaire
@@ -235,7 +241,7 @@ export class SessionService {
 
     // Get the next N visible questions starting from current position
     const nextQuestions: QuestionResponse[] = [];
-    let currentIndex = visibleQuestions.findIndex((q) => q.id === session.currentQuestionId);
+    const currentIndex = visibleQuestions.findIndex((q) => q.id === session.currentQuestionId);
 
     for (let i = currentIndex; i < visibleQuestions.length && nextQuestions.length < count; i++) {
       const question = visibleQuestions[i];
@@ -451,12 +457,14 @@ export class SessionService {
     const nextQuestions: QuestionResponse[] = [];
 
     if (!isComplete && session.currentQuestionId) {
-      const currentIndex = visibleQuestions.findIndex(
-        (q) => q.id === session.currentQuestionId,
-      );
+      const currentIndex = visibleQuestions.findIndex((q) => q.id === session.currentQuestionId);
 
       // Start from current question and find unanswered ones
-      for (let i = Math.max(0, currentIndex); i < visibleQuestions.length && nextQuestions.length < questionCount; i++) {
+      for (
+        let i = Math.max(0, currentIndex);
+        i < visibleQuestions.length && nextQuestions.length < questionCount;
+        i++
+      ) {
         const question = visibleQuestions[i];
         if (!responseMap.has(question.id)) {
           nextQuestions.push(this.mapQuestionToResponse(question));
@@ -516,9 +524,10 @@ export class SessionService {
         id: session.currentSection.id,
         name: session.currentSection.name,
         description: (session.currentSection as any).description ?? undefined,
-        progress: sectionQuestions.length > 0
-          ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
-          : 0,
+        progress:
+          sectionQuestions.length > 0
+            ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
+            : 0,
         questionsInSection: sectionQuestions.length,
         answeredInSection: sectionAnswered,
       };
@@ -568,10 +577,7 @@ export class SessionService {
     };
   }
 
-  private async getSessionWithValidation(
-    sessionId: string,
-    userId: string,
-  ): Promise<Session> {
+  private async getSessionWithValidation(sessionId: string, userId: string): Promise<Session> {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
     });
@@ -620,7 +626,9 @@ export class SessionService {
   }
 
   private mapQuestionToResponse(question: Question): QuestionResponse {
-    const options = question.options as { id: string; label: string; description?: string }[] | null;
+    const options = question.options as
+      | { id: string; label: string; description?: string }[]
+      | null;
     const validation = question.validationRules as Record<string, unknown> | null;
 
     return {
@@ -679,10 +687,18 @@ export class SessionService {
     if (value !== null && value !== undefined) {
       if (validation) {
         // Min/max length for text
-        if (validation.minLength && typeof value === 'string' && value.length < (validation.minLength as number)) {
+        if (
+          validation.minLength &&
+          typeof value === 'string' &&
+          value.length < (validation.minLength as number)
+        ) {
           errors.push(`Minimum length is ${validation.minLength} characters`);
         }
-        if (validation.maxLength && typeof value === 'string' && value.length > (validation.maxLength as number)) {
+        if (
+          validation.maxLength &&
+          typeof value === 'string' &&
+          value.length > (validation.maxLength as number)
+        ) {
           errors.push(`Maximum length is ${validation.maxLength} characters`);
         }
 
@@ -838,9 +854,7 @@ export class SessionService {
       .filter((r) => r.timeSpentSeconds != null)
       .map((r) => Number(r.timeSpentSeconds));
     const totalTimeSpent = timesSpent.reduce((sum, t) => sum + t, 0);
-    const avgTimePerQuestion = timesSpent.length > 0
-      ? totalTimeSpent / timesSpent.length
-      : 0;
+    const avgTimePerQuestion = timesSpent.length > 0 ? totalTimeSpent / timesSpent.length : 0;
 
     // Group by section
     const bySection: Record<string, { answered: number; total: number; avgTime: number }> = {};
@@ -863,9 +877,8 @@ export class SessionService {
     // Calculate avg time per section
     Object.keys(bySection).forEach((section) => {
       const times = sectionTimes[section];
-      bySection[section].avgTime = times.length > 0
-        ? times.reduce((a, b) => a + b, 0) / times.length
-        : 0;
+      bySection[section].avgTime =
+        times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
     });
 
     // Group by dimension
@@ -928,9 +941,7 @@ export class SessionService {
     const scores = completed
       .filter((s) => s.readinessScore != null)
       .map((s) => Number(s.readinessScore));
-    const avgScore = scores.length > 0
-      ? scores.reduce((a, b) => a + b, 0) / scores.length
-      : 0;
+    const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
     const lowestScore = scores.length > 0 ? Math.min(...scores) : 0;
 
@@ -938,9 +949,10 @@ export class SessionService {
     const completionTimes = completed
       .filter((s) => s.completedAt && s.startedAt)
       .map((s) => s.completedAt!.getTime() - s.startedAt.getTime());
-    const avgCompletionTime = completionTimes.length > 0
-      ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
-      : 0;
+    const avgCompletionTime =
+      completionTimes.length > 0
+        ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
+        : 0;
 
     return {
       userId,
@@ -952,9 +964,8 @@ export class SessionService {
       highestScore: Math.round(highestScore * 100) / 100,
       lowestScore: Math.round(lowestScore * 100) / 100,
       averageCompletionTimeMs: Math.round(avgCompletionTime),
-      scoreImprovement: scores.length >= 2
-        ? Math.round((scores[scores.length - 1] - scores[0]) * 100) / 100
-        : 0,
+      scoreImprovement:
+        scores.length >= 2 ? Math.round((scores[scores.length - 1] - scores[0]) * 100) / 100 : 0,
       analyzedAt: new Date(),
     };
   }

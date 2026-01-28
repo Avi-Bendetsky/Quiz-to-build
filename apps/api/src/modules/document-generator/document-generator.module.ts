@@ -22,4 +22,4 @@ import { DeliverablesCompilerService } from './services/deliverables-compiler.se
   ],
   exports: [DocumentGeneratorService, DeliverablesCompilerService],
 })
-export class DocumentGeneratorModule { }
+export class DocumentGeneratorModule {}

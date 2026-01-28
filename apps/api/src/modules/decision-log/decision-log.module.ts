@@ -7,7 +7,7 @@ import { PrismaModule } from '@libs/database';
 
 /**
  * Decision Log Module
- * 
+ *
  * Implements Quiz2Biz append-only forensic decision record:
  * - Status workflow: DRAFT -> LOCKED -> (AMENDED/SUPERSEDED)
  * - Append-only enforcement at service layer
@@ -16,9 +16,9 @@ import { PrismaModule } from '@libs/database';
  * - Audit export for compliance
  */
 @Module({
-    imports: [PrismaModule],
-    controllers: [DecisionLogController],
-    providers: [DecisionLogService, ApprovalWorkflowService, ApprovalGuard],
-    exports: [DecisionLogService, ApprovalWorkflowService],
+  imports: [PrismaModule],
+  controllers: [DecisionLogController],
+  providers: [DecisionLogService, ApprovalWorkflowService, ApprovalGuard],
+  exports: [DecisionLogService, ApprovalWorkflowService],
 })
-export class DecisionLogModule { }
+export class DecisionLogModule {}

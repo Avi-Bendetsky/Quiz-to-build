@@ -79,18 +79,19 @@ export class SessionController {
   }
 
   @Get(':id/continue')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Continue questionnaire session',
-    description: 'Retrieves the current session state, applies adaptive logic rules, and returns the next question(s) along with progress information. Use this endpoint to resume a questionnaire session.',
+    description:
+      'Retrieves the current session state, applies adaptive logic rules, and returns the next question(s) along with progress information. Use this endpoint to resume a questionnaire session.',
   })
-  @ApiQuery({ 
-    name: 'questionCount', 
-    required: false, 
-    type: Number, 
-    description: 'Number of questions to fetch (default: 1, max: 5)' 
+  @ApiQuery({
+    name: 'questionCount',
+    required: false,
+    type: Number,
+    description: 'Number of questions to fetch (default: 1, max: 5)',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Session state with next question(s) and progress information',
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
@@ -106,7 +107,12 @@ export class SessionController {
 
   @Get(':id/questions/next')
   @ApiOperation({ summary: 'Get next question(s) based on adaptive logic' })
-  @ApiQuery({ name: 'count', required: false, type: Number, description: 'Number of questions to fetch (default: 1, max: 5)' })
+  @ApiQuery({
+    name: 'count',
+    required: false,
+    type: Number,
+    description: 'Number of questions to fetch (default: 1, max: 5)',
+  })
   @ApiResponse({ status: 200, description: 'Next question(s)' })
   async getNextQuestion(
     @CurrentUser() user: AuthenticatedUser,

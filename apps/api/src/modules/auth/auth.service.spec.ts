@@ -136,9 +136,7 @@ describe('AuthService', () => {
     it('should throw ConflictException if user already exists', async () => {
       prismaService.user.findUnique.mockResolvedValue(mockUser);
 
-      await expect(service.register(registerDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
       expect(prismaService.user.create).not.toHaveBeenCalled();
     });
 
@@ -185,9 +183,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for invalid email', async () => {
       prismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for invalid password', async () => {
@@ -195,9 +191,7 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
       prismaService.user.update.mockResolvedValue(mockUser);
 
-      await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
       expect(prismaService.user.update).toHaveBeenCalled();
     });
 
@@ -209,9 +203,7 @@ describe('AuthService', () => {
       prismaService.user.findUnique.mockResolvedValue(lockedUser);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        new UnauthorizedException(
-          'Account is temporarily locked. Please try again later.',
-        ),
+        new UnauthorizedException('Account is temporarily locked. Please try again later.'),
       );
     });
 
@@ -236,9 +228,7 @@ describe('AuthService', () => {
         passwordHash: null,
       });
 
-      await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -263,18 +253,14 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for invalid refresh token', async () => {
       redisService.get.mockResolvedValue(null);
 
-      await expect(service.refresh('invalid-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refresh('invalid-token')).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
       redisService.get.mockResolvedValue(mockUser.id);
       prismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.refresh('valid-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refresh('valid-token')).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if user is deleted', async () => {
@@ -284,9 +270,7 @@ describe('AuthService', () => {
         deletedAt: new Date(),
       });
 
-      await expect(service.refresh('valid-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refresh('valid-token')).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -374,9 +358,9 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
       prismaService.user.update.mockResolvedValue(mockUser);
 
-      await expect(
-        service.login({ email: 'test@example.com', password: 'wrong' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login({ email: 'test@example.com', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       expect(prismaService.user.update).toHaveBeenCalledWith({
         where: { id: mockUser.id },
@@ -390,9 +374,9 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
       prismaService.user.update.mockResolvedValue(userWith4Attempts);
 
-      await expect(
-        service.login({ email: 'test@example.com', password: 'wrong' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login({ email: 'test@example.com', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       expect(prismaService.user.update).toHaveBeenCalledWith({
         where: { id: mockUser.id },
@@ -421,11 +405,7 @@ describe('AuthService', () => {
       });
 
       // The default is 7d which should be 604800 seconds
-      expect(redisService.set).toHaveBeenCalledWith(
-        expect.any(String),
-        mockUser.id,
-        604800,
-      );
+      expect(redisService.set).toHaveBeenCalledWith(expect.any(String), mockUser.id, 604800);
     });
   });
 });
