@@ -78,10 +78,20 @@ export const FileUploadInput: React.FC<QuestionInputProps<FileWithPreview[]>> = 
     <div className="question-input file-upload-input">
       {/* Drop zone */}
       <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label="Upload files - Click to browse or drag and drop"
+        aria-disabled={disabled}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !disabled && fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
                     ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}

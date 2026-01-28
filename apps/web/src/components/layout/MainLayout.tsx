@@ -38,8 +38,16 @@ export function MainLayout() {
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Close sidebar"
           className="fixed inset-0 z-40 bg-gray-900/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+              setSidebarOpen(false);
+            }
+          }}
         />
       )}
 
