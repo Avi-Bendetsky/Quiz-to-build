@@ -11,57 +11,57 @@ import { Config } from '../lib/config';
 export const configCommand = new Command('config').description('Manage CLI configuration');
 
 configCommand
-  .command('set <key> <value>')
-  .description('Set a configuration value')
-  .action((key: string, value: string) => {
-    const config = new Config();
-    config.set(key, value);
-    console.log(chalk.green(`✅ Set ${key} = ${value}`));
-  });
-
-configCommand
-  .command('get <key>')
-  .description('Get a configuration value')
-  .action((key: string) => {
-    const config = new Config();
-    const value = config.get(key);
-    if (value !== undefined) {
-      console.log(value);
-    } else {
-      console.log(chalk.gray('(not set)'));
-    }
-  });
-
-configCommand
-  .command('list')
-  .description('List all configuration values')
-  .action(() => {
-    const config = new Config();
-    const all = config.getAll();
-
-    console.log(chalk.bold('Quiz2Biz CLI Configuration'));
-    console.log(chalk.gray('─'.repeat(40)));
-
-    Object.entries(all).forEach(([key, value]) => {
-      if (key !== 'offlineData') {
-        console.log(`${chalk.cyan(key)}: ${String(value)}`);
-      }
+    .command('set <key> <value>')
+    .description('Set a configuration value')
+    .action((key: string, value: string) => {
+        const config = new Config();
+        config.set(key, value);
+        console.log(chalk.green(`✅ Set ${key} = ${value}`));
     });
-  });
 
 configCommand
-  .command('reset')
-  .description('Reset configuration to defaults')
-  .action(() => {
-    const config = new Config();
-    config.reset();
-    console.log(chalk.green('✅ Configuration reset to defaults'));
-  });
+    .command('get <key>')
+    .description('Get a configuration value')
+    .action((key: string) => {
+        const config = new Config();
+        const value = config.get(key);
+        if (value !== undefined) {
+            console.log(value);
+        } else {
+            console.log(chalk.gray('(not set)'));
+        }
+    });
 
 configCommand
-  .command('path')
-  .description('Show configuration file path')
-  .action(() => {
-    const config = new Config();
-    console.log(config.getPath());
-  });
+    .command('list')
+    .description('List all configuration values')
+    .action(() => {
+        const config = new Config();
+        const all = config.getAll();
+
+        console.log(chalk.bold('Quiz2Biz CLI Configuration'));
+        console.log(chalk.gray('─'.repeat(40)));
+
+        Object.entries(all).forEach(([key, value]) => {
+            if (key !== 'offlineData') {
+                console.log(`${chalk.cyan(key)}: ${String(value)}`);
+            }
+        });
+    });
+
+configCommand
+    .command('reset')
+    .description('Reset configuration to defaults')
+    .action(() => {
+        const config = new Config();
+        config.reset();
+        console.log(chalk.green('✅ Configuration reset to defaults'));
+    });
+
+configCommand
+    .command('path')
+    .description('Show configuration file path')
+    .action(() => {
+        const config = new Config();
+        console.log(config.getPath());
+    });
