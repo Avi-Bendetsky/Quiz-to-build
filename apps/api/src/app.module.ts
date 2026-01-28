@@ -15,6 +15,7 @@ import { DocumentGeneratorModule } from './modules/document-generator/document-g
 import { ScoringEngineModule } from './modules/scoring-engine/scoring-engine.module';
 import { EvidenceRegistryModule } from './modules/evidence-registry/evidence-registry.module';
 import { DecisionLogModule } from './modules/decision-log/decision-log.module';
+import { HeatmapModule } from './modules/heatmap/heatmap.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -64,6 +65,7 @@ import configuration from './config/configuration';
     ScoringEngineModule,
     EvidenceRegistryModule,
     DecisionLogModule,
+    HeatmapModule,
   ],
   controllers: [HealthController],
   providers: [

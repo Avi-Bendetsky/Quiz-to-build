@@ -80,9 +80,9 @@
     },
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "^@libs/database(.*)$": "<rootDir>/../../libs/database/src$1",
-      "^@libs/redis(.*)$": "<rootDir>/../../libs/redis/src$1",
-      "^@libs/shared(.*)$": "<rootDir>/../../libs/shared/src$1"
+      "^@libs/database(.*)$": "<rootDir>/../../../libs/database/src$1",
+      "^@libs/redis(.*)$": "<rootDir>/../../../libs/redis/src$1",
+      "^@libs/shared(.*)$": "<rootDir>/../../../libs/shared/src$1"
     }
   }
 }
