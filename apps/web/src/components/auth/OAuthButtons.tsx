@@ -73,7 +73,7 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
 
         try {
             // Load Google Identity Services
-            // @ts-ignore - Google Identity Services global
+            // @ts-expect-error - Google Identity Services global
             if (!window.google?.accounts) {
                 // Dynamically load the Google Identity Services script
                 await new Promise<void>((resolve, reject) => {
@@ -87,7 +87,7 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
                 });
             }
 
-            // @ts-ignore - Google Identity Services global
+            // @ts-expect-error - Google Identity Services global
             const client = window.google.accounts.oauth2.initTokenClient({
                 client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                 scope: 'email profile openid',
@@ -112,8 +112,8 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
 
                         const data = await res.json();
                         login(data.accessToken, data.refreshToken, data.user);
-                        navigate('/dashboard');
-                    } catch (err) {
+                        void navigate('/dashboard');
+                    } catch (_err) {
                         onError?.('Failed to authenticate with Google');
                     } finally {
                         setLoadingProvider(null);
@@ -138,7 +138,8 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
             const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback/microsoft`);
             const scope = encodeURIComponent('openid profile email User.Read');
 
-            const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
+            const authUrl =
+                `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
                 `client_id=${clientId}&` +
                 `response_type=token&` +
                 `redirect_uri=${redirectUri}&` +
@@ -154,7 +155,9 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
 
             // Listen for the callback
             const handleMessage = async (event: MessageEvent) => {
-                if (event.origin !== window.location.origin) return;
+                if (event.origin !== window.location.origin) {
+                    return;
+                }
 
                 if (event.data?.type === 'microsoft-oauth-callback') {
                     window.removeEventListener('message', handleMessage);
@@ -180,7 +183,7 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
                         const data = await res.json();
                         login(data.accessToken, data.refreshToken, data.user);
                         navigate('/dashboard');
-                    } catch (err) {
+                    } catch (_err) {
                         onError?.('Failed to authenticate with Microsoft');
                     } finally {
                         setLoadingProvider(null);
@@ -197,7 +200,6 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
                     setLoadingProvider(null);
                 }
             }, 120000); // 2 minute timeout
-
         } catch (err) {
             onError?.(err instanceof Error ? err.message : 'Failed to initialize Microsoft login');
             setLoadingProvider(null);
@@ -205,12 +207,14 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
     };
 
     const handleOAuthClick = (provider: 'google' | 'microsoft') => {
-        if (loadingProvider) return;
+        if (loadingProvider) {
+            return;
+        }
 
         if (provider === 'google') {
-            handleGoogleLogin();
+            void handleGoogleLogin();
         } else if (provider === 'microsoft') {
-            handleMicrosoftLogin();
+            void handleMicrosoftLogin();
         }
     };
 
@@ -240,11 +244,7 @@ export function OAuthButtons({ mode, onError }: OAuthButtonsProps) {
                             disabled={loadingProvider !== null}
                             className={`flex items-center justify-center gap-2 px-4 py-2.5 border rounded-md shadow-sm text-sm font-medium transition-colors ${config.bgColor} ${config.textColor} ${config.borderColor} disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
-                            {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                config.icon
-                            )}
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : config.icon}
                             <span>{config.name}</span>
                         </button>
                     );
