@@ -19,6 +19,11 @@ export interface ProgressInfo {
   answeredQuestions: number;
   totalQuestions: number;
   estimatedTimeRemaining?: number;
+  // Quiz2Biz document counters: "Sections left: n | Questions left: m | This section: x/y"
+  sectionsLeft: number;
+  questionsLeft: number;
+  totalSections: number;
+  completedSections: number;
 }
 
 export interface SessionResponse {
@@ -471,7 +476,25 @@ export class SessionService {
 
     // Calculate progress
     const answeredCount = responses.length;
-    const progress = this.calculateProgress(answeredCount, visibleQuestions.length);
+
+    // Calculate section completion info for Quiz2Biz progress counters
+    const allSections = session.questionnaire.sections;
+    const sectionCompletionStatus = allSections.map((section) => {
+      const sectionQuestions = visibleQuestions.filter((q) => q.sectionId === section.id);
+      const sectionAnswered = sectionQuestions.filter((q) => responseMap.has(q.id)).length;
+      return {
+        sectionId: section.id,
+        total: sectionQuestions.length,
+        answered: sectionAnswered,
+        isComplete: sectionQuestions.length > 0 && sectionAnswered === sectionQuestions.length,
+      };
+    });
+    const completedSectionsCount = sectionCompletionStatus.filter((s) => s.isComplete).length;
+
+    const progress = this.calculateProgress(answeredCount, visibleQuestions.length, {
+      totalSections: allSections.length,
+      completedSections: completedSectionsCount,
+    });
 
     // Get current section details
     let currentSectionInfo = {
@@ -567,8 +590,11 @@ export class SessionService {
   private mapToSessionResponse(
     session: Session & { currentSection?: { id: string; name: string } | null },
     totalQuestions: number,
+    sectionInfo?: { totalSections: number; completedSections: number },
   ): SessionResponse {
     const progress = session.progress as { percentage: number; answered: number; total: number };
+    const questionsLeft = (progress.total || totalQuestions) - progress.answered;
+    const sectionsLeft = (sectionInfo?.totalSections ?? 0) - (sectionInfo?.completedSections ?? 0);
 
     return {
       id: session.id,
@@ -580,6 +606,10 @@ export class SessionService {
         percentage: progress.percentage,
         answeredQuestions: progress.answered,
         totalQuestions: progress.total || totalQuestions,
+        sectionsLeft,
+        questionsLeft,
+        totalSections: sectionInfo?.totalSections ?? 0,
+        completedSections: sectionInfo?.completedSections ?? 0,
       },
       currentSection: session.currentSection
         ? { id: session.currentSection.id, name: session.currentSection.name }
@@ -606,16 +636,30 @@ export class SessionService {
     };
   }
 
-  private calculateProgress(answered: number, total: number): ProgressInfo {
+  private calculateProgress(
+    answered: number,
+    total: number,
+    sectionInfo?: {
+      totalSections: number;
+      completedSections: number;
+    },
+  ): ProgressInfo {
     const percentage = total > 0 ? Math.round((answered / total) * 100) : 0;
     const avgTimePerQuestion = 1.5; // minutes
     const estimatedTimeRemaining = Math.ceil((total - answered) * avgTimePerQuestion);
+    const questionsLeft = total - answered;
+    const sectionsLeft = (sectionInfo?.totalSections ?? 0) - (sectionInfo?.completedSections ?? 0);
 
     return {
       percentage,
       answeredQuestions: answered,
       totalQuestions: total,
       estimatedTimeRemaining,
+      // Quiz2Biz progress counters
+      sectionsLeft,
+      questionsLeft,
+      totalSections: sectionInfo?.totalSections ?? 0,
+      completedSections: sectionInfo?.completedSections ?? 0,
     };
   }
 

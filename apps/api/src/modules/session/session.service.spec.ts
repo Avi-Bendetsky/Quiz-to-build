@@ -712,5 +712,74 @@ describe('SessionService', () => {
       const questionIds = result.nextQuestions.map(q => q.id);
       expect(questionIds).not.toContain('q1');
     });
+
+    it('should include Quiz2Biz progress counters (sectionsLeft, questionsLeft)', async () => {
+      // Setup session with 2 sections
+      const sessionWith2Sections = {
+        ...mockSession,
+        questionnaire: {
+          ...mockQuestionnaire,
+          sections: [
+            { id: 'section-1', name: 'Section 1', orderIndex: 0 },
+            { id: 'section-2', name: 'Section 2', orderIndex: 1 },
+          ],
+        },
+      };
+      prismaService.session.findUnique.mockResolvedValue(sessionWith2Sections as any);
+
+      // 3 visible questions across 2 sections
+      adaptiveLogicService.getVisibleQuestions.mockResolvedValue([
+        { ...mockQuestion, id: 'q1', sectionId: 'section-1', isRequired: true },
+        { ...mockQuestion, id: 'q2', sectionId: 'section-1', isRequired: false },
+        { ...mockQuestion, id: 'q3', sectionId: 'section-2', isRequired: true },
+      ] as any);
+
+      // 1 answered (section-1 not complete)
+      prismaService.response.findMany.mockResolvedValue([
+        { questionId: 'q1', value: 'answer1' },
+      ] as any);
+
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      // Should have Quiz2Biz progress counters
+      expect(result.overallProgress.totalSections).toBe(2);
+      expect(result.overallProgress.questionsLeft).toBe(2); // 3 total - 1 answered
+      expect(result.overallProgress.sectionsLeft).toBe(2); // Neither section complete
+      expect(result.overallProgress.completedSections).toBe(0);
+    });
+
+    it('should track completed sections correctly', async () => {
+      // Setup session with 2 sections
+      const sessionWith2Sections = {
+        ...mockSession,
+        questionnaire: {
+          ...mockQuestionnaire,
+          sections: [
+            { id: 'section-1', name: 'Section 1', orderIndex: 0 },
+            { id: 'section-2', name: 'Section 2', orderIndex: 1 },
+          ],
+        },
+      };
+      prismaService.session.findUnique.mockResolvedValue(sessionWith2Sections as any);
+
+      // 2 questions in section-1, 1 in section-2
+      adaptiveLogicService.getVisibleQuestions.mockResolvedValue([
+        { ...mockQuestion, id: 'q1', sectionId: 'section-1', isRequired: true },
+        { ...mockQuestion, id: 'q2', sectionId: 'section-1', isRequired: false },
+        { ...mockQuestion, id: 'q3', sectionId: 'section-2', isRequired: true },
+      ] as any);
+
+      // All section-1 questions answered, section-2 not started
+      prismaService.response.findMany.mockResolvedValue([
+        { questionId: 'q1', value: 'answer1' },
+        { questionId: 'q2', value: 'answer2' },
+      ] as any);
+
+      const result = await service.continueSession(mockSessionId, mockUserId, 1);
+
+      expect(result.overallProgress.completedSections).toBe(1); // section-1 complete
+      expect(result.overallProgress.sectionsLeft).toBe(1); // section-2 left
+      expect(result.overallProgress.questionsLeft).toBe(1); // q3 left
+    });
   });
 });
