@@ -30,20 +30,21 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
-    "prepare": "node -e \"try { require('husky').install() } catch (e) { console.log('Husky not installed') }\""
+    "prepare": "husky install"
   },
   "devDependencies": {
-    "@prisma/client": "5.22.0",
-    "prisma": "5.22.0",
+    "@swc/cli": "^0.5.2",
+    "@swc/core": "^1.15.10",
     "@types/node": "^20.10.0",
-    "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.18.0",
     "@typescript-eslint/parser": "^6.18.0",
+    "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "prettier": "^3.2.0",
+    "prisma": "^5.8.0",
     "turbo": "^1.11.0",
     "typescript": "^5.3.3"
   },

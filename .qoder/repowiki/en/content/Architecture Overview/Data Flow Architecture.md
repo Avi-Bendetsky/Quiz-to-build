@@ -9,17 +9,9 @@
 - [http-exception.filter.ts](file://apps/api/src/common/filters/http-exception.filter.ts)
 - [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts)
 - [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts)
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts)
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts)
-- [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts)
-- [rule.types.ts](file://apps/api/src/modules/adaptive-logic/types/rule.types.ts)
-- [document-generator.module.ts](file://apps/api/src/modules/document-generator/document-generator.module.ts)
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts)
-- [document-controller.ts](file://apps/api/src/modules/document-generator/controllers/document.controller.ts)
-- [document-admin.controller.ts](file://apps/api/src/modules/document-generator/controllers/document-admin.controller.ts)
-- [template-engine.service.ts](file://apps/api/src/modules/document-generator/services/template-engine.service.ts)
-- [document-builder.service.ts](file://apps/api/src/modules/document-generator/services/document-builder.service.ts)
-- [storage.service.ts](file://apps/api/src/modules/document-generator/services/storage.service.ts)
 - [prisma.service.ts](file://libs/database/src/prisma.service.ts)
 - [prisma.module.ts](file://libs/database/src/prisma.module.ts)
 - [redis.service.ts](file://libs/redis/src/redis.service.ts)
@@ -27,58 +19,38 @@
 - [schema.prisma](file://prisma/schema.prisma)
 </cite>
 
-## Update Summary
-**Changes Made**
-- Removed comprehensive session state management documentation and diagrams
-- Eliminated detailed adaptive state tracking sections that integrated Session Module with Adaptive Logic Module
-- Removed ContinueSessionResponse and SubmitResponseResult interface documentation
-- Updated architecture diagrams to reflect session integration removal
-- Maintained authentication, adaptive logic, and document generation workflows
-
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Adaptive Logic Integration](#adaptive-logic-integration)
-7. [Document Generation Workflow](#document-generation-workflow)
-8. [Dependency Analysis](#dependency-analysis)
-9. [Performance Considerations](#performance-considerations)
-10. [Troubleshooting Guide](#troubleshooting-guide)
-11. [Conclusion](#conclusion)
+6. [Dependency Analysis](#dependency-analysis)
+7. [Performance Considerations](#performance-considerations)
+8. [Troubleshooting Guide](#troubleshooting-guide)
+9. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes the end-to-end data flow architecture for the Quiz-to-build system, focusing on authentication, adaptive logic integration, and document generation workflows. The system provides intelligent question routing based on user responses and automated document generation from questionnaire data, with comprehensive administrative controls for document types and quality assurance.
+This document describes the end-to-end data flow architecture for the Quiz-to-build system. It covers how HTTP requests traverse the application via global interceptors and guards, how controllers delegate to services, how services interact with the database using Prisma ORM, and how Redis is used for session-related state and refresh tokens. It also explains request/response transformation, error handling via exception filters, and logging/metrics integration through interceptors.
 
 ## Project Structure
-The application is organized as a NestJS monorepo with enhanced modular architecture:
-- Core modules for authentication, questionnaires, and standards
-- Adaptive logic module for dynamic question routing and visibility rules
-- Comprehensive document generation module with template engine and storage integration
+The application is organized as a NestJS monorepo with:
+- An API application module that wires global pipes, filters, and interceptors
+- Feature modules for authentication, questionnaires, sessions, and standards
 - Shared libraries for database (Prisma) and cache (Redis)
-- Advanced DTOs and service layers for complex business logic
+- A Prisma schema defining the domain models and relationships
 
 ```mermaid
 graph TB
-subgraph "Core Application"
+subgraph "API Application"
 MAIN["apps/api/src/main.ts"]
 APPMOD["apps/api/src/app.module.ts"]
 CTRL_AUTH["modules/auth/auth.controller.ts"]
+CTRL_SESSION["modules/session/session.controller.ts"]
 CTRL_QUESTION["modules/questionnaire/questionnaire.controller.ts"]
 INT_LOG["common/interceptors/logging.interceptor.ts"]
 INT_TR["common/interceptors/transform.interceptor.ts"]
 FILT_EX["common/filters/http-exception.filter.ts"]
-end
-subgraph "Enhanced Modules"
-ADAPTIVE["modules/adaptive-logic/adaptive-logic.service.ts"]
-CONDITION["modules/adaptive-logic/evaluators/condition.evaluator.ts"]
-DOC_GEN["modules/document-generator/document-generator.module.ts"]
-DOC_CTRL["modules/document-generator/controllers/document.controller.ts"]
-DOC_ADMIN["modules/document-generator/controllers/document-admin.controller.ts"]
-TEMPLATE["modules/document-generator/services/template-engine.service.ts"]
-BUILDER["modules/document-generator/services/document-builder.service.ts"]
-STORAGE["modules/document-generator/services/storage.service.ts"]
 end
 subgraph "Libraries"
 PR_MOD["libs/database/src/prisma.module.ts"]
@@ -91,26 +63,20 @@ MAIN --> APPMOD
 APPMOD --> PR_MOD
 APPMOD --> RD_MOD
 APPMOD --> CTRL_AUTH
+APPMOD --> CTRL_SESSION
 APPMOD --> CTRL_QUESTION
-APPMOD --> ADAPTIVE
-APPMOD --> DOC_GEN
 CTRL_AUTH --> INT_LOG
 CTRL_AUTH --> INT_TR
+CTRL_SESSION --> INT_LOG
+CTRL_SESSION --> INT_TR
 CTRL_QUESTION --> INT_LOG
 CTRL_QUESTION --> INT_TR
-ADAPTIVE --> CONDITION
-DOC_GEN --> DOC_CTRL
-DOC_GEN --> DOC_ADMIN
-DOC_CTRL --> TEMPLATE
-DOC_CTRL --> STORAGE
-DOC_ADMIN --> TEMPLATE
-DOC_ADMIN --> STORAGE
-TEMPLATE --> BUILDER
-BUILDER --> STORAGE
 CTRL_AUTH --> FILT_EX
+CTRL_SESSION --> FILT_EX
 CTRL_QUESTION --> FILT_EX
-ADAPTIVE --> PR_SRV
-DOC_GEN --> PR_SRV
+CTRL_AUTH --> PR_SRV
+CTRL_SESSION --> PR_SRV
+CTRL_QUESTION --> PR_SRV
 CTRL_AUTH --> RD_SRV
 PR_SRV --> SCHEMA
 RD_SRV --> RD_SRV
@@ -119,14 +85,17 @@ RD_SRV --> RD_SRV
 **Diagram sources**
 - [main.ts](file://apps/api/src/main.ts#L11-L86)
 - [app.module.ts](file://apps/api/src/app.module.ts#L16-L66)
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L1-L264)
-- [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts#L1-L403)
-- [document-generator.module.ts](file://apps/api/src/modules/document-generator/document-generator.module.ts#L1-L23)
-- [document-controller.ts](file://apps/api/src/modules/document-generator/controllers/document.controller.ts#L1-L163)
-- [document-admin.controller.ts](file://apps/api/src/modules/document-generator/controllers/document-admin.controller.ts#L1-L230)
-- [template-engine.service.ts](file://apps/api/src/modules/document-generator/services/template-engine.service.ts#L1-L290)
-- [document-builder.service.ts](file://apps/api/src/modules/document-generator/services/document-builder.service.ts#L1-L481)
-- [storage.service.ts](file://apps/api/src/modules/document-generator/services/storage.service.ts#L1-L160)
+- [logging.interceptor.ts](file://apps/api/src/common/interceptors/logging.interceptor.ts#L16-L60)
+- [transform.interceptor.ts](file://apps/api/src/common/interceptors/transform.interceptor.ts#L21-L35)
+- [http-exception.filter.ts](file://apps/api/src/common/filters/http-exception.filter.ts#L26-L82)
+- [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts#L24-L73)
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L30-L152)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L55)
+- [prisma.module.ts](file://libs/database/src/prisma.module.ts#L4-L9)
+- [prisma.service.ts](file://libs/database/src/prisma.service.ts#L8-L40)
+- [redis.module.ts](file://libs/redis/src/redis.module.ts#L4-L9)
+- [redis.service.ts](file://libs/redis/src/redis.service.ts#L10-L38)
+- [schema.prisma](file://prisma/schema.prisma#L1-L12)
 
 **Section sources**
 - [main.ts](file://apps/api/src/main.ts#L11-L86)
@@ -135,15 +104,14 @@ RD_SRV --> RD_SRV
 ## Core Components
 - Bootstrap and global middleware:
   - Helmet security headers, CORS, global prefix, validation pipe, global exception filter, and global interceptors are configured at startup.
-- Enhanced interceptors:
+- Interceptors:
   - Logging interceptor captures request metadata and timing; logs both successes and errors.
   - Transform interceptor wraps all successful responses into a standardized envelope with success flag, data, and optional metadata.
 - Exception filter:
   - Centralized handler for all exceptions, normalizing error responses with code, message, and requestId.
-- Advanced modules and services:
+- Modules and services:
   - Authentication service integrates JWT signing, bcrypt hashing, refresh token storage in Redis, and database persistence.
-  - Adaptive logic service evaluates visibility rules, calculates adaptive changes, and manages branching logic.
-  - Document generation service handles document creation, template processing, storage, and administrative workflows.
+  - Session service orchestrates questionnaire sessions, adaptive logic evaluation, response validation, and progress computation.
   - Database and Redis modules provide PrismaClient and Redis client instances with lifecycle hooks.
 
 **Section sources**
@@ -152,14 +120,13 @@ RD_SRV --> RD_SRV
 - [transform.interceptor.ts](file://apps/api/src/common/interceptors/transform.interceptor.ts#L21-L35)
 - [http-exception.filter.ts](file://apps/api/src/common/filters/http-exception.filter.ts#L26-L82)
 - [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L34-L52)
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L264)
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts#L28-L360)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L87-L94)
 
 ## Architecture Overview
-The system follows a layered architecture with adaptive intelligence and document automation:
+The system follows a layered architecture:
 - Transport layer: Express-based NestJS with global middleware and guards
 - Presentation layer: Controllers expose endpoints and enforce auth guards
-- Domain layer: Services encapsulate business logic, adaptive evaluation, and document generation
+- Domain layer: Services encapsulate business logic and orchestration
 - Persistence layer: Prisma ORM for PostgreSQL and Redis for ephemeral state
 
 ```mermaid
@@ -169,50 +136,36 @@ Helmet["Helmet"]
 CORS["CORS"]
 Guard["JWT Guard"]
 CtrlAuth["AuthController"]
+CtrlSession["SessionController"]
 CtrlQuest["QuestionnaireController"]
-CtrlDoc["DocumentController"]
-CtrlAdmin["DocumentAdminController"]
 IntLog["LoggingInterceptor"]
 IntTr["TransformInterceptor"]
 ExFilt["HttpExceptionFilter"]
 SvcAuth["AuthService"]
-SvcAdaptive["AdaptiveLogicService"]
-SvcDocGen["DocumentGeneratorService"]
-SvcTemplate["TemplateEngineService"]
-SvcBuilder["DocumentBuilderService"]
-SvcStorage["StorageService"]
+SvcSession["SessionService"]
+SvcQuest["QuestionnaireService"]
 Prisma["PrismaService"]
 Redis["RedisService"]
 DB["PostgreSQL"]
 Cache["Redis"]
 Client --> Helmet --> CORS --> Guard --> CtrlAuth
+Client --> Helmet --> CORS --> Guard --> CtrlSession
 Client --> Helmet --> CORS --> Guard --> CtrlQuest
-Client --> Helmet --> CORS --> Guard --> CtrlDoc
-Client --> Helmet --> CORS --> Guard --> CtrlAdmin
 CtrlAuth --> IntLog
 CtrlAuth --> IntTr
+CtrlSession --> IntLog
+CtrlSession --> IntTr
 CtrlQuest --> IntLog
 CtrlQuest --> IntTr
-CtrlDoc --> IntLog
-CtrlDoc --> IntTr
-CtrlAdmin --> IntLog
-CtrlAdmin --> IntTr
 CtrlAuth --> ExFilt
+CtrlSession --> ExFilt
 CtrlQuest --> ExFilt
-CtrlDoc --> ExFilt
-CtrlAdmin --> ExFilt
 CtrlAuth --> SvcAuth
-CtrlQuest --> SvcAdaptive
-CtrlDoc --> SvcDocGen
-CtrlAdmin --> SvcDocGen
-SvcAdaptive --> Prisma
-SvcDocGen --> SvcTemplate
-SvcDocGen --> SvcBuilder
-SvcDocGen --> SvcStorage
-SvcTemplate --> Prisma
-SvcBuilder --> Prisma
-SvcStorage --> Prisma
+CtrlSession --> SvcSession
+CtrlQuest --> SvcQuest
 SvcAuth --> Prisma
+SvcSession --> Prisma
+SvcQuest --> Prisma
 SvcAuth --> Redis
 Prisma --> DB
 Redis --> Cache
@@ -221,15 +174,13 @@ Redis --> Cache
 **Diagram sources**
 - [main.ts](file://apps/api/src/main.ts#L20-L49)
 - [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts#L24-L73)
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L30-L152)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L55)
-- [document-controller.ts](file://apps/api/src/modules/document-generator/controllers/document.controller.ts#L30-L163)
-- [document-admin.controller.ts](file://apps/api/src/modules/document-generator/controllers/document-admin.controller.ts#L35-L230)
 - [logging.interceptor.ts](file://apps/api/src/common/interceptors/logging.interceptor.ts#L16-L60)
 - [transform.interceptor.ts](file://apps/api/src/common/interceptors/transform.interceptor.ts#L21-L35)
 - [http-exception.filter.ts](file://apps/api/src/common/filters/http-exception.filter.ts#L26-L82)
 - [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L42-L52)
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L264)
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts#L28-L360)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L89-L94)
 - [prisma.service.ts](file://libs/database/src/prisma.service.ts#L8-L40)
 - [redis.service.ts](file://libs/redis/src/redis.service.ts#L10-L38)
 
@@ -297,6 +248,59 @@ AC-->>C : 200 {success : true, data : user}
 - [prisma.service.ts](file://libs/database/src/prisma.service.ts#L20-L40)
 - [redis.service.ts](file://libs/redis/src/redis.service.ts#L40-L59)
 
+### Session Management Data Flow
+This flow covers creating sessions, retrieving next questions, submitting responses, continuing sessions, and completing sessions.
+
+```mermaid
+sequenceDiagram
+participant C as "Client"
+participant G as "JWT Guard"
+participant SC as "SessionController"
+participant SS as "SessionService"
+participant QS as "QuestionnaireService"
+participant ALS as "AdaptiveLogicService"
+participant PR as "PrismaService"
+C->>SC : POST /sessions
+SC->>SS : create(userId, dto)
+SS->>QS : findById(dto.questionnaireId)
+SS->>QS : getTotalQuestionCount(dto.questionnaireId)
+SS->>PR : create(session)
+SS-->>SC : SessionResponse
+SC-->>C : 201 {success : true, data : ...}
+C->>SC : GET /sessions/{id}/continue?questionCount=N
+SC->>SS : continueSession(id, userId, N)
+SS->>PR : findUnique(session)
+SS->>PR : findMany(responses)
+SS->>ALS : getVisibleQuestions(questionnaireId, responses)
+SS->>PR : findUnique(currentSection)
+SS->>PR : update(lastActivityAt)
+SS-->>SC : ContinueSessionResponse
+SC-->>C : 200 {success : true, data : ...}
+C->>SC : POST /sessions/{id}/responses
+SC->>SS : submitResponse(id, userId, dto)
+SS->>QS : getQuestionById(dto.questionId)
+SS->>PR : upsert(response)
+SS->>PR : findMany(responses)
+SS->>ALS : getVisibleQuestions(...)
+SS->>PR : update(session.progress, currentQuestionId)
+SS-->>SC : SubmitResponseResult
+SC-->>C : 201 {success : true, data : ...}
+C->>SC : POST /sessions/{id}/complete
+SC->>SS : completeSession(id, userId)
+SS->>PR : update(status=COMPLETED, completedAt)
+SS-->>SC : SessionResponse
+SC-->>C : 200 {success : true, data : ...}
+```
+
+**Diagram sources**
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L39-L151)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L96-L546)
+- [prisma.service.ts](file://libs/database/src/prisma.service.ts#L8-L40)
+
+**Section sources**
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L36-L152)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L96-L546)
+
 ### Request/Response Transformation Pipeline
 The transform interceptor wraps all successful responses into a consistent envelope. The logging interceptor records request metadata and timing. The exception filter ensures all errors are normalized.
 
@@ -329,9 +333,8 @@ Respond --> Log["LoggingInterceptor<br/>Log method/url/status/duration/ip/userAg
 - Initialization and lifecycle:
   - PrismaService extends PrismaClient and connects/disconnects on module init/destroy.
   - In development, slow queries are logged for performance tuning.
-- Enhanced query execution:
-  - Services call Prisma methods (find, create, upsert, update, count) to manage Users, Questionnaires, Sections, Questions, VisibilityRules, and Documents.
-  - Complex queries now include visibility rule evaluation and document type mappings.
+- Query execution:
+  - Services call Prisma methods (find, create, upsert, update, count) to manage Users, Sessions, Responses, and related entities.
 - Transactions and connection management:
   - The code does not explicitly use Prisma transactions; most operations are single-entity writes/read. For multi-entity consistency needs, explicit transactions could be introduced.
 
@@ -349,53 +352,28 @@ class User {
 +id : string
 +email : string
 +role : UserRole
++sessions : Session[]
 }
-class Questionnaire {
+class Session {
 +id : string
-+name : string
-+version : number
-+sections : Section[]
-}
-class Section {
-+id : string
-+name : string
-+orderIndex : number
-+questions : Question[]
-}
-class Question {
-+id : string
-+text : string
-+type : QuestionType
-+isRequired : boolean
-+validationRules : json
-+visibilityRules : VisibilityRule[]
-}
-class VisibilityRule {
-+id : string
-+questionId : string
-+condition : json
-+action : VisibilityAction
-+priority : number
-+isActive : boolean
-}
-class Document {
-+id : string
++userId : string
 +questionnaireId : string
-+documentTypeId : string
-+status : DocumentStatus
-+format : string
-+storageUrl : string
++status : SessionStatus
++progress : json
++responses : Response[]
+}
+class Response {
++id : string
++sessionId : string
++questionId : string
++value : json
++isValid : boolean
 }
 PrismaService --> User : "manages"
-PrismaService --> Questionnaire : "manages"
-PrismaService --> Section : "manages"
-PrismaService --> Question : "manages"
-PrismaService --> VisibilityRule : "manages"
-PrismaService --> Document : "manages"
-Questionnaire "1" --> "*" Section : "has"
-Section "1" --> "*" Question : "contains"
-Question "1" --> "*" VisibilityRule : "has"
-Questionnaire "1" --> "*" Document : "generates"
+PrismaService --> Session : "manages"
+PrismaService --> Response : "manages"
+User "1" --> "*" Session : "has"
+Session "1" --> "*" Response : "contains"
 ```
 
 **Diagram sources**
@@ -412,6 +390,8 @@ Questionnaire "1" --> "*" Document : "generates"
 - Refresh token storage:
   - On login/register, refresh tokens are stored in Redis with TTL derived from configuration.
   - Token verification during refresh reads the token key; logout deletes the key.
+- Session state:
+  - The session service maintains in-memory maps of responses for adaptive logic evaluation; Redis is not used for runtime session state.
 - Redis client:
   - RedisService provides a pooled client with retry strategy, lifecycle hooks, and convenience methods for string/hash operations.
 
@@ -493,191 +473,16 @@ L->>L : log(JSON with metadata)
 - [logging.interceptor.ts](file://apps/api/src/common/interceptors/logging.interceptor.ts#L16-L60)
 - [prisma.service.ts](file://libs/database/src/prisma.service.ts#L25-L33)
 
-## Adaptive Logic Integration
-
-### Adaptive Logic Service Architecture
-The adaptive logic system provides intelligent question routing and visibility management based on user responses and predefined rules.
-
-```mermaid
-graph TB
-ALS["AdaptiveLogicService"]
-CE["ConditionEvaluator"]
-PR["PrismaService"]
-QR["QuestionnaireService"]
-ALS --> CE
-ALS --> PR
-ALS --> QR
-CE --> EQ["equals"]
-CE --> INC["includes"]
-CE --> NUM["numeric comparisons"]
-CE --> STR["string operations"]
-CE --> EMPTY["empty checks"]
-ALS --> GVQ["getVisibleQuestions"]
-ALS --> EQV["evaluateQuestionState"]
-ALS --> GNQ["getNextQuestion"]
-ALS --> CALC["calculateAdaptiveChanges"]
-ALS --> GRF["getRulesForQuestion"]
-ALS --> BDG["buildDependencyGraph"]
-```
-
-**Diagram sources**
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L264)
-- [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts#L4-L403)
-- [rule.types.ts](file://apps/api/src/modules/adaptive-logic/types/rule.types.ts#L3-L239)
-
-### Condition Evaluation Engine
-The condition evaluator supports complex logical operations and response value extraction.
-
-```mermaid
-flowchart TD
-Start["Condition Evaluation Request"] --> CheckNested{"Has nested conditions?"}
-CheckNested --> |Yes| EvalNested["Evaluate nested conditions<br/>with logical operator"]
-CheckNested --> |No| CheckField{"Has field and operator?"}
-EvalNested --> Result1["Return combined result"]
-CheckField --> |No| True["Return true (no condition)"]
-CheckField --> |Yes| Extract["Extract response value"]
-Extract --> Compare["Apply operator comparison"]
-Compare --> Result2["Return boolean result"]
-True --> Result1
-Result1 --> End["Evaluation Complete"]
-Result2 --> End
-```
-
-**Diagram sources**
-- [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts#L9-L403)
-
-### Visibility Rule Processing
-The system processes visibility rules to dynamically show/hide questions and adjust required fields.
-
-```mermaid
-sequenceDiagram
-participant ALS as "AdaptiveLogicService"
-participant PR as "PrismaService"
-participant CE as "ConditionEvaluator"
-ALS->>PR : findMany(questions with visibilityRules)
-PR-->>ALS : questions with rules
-ALS->>ALS : iterate through rules (highest priority first)
-ALS->>CE : evaluateCondition(condition, responses)
-CE-->>ALS : boolean result
-ALS->>ALS : apply action (SHOW/HIDE/REQUIRE/UNREQUIRE)
-ALS-->>ALS : final question state
-```
-
-**Diagram sources**
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L69-L110)
-- [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts#L9-L403)
-
-**Section sources**
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L264)
-- [condition.evaluator.ts](file://apps/api/src/modules/adaptive-logic/evaluators/condition.evaluator.ts#L4-L403)
-- [rule.types.ts](file://apps/api/src/modules/adaptive-logic/types/rule.types.ts#L3-L239)
-
-## Document Generation Workflow
-
-### Document Generation Architecture
-The document generation system creates professional documents from questionnaire responses using templates and storage services.
-
-```mermaid
-graph TB
-DG["DocumentGeneratorService"]
-TE["TemplateEngineService"]
-DB["DocumentBuilderService"]
-ST["StorageService"]
-PR["PrismaService"]
-DG --> TE
-DG --> DB
-DG --> ST
-DG --> PR
-TE --> MAP["mapResponsesToContent"]
-TE --> STD["buildStandardsSections"]
-TE --> VAL["validateRequiredFields"]
-DB --> SECTIONS["buildSections"]
-DB --> CONTENT["buildContentSection"]
-DB --> TABLES["buildTables"]
-DB --> STYLES["apply document styles"]
-ST --> UPLOAD["upload to Azure Blob Storage"]
-ST --> SAS["generate SAS URLs"]
-ST --> DELETE["delete documents"]
-```
-
-**Diagram sources**
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts#L28-L360)
-- [template-engine.service.ts](file://apps/api/src/modules/document-generator/services/template-engine.service.ts#L26-L290)
-- [document-builder.service.ts](file://apps/api/src/modules/document-generator/services/document-builder.service.ts#L28-L481)
-- [storage.service.ts](file://apps/api/src/modules/document-generator/services/storage.service.ts#L18-L160)
-
-### Document Generation Process
-The system generates documents through a multi-stage process with validation and storage.
-
-```mermaid
-sequenceDiagram
-participant C as "Client"
-participant DC as "DocumentController"
-participant DGS as "DocumentGeneratorService"
-participant TE as "TemplateEngineService"
-participant DBS as "DocumentBuilderService"
-participant STS as "StorageService"
-participant PR as "PrismaService"
-C->>DC : POST /documents/generate
-DC->>DGS : generateDocument(params)
-DGS->>PR : validate document type
-DGS->>TE : assembleTemplateData(questionnaireId, slug)
-TE->>PR : fetch responses and mappings
-TE-->>TE : mapResponsesToContent()
-TE-->>DGS : TemplateData
-DGS->>DBS : buildDocument(templateData, typeInfo)
-DBS-->>DGS : Buffer (DOCX)
-DGS->>STS : upload(buffer, fileName, category)
-STS-->>DGS : UploadResult
-DGS->>PR : update document status
-DGS-->>DC : Document
-DC-->>C : 201 Created
-```
-
-**Diagram sources**
-- [document-controller.ts](file://apps/api/src/modules/document-generator/controllers/document.controller.ts#L38-L54)
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts#L42-L139)
-- [template-engine.service.ts](file://apps/api/src/modules/document-generator/services/template-engine.service.ts#L35-L99)
-- [document-builder.service.ts](file://apps/api/src/modules/document-generator/services/document-builder.service.ts#L35-L72)
-- [storage.service.ts](file://apps/api/src/modules/document-generator/services/storage.service.ts#L65-L95)
-
-### Template Data Assembly
-The template engine processes questionnaire responses into structured content for document generation.
-
-```mermaid
-flowchart TD
-Start["assembleTemplateData"] --> FetchType["Fetch document type"]
-FetchType --> FetchResponses["Fetch valid responses"]
-FetchResponses --> MapContent["mapResponsesToContent"]
-MapContent --> Extract["extractResponseValue"]
-Extract --> SetNested["setNestedValue"]
-SetNested --> BuildStandards["buildStandardsSections (CTO)"]
-BuildStandards --> Return["Return TemplateData"]
-```
-
-**Diagram sources**
-- [template-engine.service.ts](file://apps/api/src/modules/document-generator/services/template-engine.service.ts#L35-L136)
-
-**Section sources**
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts#L28-L360)
-- [document-controller.ts](file://apps/api/src/modules/document-generator/controllers/document.controller.ts#L30-L163)
-- [template-engine.service.ts](file://apps/api/src/modules/document-generator/services/template-engine.service.ts#L26-L290)
-- [document-builder.service.ts](file://apps/api/src/modules/document-generator/services/document-builder.service.ts#L28-L481)
-- [storage.service.ts](file://apps/api/src/modules/document-generator/services/storage.service.ts#L18-L160)
-
 ## Dependency Analysis
 - AppModule aggregates:
-  - ConfigModule, ThrottlerModule, PrismaModule, RedisModule, and enhanced feature modules.
+  - ConfigModule, ThrottlerModule, PrismaModule, RedisModule, and feature modules.
   - Registers global throttling guard and exposes guards via APP_GUARD.
-- Enhanced feature modules depend on shared libraries:
-  - Auth and Questionnaire modules inject PrismaService and RedisService.
-  - Adaptive Logic module injects PrismaService and ConditionEvaluator.
-  - Document Generator module injects PrismaService, TemplateEngineService, DocumentBuilderService, and StorageService.
+- Feature modules depend on shared libraries:
+  - Auth and Session modules inject PrismaService and RedisService.
 - Controllers depend on services:
   - AuthController depends on AuthService.
+  - SessionController depends on SessionService.
   - QuestionnaireController depends on QuestionnaireService.
-  - DocumentController depends on DocumentGeneratorService.
-  - DocumentAdminController depends on DocumentGeneratorService and PrismaService.
 
 ```mermaid
 graph LR
@@ -686,28 +491,23 @@ AppModule --> Throttler["ThrottlerModule"]
 AppModule --> PrismaMod["PrismaModule"]
 AppModule --> RedisMod["RedisModule"]
 AppModule --> AuthCtrl["AuthController"]
-AppModule --> QuestionCtrl["QuestionnaireController"]
-AppModule --> DocCtrl["DocumentController"]
-AppModule --> DocAdminCtrl["DocumentAdminController"]
-AppModule --> AdaptiveMod["AdaptiveLogicModule"]
-AppModule --> DocGenMod["DocumentGeneratorModule"]
+AppModule --> SessionCtrl["SessionController"]
+AppModule --> QuestCtrl["QuestionnaireController"]
 AuthCtrl --> AuthService
-QuestionCtrl --> QuestionnaireService
-DocCtrl --> DocumentGeneratorService
-DocAdminCtrl --> DocumentGeneratorService
-AdaptiveLogicService --> PrismaService
-DocumentGeneratorService --> PrismaService
-DocumentGeneratorService --> TemplateEngineService
-DocumentGeneratorService --> DocumentBuilderService
-DocumentGeneratorService --> StorageService
+SessionCtrl --> SessionService
+QuestCtrl --> QuestionnaireService
 AuthService --> PrismaService
+SessionService --> PrismaService
 AuthService --> RedisService
 ```
 
 **Diagram sources**
 - [app.module.ts](file://apps/api/src/app.module.ts#L16-L66)
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L264)
-- [document-generator.module.ts](file://apps/api/src/modules/document-generator/document-generator.module.ts#L11-L22)
+- [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts#L24-L73)
+- [session.controller.ts](file://apps/api/src/modules/session/session.controller.ts#L30-L152)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L55)
+- [prisma.module.ts](file://libs/database/src/prisma.module.ts#L4-L9)
+- [redis.module.ts](file://libs/redis/src/redis.module.ts#L4-L9)
 
 **Section sources**
 - [app.module.ts](file://apps/api/src/app.module.ts#L16-L66)
@@ -715,16 +515,11 @@ AuthService --> RedisService
 ## Performance Considerations
 - Interceptors:
   - Logging adds minimal overhead; ensure requestId propagation for tracing across services.
-- Enhanced Prisma operations:
+- Prisma:
   - Use selective includes and where clauses to avoid N+1 queries; batch operations where possible.
   - Monitor slow queries in development; consider adding indexes for frequent filters.
-  - Adaptive logic evaluation uses Map-based lookups for O(1) response access.
-- Redis optimizations:
+- Redis:
   - Keep TTLs aligned with token lifetimes; monitor key expiration and eviction policies.
-  - Consider caching frequently accessed visibility rules and document templates.
-- Document generation:
-  - Template assembly processes responses in O(n) time; consider caching template data for repeated generations.
-  - Storage operations use Azure Blob Storage with efficient upload and SAS URL generation.
 - Validation:
   - ValidationPipe transforms inputs; keep DTOs concise to reduce unnecessary conversions.
 
@@ -733,22 +528,16 @@ AuthService --> RedisService
   - Inspect the exception filter logs for stack traces and error envelopes.
 - Authentication failures:
   - Check Redis refresh token presence and expiry; verify Prisma user existence and lockout fields.
-- Document generation issues:
-  - Check document type configuration and required question mappings.
-  - Verify Azure Blob Storage connectivity and SAS URL generation.
-  - Review template data assembly and document building process.
+- Session anomalies:
+  - Review Prisma session progress and response upserts; confirm adaptive visibility rules and next-question selection logic.
 - Database connectivity:
   - Confirm PrismaService lifecycle logs and slow query warnings in development.
-- Adaptive logic problems:
-  - Validate visibility rule configurations and condition operators.
-  - Check response value extraction for different question types.
 
 **Section sources**
 - [http-exception.filter.ts](file://apps/api/src/common/filters/http-exception.filter.ts#L56-L82)
 - [auth.service.ts](file://apps/api/src/modules/auth/auth.service.ts#L128-L164)
-- [adaptive-logic.service.ts](file://apps/api/src/modules/adaptive-logic/adaptive-logic.service.ts#L19-L264)
-- [document-generator.service.ts](file://apps/api/src/modules/document-generator/services/document-generator.service.ts#L42-L139)
+- [session.service.ts](file://apps/api/src/modules/session/session.service.ts#L270-L359)
 - [prisma.service.ts](file://libs/database/src/prisma.service.ts#L20-L40)
 
 ## Conclusion
-The Quiz-to-build system implements a comprehensive, intelligent architecture with adaptive logic integration and automated document generation. The system provides dynamic question routing based on user responses and professional document generation from questionnaire data. The adaptive logic engine evaluates complex visibility rules in real-time, while the document generation workflow transforms structured questionnaire responses into professional documents. The documented flows and diagrams serve as a blueprint for extending functionality, optimizing performance, and maintaining reliability in this enhanced system.
+The Quiz-to-build system implements a robust, layered architecture with clear separation of concerns. Global interceptors and filters ensure consistent request/response handling and error normalization. Prisma ORM provides reliable persistence, while Redis supports secure, time-bound refresh tokens. The session service coordinates adaptive logic and progress tracking, enabling dynamic questionnaire experiences. The documented flows and diagrams serve as a blueprint for extending functionality, optimizing performance, and maintaining reliability.

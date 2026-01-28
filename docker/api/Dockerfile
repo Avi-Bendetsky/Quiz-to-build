@@ -1,17 +1,10 @@
-# Build stage - Using latest LTS with security patches
-FROM docker.io/library/node:20.18.1-bookworm-slim AS builder
+# Build stage
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install OpenSSL and security updates (required by Prisma)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl \
-    ca-certificates \
-    && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# Update npm to latest secure version
-RUN npm install -g npm@latest
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 # Install dependencies
 COPY package*.json ./
@@ -20,7 +13,7 @@ COPY libs/database/package*.json ./libs/database/
 COPY libs/redis/package*.json ./libs/redis/
 COPY libs/shared/package*.json ./libs/shared/
 
-RUN npm ci --audit --production=false
+RUN npm ci
 
 # Copy source files
 COPY . .
@@ -28,29 +21,52 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build only the API for production
-RUN npm run build --workspace=api
+# Build the application
+RUN npm run build
 
-# Production stage - Hardened image
-FROM docker.io/library/node:20.18.1-bookworm-slim AS production
+# Development stage
+FROM node:20-alpine AS development
 
 WORKDIR /app
 
-# Install security updates and minimal runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl \
-    ca-certificates \
-    dumb-init \
-    && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
+# Install dependencies
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY libs/database/package*.json ./libs/database/
+COPY libs/redis/package*.json ./libs/redis/
+COPY libs/shared/package*.json ./libs/shared/
+
+RUN npm ci
+
+# Copy source files
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Expose port
+EXPOSE 3000
+
+# Start in development mode
+CMD ["npm", "run", "start:dev"]
+
+# Production stage (must be last for default ACR build)
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 # Create non-root user for security
-RUN groupadd -g 1001 nodejs && \
-    useradd -m -u 1001 -g nodejs nestjs
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
 
-# Copy built application from correct location
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
+# Copy built application
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
@@ -69,45 +85,9 @@ USER nestjs
 # Expose port
 EXPOSE 3000
 
-# Health check with reduced privileges
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/v1/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Start the application with dumb-init
-CMD ["/usr/bin/dumb-init", "--", "./entrypoint.sh"]
-
-# Development stage
-FROM docker.io/library/node:20.18.1-bookworm-slim AS development
-
-WORKDIR /app
-
-# Install OpenSSL and security updates (required by Prisma)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl \
-    ca-certificates \
-    && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# Update npm to latest secure version
-RUN npm install -g npm@latest
-
-# Install dependencies
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
-COPY libs/database/package*.json ./libs/database/
-COPY libs/redis/package*.json ./libs/redis/
-COPY libs/shared/package*.json ./libs/shared/
-
-RUN npm ci --audit
-
-# Copy source files
-COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Expose port
-EXPOSE 3000
-
-# Start in development mode
-CMD ["npm", "run", "start:dev"]
+# Start the application
+CMD ["./entrypoint.sh"]

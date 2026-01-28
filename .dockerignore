@@ -18,21 +18,3 @@ Thumbs.db
 docker-compose*.yml
 Dockerfile*
 .dockerignore
-# Security: Exclude sensitive files
-*.key
-*.pem
-*.p12
-*.pfx
-secrets/
-.secrets
-.npmrc
-.yarnrc
-# Testing and CI files
-test/
-tests/
-*.test.ts
-*.spec.ts
-jest.config.js
-.github/
-.gitlab-ci.yml
-azure-pipelines.yml

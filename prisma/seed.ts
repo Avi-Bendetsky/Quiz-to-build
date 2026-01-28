@@ -1,6 +1,8 @@
 import { PrismaClient, QuestionType, VisibilityAction, UserRole } from '@prisma/client';
 import { seedStandards } from './seeds/standards.seed';
 import { seedBusinessIncubator } from './seeds/business-incubator.seed';
+import { seedDimensions } from './seeds/dimensions.seed';
+import { seedReadinessQuestions } from './seeds/questions.seed';
 
 const prisma = new PrismaClient();
 
@@ -484,6 +486,10 @@ async function main(): Promise<void> {
 
   // Seed Business Startup Incubator questionnaire
   await seedBusinessIncubator();
+
+  // Seed Quiz2Biz dimensions and readiness questions
+  await seedDimensions();
+  await seedReadinessQuestions();
 
   console.log('Database seed completed successfully!');
 }

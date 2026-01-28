@@ -2,33 +2,15 @@
 
 <cite>
 **Referenced Files in This Document**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts)
-- [admin.module.ts](file://apps/api/src/modules/admin/admin.module.ts)
-- [create-questionnaire.dto.ts](file://apps/api/src/modules/admin/dto/create-questionnaire.dto.ts)
-- [update-questionnaire.dto.ts](file://apps/api/src/modules/admin/dto/update-questionnaire.dto.ts)
-- [create-section.dto.ts](file://apps/api/src/modules/admin/dto/create-section.dto.ts)
-- [create-question.dto.ts](file://apps/api/src/modules/admin/dto/create-question.dto.ts)
-- [reorder-questions.dto.ts](file://apps/api/src/modules/admin/dto/reorder-questions.dto.ts)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts)
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts)
 - [questionnaire.module.ts](file://apps/api/src/modules/questionnaire/questionnaire.module.ts)
 - [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts)
 - [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts)
-- [roles.guard.ts](file://apps/api/src/modules/auth/guards/roles.guard.ts)
 - [auth.controller.ts](file://apps/api/src/modules/auth/auth.controller.ts)
 - [schema.prisma](file://prisma/schema.prisma)
 - [questionnaire.service.spec.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.spec.ts)
 </cite>
-
-## Update Summary
-**Changes Made**
-- Added comprehensive CRUD endpoints for questionnaire management via AdminModule
-- Updated authentication and authorization requirements with role-based access control
-- Expanded endpoint coverage to include create, update, delete operations
-- Added detailed request/response schemas for all CRUD operations
-- Enhanced error handling documentation with specific HTTP status codes
-- Updated architectural overview to reflect dual-module approach (AdminModule + QuestionnaireModule)
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -36,338 +18,125 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Authentication and Authorization](#authentication-and-authorization)
-7. [Request/Response Schemas](#requestresponse-schemas)
-8. [Examples](#examples)
-9. [Dependency Analysis](#dependency-analysis)
-10. [Performance Considerations](#performance-considerations)
-11. [Troubleshooting Guide](#troubleshooting-guide)
-12. [Conclusion](#conclusion)
+6. [Dependency Analysis](#dependency-analysis)
+7. [Performance Considerations](#performance-considerations)
+8. [Troubleshooting Guide](#troubleshooting-guide)
+9. [Conclusion](#conclusion)
 
 ## Introduction
-This document provides comprehensive API documentation for questionnaire management endpoints across two distinct modules: the existing read-only QuestionnaireModule and the newly added AdminModule. The AdminModule provides comprehensive CRUD capabilities for questionnaire management, while the QuestionnaireModule maintains read-only endpoints for client-facing operations. The documentation covers:
+This document provides comprehensive API documentation for questionnaire management endpoints. It covers the available endpoints, request/response schemas, authentication requirements, authorization rules, error handling, and practical examples for creating complex nested questionnaires. The focus is on:
+- Listing questionnaires with filtering and sorting
+- Creating new questionnaires
+- Updating existing questionnaires
+- Deleting questionnaires
+- Retrieving a specific questionnaire with sections and questions
 
-- **AdminModule Endpoints**: Full CRUD operations for questionnaires, sections, questions, and visibility rules
-- **QuestionnaireModule Endpoints**: Read-only operations for client applications
-- **Authentication**: JWT required for all endpoints
-- **Authorization**: Role-based access control (ADMIN, SUPER_ADMIN)
-- **Request/Response Schemas**: Complete validation rules and data structures
-- **Error Handling**: Comprehensive error responses and HTTP status codes
-- **Examples**: Practical usage scenarios with complex nested structures
-
-**Updated** The AdminModule now provides comprehensive CRUD endpoints for questionnaire management, complementing existing read-only endpoints with full administrative capabilities.
+Note: The current implementation exposes endpoints for listing and retrieving questionnaires but does not include dedicated endpoints for creating, updating, or deleting questionnaires. This document therefore emphasizes the available endpoints while noting the absence of create/update/delete operations.
 
 ## Project Structure
-The questionnaire management system is now implemented across two specialized modules with clear separation of concerns:
+The questionnaire feature is implemented as a NestJS module with a controller and service. Authentication is enforced via a JWT guard applied globally to the questionnaire controller. Pagination is standardized through a shared DTO.
 
 ```mermaid
 graph TB
-subgraph "Admin Module (Full CRUD)"
-AQC["AdminQuestionnaireController<br/>POST /admin/questionnaires<br/>PUT /admin/questionnaires/:id<br/>DELETE /admin/questionnaires/:id<br/>POST/PUT/DELETE for sections & questions"]
-AQS["AdminQuestionnaireService<br/>Complete CRUD operations<br/>Transaction support<br/>Audit logging"]
-AQM["AdminModule<br/>Imports: PrismaModule<br/>Exports: Services"]
-end
-subgraph "Questionnaire Module (Read-only)"
+subgraph "Questionnaire Module"
 QC["QuestionnaireController<br/>GET /questionnaires<br/>GET /questionnaires/:id"]
-QS["QuestionnaireService<br/>Data retrieval<br/>Mapping to response models"]
-QPM["QuestionnaireModule"]
+QS["QuestionnaireService<br/>findAll()<br/>findById()"]
 end
-subgraph "Shared Security"
+subgraph "Auth Module"
 JAG["JwtAuthGuard<br/>JWT required"]
-RG["RolesGuard<br/>ADMIN/SUPER_ADMIN"]
 end
-subgraph "Database Layer"
+subgraph "Shared"
+PD["PaginationDto<br/>page, limit"]
+end
+subgraph "Database"
 PRISMA["PrismaService"]
-SCHEMA["Prisma Schema<br/>Questionnaire, Section, Question, VisibilityRule"]
+SCHEMA["Prisma Schema<br/>Questionnaire, Section, Question"]
 end
-AQC --> AQS
 QC --> QS
-AQC --> JAG
 QC --> JAG
-AQC --> RG
 QS --> PRISMA
-AQS --> PRISMA
 PRISMA --> SCHEMA
+QC --> PD
 ```
 
 **Diagram sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L44-L284)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L45-L607)
-- [admin.module.ts](file://apps/api/src/modules/admin/admin.module.ts#L7-L13)
-- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L56)
-- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L63-L253)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L55)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L63-L252)
+- [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts#L5-L24)
 - [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L6-L37)
-- [roles.guard.ts](file://apps/api/src/modules/auth/guards/roles.guard.ts#L1-L100)
 - [schema.prisma](file://prisma/schema.prisma#L173-L247)
 
 **Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L1-L284)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L1-L607)
-- [admin.module.ts](file://apps/api/src/modules/admin/admin.module.ts#L1-L14)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L1-L56)
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L1-L253)
 - [questionnaire.module.ts](file://apps/api/src/modules/questionnaire/questionnaire.module.ts#L1-L11)
+- [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts#L1-L25)
+- [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L1-L38)
+- [schema.prisma](file://prisma/schema.prisma#L173-L247)
 
 ## Core Components
-The system now consists of two complementary modules:
+- QuestionnaireController: Exposes GET endpoints for listing and retrieving questionnaires. Applies JWT authentication and bearer token authorization.
+- QuestionnaireService: Implements data retrieval logic, mapping raw database records to structured response models.
+- PaginationDto: Provides standardized pagination parameters (page, limit) with validation.
+- JwtAuthGuard: Enforces JWT authentication and handles token expiration and invalid token scenarios.
 
-### AdminModule Components
-- **AdminQuestionnaireController**: Full CRUD operations with role-based authorization
-- **AdminQuestionnaireService**: Complete business logic with transaction support and audit logging
-- **DTO Validation**: Comprehensive request validation for all operations
-
-### QuestionnaireModule Components  
-- **QuestionnaireController**: Read-only endpoints for client applications
-- **QuestionnaireService**: Data retrieval and response mapping
-- **Pagination**: Standardized pagination with filtering capabilities
-
-**Updated** The AdminModule provides comprehensive CRUD capabilities while the QuestionnaireModule maintains read-only operations for client consumption.
+Key capabilities:
+- List questionnaires with pagination and optional industry filtering
+- Retrieve a specific questionnaire with nested sections and questions
+- Map database entities to clean response models with computed totals
 
 **Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L44-L284)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L45-L607)
-- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L56)
-- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L63-L253)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L55)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L63-L252)
+- [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts#L5-L24)
+- [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L6-L37)
 
 ## Architecture Overview
-The dual-module architecture provides clear separation between administrative operations and client-facing read operations:
+The questionnaire endpoints follow a layered architecture:
+- Controller validates and orchestrates requests
+- Service performs data queries and transformations
+- Prisma handles database operations
+- Shared DTOs standardize pagination
+- JWT guard enforces authentication
 
 ```mermaid
 sequenceDiagram
-participant Client as "Client Application"
-participant AdminController as "AdminQuestionnaireController"
-participant QuestionnaireController as "QuestionnaireController"
-participant AdminGuard as "JwtAuthGuard + RolesGuard"
-participant QuestionnaireGuard as "JwtAuthGuard"
-participant AdminService as "AdminQuestionnaireService"
-participant QuestionnaireService as "QuestionnaireService"
+participant Client as "Client"
+participant Controller as "QuestionnaireController"
+participant Guard as "JwtAuthGuard"
+participant Service as "QuestionnaireService"
 participant DB as "PrismaService"
-Client->>AdminController : POST /admin/questionnaires (ADMIN/SUPER_ADMIN)
-AdminController->>AdminGuard : JWT + Role validation
-AdminGuard-->>AdminController : Authenticated
-AdminController->>AdminService : createQuestionnaire(dto, userId)
-AdminService->>DB : Create questionnaire with audit log
-DB-->>AdminService : Created questionnaire
-AdminService-->>AdminController : Questionnaire with audit trail
-AdminController-->>Client : 201 Created
-Client->>QuestionnaireController : GET /questionnaires/ : id
-QuestionnaireController->>QuestionnaireGuard : JWT validation
-QuestionnaireGuard-->>QuestionnaireController : Authenticated
-QuestionnaireController->>QuestionnaireService : findById(id)
-QuestionnaireService->>DB : Find with sections & questions
-DB-->>QuestionnaireService : Questionnaire with nested data
-QuestionnaireService-->>QuestionnaireController : QuestionnaireDetail
-QuestionnaireController-->>Client : 200 OK
+Client->>Controller : GET /questionnaires
+Controller->>Guard : Verify JWT
+Guard-->>Controller : Authenticated
+Controller->>Service : findAll(PaginationDto, industry?)
+Service->>DB : findMany() with include sections
+DB-->>Service : Questionnaires with sections
+Service-->>Controller : items, total
+Controller-->>Client : 200 OK with pagination
+Client->>Controller : GET /questionnaires/ : id
+Controller->>Guard : Verify JWT
+Guard-->>Controller : Authenticated
+Controller->>Service : findById(id)
+Service->>DB : findUnique() with include sections.questions
+DB-->>Service : Questionnaire with sections and questions
+Service-->>Controller : QuestionnaireDetail
+Controller-->>Client : 200 OK
 ```
 
 **Diagram sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L79-L88)
-- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L48-L54)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L105-L130)
-- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L100-L123)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L25-L54)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L67-L123)
 - [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L12-L36)
-- [roles.guard.ts](file://apps/api/src/modules/auth/guards/roles.guard.ts#L1-L100)
+- [schema.prisma](file://prisma/schema.prisma#L173-L247)
 
 ## Detailed Component Analysis
 
-### AdminModule Endpoints
-
-#### Questionnaire Management Endpoints
-
-##### GET /admin/questionnaires
-Purpose: List all questionnaires with pagination and administrative details.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Query Parameters:
-  - page: integer, default 1, minimum 1
-  - limit: integer, default 20, minimum 1, maximum 100
-- Response: Paginated list with administrative metadata
-  - items: array of questionnaire list items with counts
-  - pagination: page, limit, totalItems, totalPages
-
-##### GET /admin/questionnaires/:id
-Purpose: Retrieve complete questionnaire with all administrative details.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - id: string (UUID)
-- Response: Complete questionnaire with sections, questions, and counts
-
-##### POST /admin/questionnaires
-Purpose: Create new questionnaire with full administrative control.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Request Body: CreateQuestionnaireDto
-- Response: Created questionnaire with audit trail
-
-##### PUT /admin/questionnaires/:id
-Purpose: Update questionnaire metadata and properties.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - id: string (UUID)
-- Request Body: UpdateQuestionnaireDto
-- Response: Updated questionnaire with audit trail
-
-##### DELETE /admin/questionnaires/:id
-Purpose: Soft-delete questionnaire (set inactive).
-
-- Authentication: Required (JWT)
-- Authorization: SUPER_ADMIN only
-- Path Parameter:
-  - id: string (UUID)
-- Response: Success message
-
-**Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L53-L114)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L55-L192)
-
-#### Section Management Endpoints
-
-##### POST /admin/questionnaires/:questionnaireId/sections
-Purpose: Add section to existing questionnaire.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameters:
-  - questionnaireId: string (UUID)
-- Request Body: CreateSectionDto
-- Response: Created section with auto-calculated order index
-
-##### PATCH /admin/sections/:id
-Purpose: Update section properties.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - id: string (UUID)
-- Request Body: UpdateSectionDto
-- Response: Updated section
-
-##### DELETE /admin/sections/:id
-Purpose: Delete section (SUPER_ADMIN only).
-
-- Authentication: Required (JWT)
-- Authorization: SUPER_ADMIN only
-- Path Parameter:
-  - id: string (UUID)
-- Response: Success message
-- Error: 400 if section contains questions
-
-##### PATCH /admin/questionnaires/:questionnaireId/sections/reorder
-Purpose: Reorder sections within questionnaire.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameters:
-  - questionnaireId: string (UUID)
-- Request Body: ReorderSectionsDto
-- Response: Updated sections with new order indices
-
-**Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L120-L171)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L198-L338)
-
-#### Question Management Endpoints
-
-##### POST /admin/sections/:sectionId/questions
-Purpose: Add question to existing section.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameters:
-  - sectionId: string (UUID)
-- Request Body: CreateQuestionDto
-- Response: Created question with auto-calculated order index
-
-##### PATCH /admin/questions/:id
-Purpose: Update question properties.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - id: string (UUID)
-- Request Body: UpdateQuestionDto
-- Response: Updated question
-
-##### DELETE /admin/questions/:id
-Purpose: Delete question (SUPER_ADMIN only).
-
-- Authentication: Required (JWT)
-- Authorization: SUPER_ADMIN only
-- Path Parameter:
-  - id: string (UUID)
-- Response: Success message
-- Error: 400 if question has responses
-
-##### PATCH /admin/sections/:sectionId/questions/reorder
-Purpose: Reorder questions within section.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameters:
-  - sectionId: string (UUID)
-- Request Body: ReorderQuestionsDto
-- Response: Updated questions with new order indices
-
-**Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L177-L228)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L344-L496)
-
-#### Visibility Rule Management Endpoints
-
-##### GET /admin/questions/:questionId/rules
-Purpose: List visibility rules for question.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - questionId: string (UUID)
-- Response: Array of visibility rules ordered by priority
-
-##### POST /admin/questions/:questionId/rules
-Purpose: Add visibility rule to question.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameters:
-  - questionId: string (UUID)
-- Request Body: CreateVisibilityRuleDto
-- Response: Created visibility rule
-
-##### PATCH /admin/rules/:id
-Purpose: Update visibility rule.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - id: string (UUID)
-- Request Body: UpdateVisibilityRuleDto
-- Response: Updated visibility rule
-
-##### DELETE /admin/rules/:id
-Purpose: Delete visibility rule.
-
-- Authentication: Required (JWT)
-- Authorization: ADMIN, SUPER_ADMIN
-- Path Parameter:
-  - id: string (UUID)
-- Response: Success message
-
-**Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L234-L282)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L502-L605)
-
-### QuestionnaireModule Endpoints
-
-#### GET /questionnaires
+### Endpoint: GET /questionnaires
 Purpose: List all available questionnaires with pagination and optional industry filtering.
 
 - Authentication: Required (JWT)
+- Authorization: Not explicitly enforced at controller level beyond JWT
 - Query Parameters:
   - page: integer, default 1, minimum 1
   - limit: integer, default 20, minimum 1, maximum 100
@@ -376,429 +145,206 @@ Purpose: List all available questionnaires with pagination and optional industry
   - items: array of questionnaire list items
   - pagination: page, limit, totalItems, totalPages
 
-#### GET /questionnaires/:id
+Response model: QuestionnaireListItem
+- id: string (UUID)
+- name: string
+- description: string (optional)
+- industry: string (optional)
+- version: number
+- estimatedTime: number (optional)
+- totalQuestions: number
+- sections: array of { id, name, questionCount }
+- createdAt: date-time
+
+Notes:
+- Results are sorted by creation date descending
+- Only active questionnaires are returned
+- Industry filter is supported when provided
+
+**Section sources**
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L25-L46)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L67-L98)
+- [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts#L5-L24)
+- [schema.prisma](file://prisma/schema.prisma#L173-L195)
+
+### Endpoint: GET /questionnaires/:id
 Purpose: Retrieve a specific questionnaire with all sections and questions.
 
 - Authentication: Required (JWT)
 - Path Parameter:
   - id: string (UUID)
-- Response: Complete questionnaire detail with nested sections and questions
+- Response: Complete questionnaire detail
+  - id: string (UUID)
+  - name: string
+  - description: string (optional)
+  - industry: string (optional)
+  - version: number
+  - estimatedTime: number (optional)
+  - sections: array of SectionResponse
+
+SectionResponse:
+- id: string (UUID)
+- name: string
+- description: string (optional)
+- order: number
+- icon: string (optional)
+- estimatedTime: number (optional)
+- questionCount: number
+- questions: array of QuestionResponse
+
+QuestionResponse:
+- id: string (UUID)
+- text: string
+- type: QuestionType (TEXT, TEXTAREA, NUMBER, EMAIL, URL, DATE, SINGLE_CHOICE, MULTIPLE_CHOICE, SCALE, FILE_UPLOAD, MATRIX)
+- required: boolean
+- helpText: string (optional)
+- explanation: string (optional)
+- placeholder: string (optional)
+- options: array of QuestionOption (optional)
+- validation: object (optional)
+
+QuestionOption:
+- id: string (UUID)
+- label: string
+- description: string (optional)
+- icon: string (optional)
+- value: string | number | boolean (optional)
+
+Error Responses:
+- 404 Not Found: When the questionnaire does not exist or is inactive
 
 **Section sources**
-- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L25-L54)
-- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L67-L123)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L48-L54)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L100-L123)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L53-L61)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L26-L35)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L14-L24)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L6-L12)
+- [schema.prisma](file://prisma/schema.prisma#L24-L36)
+- [schema.prisma](file://prisma/schema.prisma#L218-L247)
 
-## Authentication and Authorization
+### Authentication and Authorization
+- Authentication: JWT required for all questionnaire endpoints
+- Authorization: No explicit role-based authorization is enforced in the questionnaire controller; JWT verification is sufficient
+- Token Handling: The JWT guard manages token validation, expiration, and error responses
 
-### Authentication Requirements
-- **JWT Required**: All endpoints require valid JWT token in Authorization header
-- **Token Format**: Bearer token scheme
-- **Token Validation**: Automatic validation via JwtAuthGuard
-
-### Authorization Rules
-The system implements role-based access control with different permission levels:
-
-#### Role Hierarchy
-- **ADMIN**: Full access to CRUD operations except soft-deletion
-- **SUPER_ADMIN**: Full access including soft-deletion operations
-
-#### Endpoint-Level Authorization
-- **Questionnaire CRUD**: ADMIN, SUPER_ADMIN
-- **Section CRUD**: ADMIN, SUPER_ADMIN  
-- **Question CRUD**: ADMIN, SUPER_ADMIN
-- **Visibility Rules CRUD**: ADMIN, SUPER_ADMIN
-- **Soft-Deletion**: SUPER_ADMIN only
-
+Authorization flow:
 ```mermaid
 flowchart TD
 Start(["Request Received"]) --> CheckPublic["Check @Public decorator"]
 CheckPublic --> |Public| Allow["Allow Access"]
 CheckPublic --> |Protected| ValidateJWT["Validate JWT"]
-ValidateJWT --> |Valid| CheckRole["Check User Role"]
-CheckRole --> |ADMIN| CheckAdminOps["Check Admin Operation"]
-CheckRole --> |SUPER_ADMIN| Allow
-CheckAdminOps --> |Soft-Delete| SuperAdminOnly["403 Forbidden"]
-CheckAdminOps --> |Other Ops| Allow
+ValidateJWT --> |Valid| Allow
 ValidateJWT --> |Invalid| Reject["401 Unauthorized"]
-SuperAdminOnly --> Reject
 Allow --> End(["Proceed to Controller"])
 Reject --> End
 ```
 
 **Diagram sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L54-L104)
 - [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L12-L36)
-- [roles.guard.ts](file://apps/api/src/modules/auth/guards/roles.guard.ts#L1-L100)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L20-L21)
 
 **Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L42-L44)
 - [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L1-L38)
-- [roles.guard.ts](file://apps/api/src/modules/auth/guards/roles.guard.ts#L1-L100)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L18-L21)
 
-## Request/Response Schemas
+### Request/Response Schemas
 
-### AdminModule Request Schemas
+#### GET /questionnaires
+- Query Parameters:
+  - page: integer (default 1)
+  - limit: integer (default 20, max 100)
+  - industry: string (optional)
+- Response:
+  - items: QuestionnaireListItem[]
+  - pagination: { page, limit, totalItems, totalPages }
 
-#### CreateQuestionnaireDto
-```typescript
-{
-  name: string,                    // Max 200 chars, required
-  description?: string,            // Max 200 chars, optional
-  industry?: string,               // Max 100 chars, optional
-  isDefault?: boolean,             // Default: false, optional
-  estimatedTime?: number,          // Min 1 minute, optional
-  metadata?: Record<string, unknown> // Additional data, optional
-}
-```
+#### GET /questionnaires/:id
+- Path Parameters:
+  - id: string (UUID)
+- Response:
+  - QuestionnaireDetail (see above)
 
-#### UpdateQuestionnaireDto
-```typescript
-{
-  name?: string,                   // Max 200 chars, optional
-  description?: string,            // Max 200 chars, optional  
-  industry?: string,               // Max 100 chars, optional
-  isDefault?: boolean,             // Optional
-  isActive?: boolean,              // Optional (ADMIN only)
-  estimatedTime?: number,          // Min 1 minute, optional
-  metadata?: Record<string, unknown> // Optional
-}
-```
-
-#### CreateSectionDto
-```typescript
-{
-  name: string,                    // Max 200 chars, required
-  description?: string,            // Max 200 chars, optional
-  icon?: string,                   // Max 50 chars, optional
-  estimatedTime?: number,          // Min 1 minute, optional
-  orderIndex?: number,             // Min 0, auto-calculated if not provided
-  metadata?: Record<string, unknown> // Optional
-}
-```
-
-#### CreateQuestionDto
-```typescript
-{
-  text: string,                    // Max 1000 chars, required
-  type: QuestionType,              // Required enum
-  helpText?: string,               // Optional
-  explanation?: string,            // Optional
-  placeholder?: string,            // Optional
-  isRequired?: boolean,            // Default: false, optional
-  options?: QuestionOptionDto[],   // For choice-based questions
-  validationRules?: Record<string, unknown>, // Optional
-  defaultValue?: unknown,          // Optional
-  suggestedAnswer?: unknown,       // Optional
-  industryTags?: string[],         // Optional
-  documentMappings?: Record<string, unknown>, // Optional
-  orderIndex?: number,             // Min 0, optional
-  metadata?: Record<string, unknown> // Optional
-}
-```
-
-#### ReorderQuestionsDto
-```typescript
-{
-  items: ReorderItem[]: [
-    {
-      id: string,                  // UUID
-      orderIndex: number           // Min 0
-    }
-  ]
-}
-```
-
-### AdminModule Response Schemas
-
-#### QuestionnaireWithDetails
-```typescript
-{
-  id: string,
-  name: string,
-  description?: string,
-  industry?: string,
-  version: number,
-  estimatedTime?: number,
-  isDefault: boolean,
-  isActive: boolean,
-  sections: SectionWithQuestions[],
-  _count: { sessions: number }
-}
-```
-
-#### SectionWithQuestions
-```typescript
-{
-  id: string,
-  name: string,
-  description?: string,
-  orderIndex: number,
-  questions: QuestionWithRules[],
-  _count: { questions: number }
-}
-```
-
-#### QuestionWithRules
-```typescript
-{
-  id: string,
-  text: string,
-  type: QuestionType,
-  isRequired: boolean,
-  visibilityRules: VisibilityRule[]
-}
-```
-
-### QuestionnaireModule Response Schemas
-
-#### QuestionnaireListItem
-```typescript
-{
-  id: string,
-  name: string,
-  description?: string,
-  industry?: string,
-  version: number,
-  estimatedTime?: number,
-  totalQuestions: number,
-  sections: [
-    {
-      id: string,
-      name: string,
-      questionCount: number
-    }
-  ],
-  createdAt: Date
-}
-```
-
-#### QuestionnaireDetail
-```typescript
-{
-  id: string,
-  name: string,
-  description?: string,
-  industry?: string,
-  version: number,
-  estimatedTime?: number,
-  sections: SectionResponse[]
-}
-```
-
-#### SectionResponse
-```typescript
-{
-  id: string,
-  name: string,
-  description?: string,
-  order: number,
-  icon?: string,
-  estimatedTime?: number,
-  questionCount: number,
-  questions?: QuestionResponse[]
-}
-```
-
-#### QuestionResponse
-```typescript
-{
-  id: string,
-  text: string,
-  type: QuestionType,
-  required: boolean,
-  helpText?: string,
-  explanation?: string,
-  placeholder?: string,
-  options?: QuestionOption[],
-  validation?: Record<string, unknown>
-}
-```
+#### Error Responses
+- 401 Unauthorized: Invalid or missing JWT token
+- 404 Not Found: Questionnaire not found or inactive
 
 **Section sources**
-- [create-questionnaire.dto.ts](file://apps/api/src/modules/admin/dto/create-questionnaire.dto.ts#L12-L44)
-- [update-questionnaire.dto.ts](file://apps/api/src/modules/admin/dto/update-questionnaire.dto.ts#L6-L11)
-- [create-section.dto.ts](file://apps/api/src/modules/admin/dto/create-section.dto.ts#L11-L44)
-- [create-question.dto.ts](file://apps/api/src/modules/admin/dto/create-question.dto.ts#L30-L99)
-- [reorder-questions.dto.ts](file://apps/api/src/modules/admin/dto/reorder-questions.dto.ts#L16-L22)
-- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L37-L61)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L25-L54)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L100-L123)
+- [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L25-L36)
 
-## Examples
-
-### AdminModule Examples
-
-#### Example: Creating a Complex Questionnaire
-```http
-POST /admin/questionnaires HTTP/1.1
-Authorization: Bearer <JWT_TOKEN>
-Content-Type: application/json
-
-{
-  "name": "Business Plan Questionnaire",
-  "description": "Comprehensive questionnaire for business planning",
-  "industry": "technology",
-  "isDefault": true,
-  "estimatedTime": 45,
-  "metadata": {
-    "category": "business",
-    "version": "1.0"
-  }
-}
-```
-
-#### Example: Adding Sections with Questions
-```http
-POST /admin/questionnaires/:questionnaireId/sections HTTP/1.1
-Authorization: Bearer <JWT_TOKEN>
-Content-Type: application/json
-
-{
-  "name": "Business Foundation",
-  "description": "Core business information and goals",
-  "icon": "briefcase",
-  "estimatedTime": 10,
-  "metadata": {
-    "color": "blue"
-  }
-}
-```
-
-#### Example: Creating Choice-Based Questions
-```http
-POST /admin/sections/:sectionId/questions HTTP/1.1
-Authorization: Bearer <JWT_TOKEN>
-Content-Type: application/json
-
-{
-  "text": "What is your business type?",
-  "type": "MULTIPLE_CHOICE",
-  "isRequired": true,
-  "options": [
-    {
-      "value": "startup",
-      "label": "Startup",
-      "description": "New business venture"
-    },
-    {
-      "value": "established",
-      "label": "Established Business",
-      "description": "Mature business"
-    }
-  ],
-  "validationRules": {
-    "minSelections": 1,
-    "maxSelections": 2
-  }
-}
-```
-
-#### Example: Bulk Reordering Operations
-```http
-PATCH /admin/sections/:sectionId/questions/reorder HTTP/1.1
-Authorization: Bearer <JWT_TOKEN>
-Content-Type: application/json
-
-{
-  "items": [
-    {
-      "id": "123e4567-e89b-12d3-a456-426614174000",
-      "orderIndex": 0
-    },
-    {
-      "id": "8f456789-a012-b345-c678-567890123456",
-      "orderIndex": 1
-    }
-  ]
-}
-```
-
-### QuestionnaireModule Examples
+### Examples
 
 #### Example: Listing Questionnaires with Filtering
-```http
-GET /questionnaires?page=1&limit=20&industry=healthcare HTTP/1.1
-Authorization: Bearer <JWT_TOKEN>
-```
+- Request: GET /questionnaires?page=1&limit=20&industry=healthcare
+- Response: 200 OK with items and pagination metadata
 
-#### Example: Retrieving Questionnaire with Nested Data
-```http
-GET /questionnaires/:id HTTP/1.1
-Authorization: Bearer <JWT_TOKEN>
-```
+#### Example: Retrieving a Specific Questionnaire
+- Request: GET /questionnaires/:id
+- Response: 200 OK with QuestionnaireDetail containing nested sections and questions
+
+#### Example: Nested Structure Details
+- QuestionnaireDetail includes:
+  - sections: array of SectionResponse
+  - Each SectionResponse includes:
+    - questions: array of QuestionResponse
+    - Each QuestionResponse includes:
+      - options: array of QuestionOption (for choice-type questions)
+      - validation: arbitrary JSON object (for validation rules)
+
+Note: The current implementation does not expose endpoints for creating, updating, or deleting questionnaires. Any modifications to questionnaires would require extending the controller and service accordingly.
 
 **Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L79-L114)
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L120-L171)
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L177-L228)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L25-L54)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L53-L61)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L26-L35)
+- [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L14-L24)
+- [questionnaire.service.spec.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.spec.ts#L102-L202)
 
 ## Dependency Analysis
-The dual-module architecture introduces clear dependency relationships:
+The questionnaire module depends on:
+- Shared PaginationDto for standardized pagination
+- PrismaService for database operations
+- JwtAuthGuard for authentication enforcement
 
 ```mermaid
 graph LR
-subgraph "Admin Module Dependencies"
-AQC["AdminQuestionnaireController"] --> AQS["AdminQuestionnaireService"]
-AQC --> JAG["JwtAuthGuard"]
-AQC --> RG["RolesGuard"]
-AQS --> PRISMA["PrismaService"]
-AQS --> AUDIT["AdminAuditService"]
-end
-subgraph "Questionnaire Module Dependencies"
 QC["QuestionnaireController"] --> QS["QuestionnaireService"]
-QC --> JAG
-QS --> PRISMA
-end
-subgraph "Shared Dependencies"
+QC --> JAG["JwtAuthGuard"]
+QS --> PRISMA["PrismaService"]
+QC --> PD["PaginationDto"]
 PRISMA --> SCHEMA["Prisma Schema"]
-PD["PaginationDto"]
-end
-AQC --> PD
-QC --> PD
 ```
 
 **Diagram sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L1-L284)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L1-L607)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L1-L56)
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L1-L253)
-- [admin.module.ts](file://apps/api/src/modules/admin/admin.module.ts#L1-L14)
+- [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts#L1-L25)
+- [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L1-L38)
+- [schema.prisma](file://prisma/schema.prisma#L173-L247)
 
 **Section sources**
-- [admin-questionnaire.controller.ts](file://apps/api/src/modules/admin/controllers/admin-questionnaire.controller.ts#L1-L284)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L1-L607)
 - [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L1-L56)
 - [questionnaire.service.ts](file://apps/api/src/modules/questionnaire/questionnaire.service.ts#L1-L253)
-- [admin.module.ts](file://apps/api/src/modules/admin/admin.module.ts#L1-L14)
+- [questionnaire.module.ts](file://apps/api/src/modules/questionnaire/questionnaire.module.ts#L1-L11)
 
 ## Performance Considerations
-- **Pagination**: Use page and limit parameters for all list operations
-- **Batch Operations**: Use bulk reorder endpoints for efficient ordering changes
-- **Transaction Support**: Admin operations use transactions for data consistency
-- **Audit Logging**: Audit trail operations add overhead but ensure compliance
-- **Nested Queries**: Admin endpoints include extensive nesting for administrative purposes
-- **Caching**: Consider caching frequently accessed questionnaires in QuestionnaireModule
+- Pagination: Use page and limit parameters to avoid large result sets
+- Filtering: Apply industry filter when appropriate to reduce dataset size
+- Nested Queries: Retrieving a single questionnaire includes sections and questions; consider caching frequently accessed questionnaires
+- Validation: Keep validation rules minimal to reduce payload sizes
 
 ## Troubleshooting Guide
-
-### Common Authentication Issues
-- **401 Unauthorized**: Invalid or expired JWT token
-- **403 Forbidden**: Insufficient permissions for operation
-- **404 Not Found**: Resource not found or inactive
-
-### Common Business Logic Errors
-- **400 Bad Request**: Validation errors in request data
-- **400 Bad Request**: Cannot delete section with questions
-- **400 Bad Request**: Cannot delete question with responses
-
-### Common Data Integrity Issues
-- **404 Not Found**: Questionnaire/Section/Question not found
-- **400 Bad Request**: Invalid UUID format
-- **400 Bad Request**: Out of range values (negative order indices)
+Common issues and resolutions:
+- 401 Unauthorized: Ensure a valid JWT is included in the Authorization header
+- 404 Not Found: Verify the questionnaire ID exists and is active
+- 400 Bad Request: Validate query parameters (page, limit) against the PaginationDto constraints
 
 **Section sources**
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L288-L292)
-- [admin-questionnaire.service.ts](file://apps/api/src/modules/admin/services/admin-questionnaire.service.ts#L448-L452)
 - [jwt-auth.guard.ts](file://apps/api/src/modules/auth/guards/jwt-auth.guard.ts#L25-L36)
+- [questionnaire.controller.ts](file://apps/api/src/modules/questionnaire/questionnaire.controller.ts#L50-L51)
+- [pagination.dto.ts](file://libs/shared/src/dto/pagination.dto.ts#L13-L19)
 
 ## Conclusion
-The questionnaire management system now provides comprehensive CRUD capabilities through the AdminModule while maintaining read-only operations in the QuestionnaireModule. The dual-module architecture ensures clear separation of concerns, with administrative operations having full control over questionnaire lifecycle management and client applications receiving optimized read-only data structures. The implementation includes robust authentication and authorization, comprehensive validation, and detailed audit trails for compliance requirements. This architecture supports both administrative workflows and client consumption patterns effectively.
+The questionnaire module currently supports listing and retrieving questionnaires with robust pagination, filtering, and nested data structures. Authentication is enforced via JWT, and the response models clearly represent questionnaires, sections, and questions along with their associated metadata. To meet the full scope of the documentation objective, create, update, and delete endpoints should be added to the controller and service, following the established patterns for authentication, validation, and response modeling.

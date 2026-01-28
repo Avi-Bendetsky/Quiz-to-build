@@ -125,6 +125,7 @@ done
 
 if [ "$HTTP_CODE" != "200" ]; then
     echo -e "${YELLOW}Warning: Health check did not return 200. Check the logs.${NC}"
+    echo -e "${YELLOW}The deployment completed but the API may need more time to start.${NC}"
 fi
 
 # Print summary

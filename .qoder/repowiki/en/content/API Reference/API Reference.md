@@ -23,15 +23,6 @@
 - [standard.dto.ts](file://apps/api/src/modules/standards/dto/standard.dto.ts)
 </cite>
 
-## Update Summary
-**Changes Made**
-- Updated authentication endpoints documentation with comprehensive request/response schemas
-- Enhanced session management API documentation with detailed adaptive logic controls
-- Expanded standards endpoints coverage with document generation capabilities
-- Added comprehensive validation rules and error response documentation
-- Updated security considerations and JWT token usage patterns
-- Improved client implementation guidelines and common usage patterns
-
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -45,7 +36,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive API documentation for the Quiz-to-build system REST endpoints. It covers authentication, user management, questionnaires, sessions, and standards. For each endpoint, you will find HTTP methods, URL patterns, request/response schemas, authentication requirements, error responses, validation rules, and practical usage guidance. JWT-based authentication and role-based access control are central to the system's security model.
+This document provides comprehensive API documentation for the Quiz-to-build system REST endpoints. It covers authentication, user management, questionnaires, sessions, and standards. For each endpoint, you will find HTTP methods, URL patterns, request/response schemas, authentication requirements, error responses, validation rules, and practical usage guidance. JWT-based authentication and role-based access control are central to the system’s security model.
 
 ## Project Structure
 The API is organized into NestJS modules, each exposing a set of related endpoints:
@@ -169,7 +160,6 @@ All authentication endpoints are under /api/v1/auth.
   - Request body: LoginDto
     - email: string, required, must be a valid email
     - password: string, required, min length 1
-    - ip: string, auto-populated by controller, not from request body
   - Responses:
     - 200 OK: TokenResponseDto
     - 401 Unauthorized: Invalid credentials
@@ -326,7 +316,7 @@ Endpoints are under /api/v1/sessions and require JWT authentication.
     - Body: see [create-session.dto.ts](file://apps/api/src/modules/session/dto/create-session.dto.ts#L4-L14)
 
 - GET /api/v1/sessions
-  - Purpose: List current user's sessions
+  - Purpose: List current user’s sessions
   - Authentication: Required (JWT)
   - Query parameters:
     - status?: enum SessionStatus (optional)
@@ -503,6 +493,8 @@ STC["StandardsController"] --> SD["StandardDto"]
 - Adaptive logic: Session continuation and next-question retrieval accept a count parameter constrained to 1–5 to balance responsiveness and load.
 - Token lifetime: Access tokens include an expiresIn field; clients should refresh proactively to avoid interruptions.
 
+[No sources needed since this section provides general guidance]
+
 ## Troubleshooting Guide
 Common issues and resolutions:
 - 401 Unauthorized
@@ -544,6 +536,8 @@ Common issues and resolutions:
 
 ## Conclusion
 This API provides a secure, validated, and well-documented interface for managing users, questionnaires, sessions, and standards. JWT-based authentication and role-based access control protect sensitive operations, while DTOs and pagination ensure predictable performance and usability. Clients should follow the documented schemas, handle token lifecycle carefully, and leverage the provided endpoints to implement robust quiz experiences.
+
+[No sources needed since this section summarizes without analyzing specific files]
 
 ## Appendices
 
