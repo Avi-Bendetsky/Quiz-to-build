@@ -16,6 +16,7 @@ import { ScoringEngineModule } from './modules/scoring-engine/scoring-engine.mod
 import { EvidenceRegistryModule } from './modules/evidence-registry/evidence-registry.module';
 import { DecisionLogModule } from './modules/decision-log/decision-log.module';
 import { HeatmapModule } from './modules/heatmap/heatmap.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -66,6 +67,7 @@ import configuration from './config/configuration';
     EvidenceRegistryModule,
     DecisionLogModule,
     HeatmapModule,
+    NotificationModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -45,4 +45,20 @@ export default (): Record<string, unknown> => ({
   logging: {
     level: process.env.LOG_LEVEL || 'debug',
   },
+
+  // Email (SendGrid)
+  email: {
+    sendgridApiKey: process.env.SENDGRID_API_KEY,
+    from: process.env.EMAIL_FROM || 'noreply@quiz2biz.com',
+    fromName: process.env.EMAIL_FROM_NAME || 'Quiz2Biz',
+  },
+
+  // Frontend URL for email links
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
+
+  // Verification tokens
+  tokens: {
+    verificationExpiry: process.env.VERIFICATION_TOKEN_EXPIRY || '24h',
+    passwordResetExpiry: process.env.PASSWORD_RESET_TOKEN_EXPIRY || '1h',
+  },
 });
