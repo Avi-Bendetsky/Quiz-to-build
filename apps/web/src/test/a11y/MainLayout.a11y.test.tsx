@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { axe, toHaveNoViolations } from 'jest-axe';
 
@@ -278,7 +278,9 @@ describe('MainLayout Accessibility', () => {
         </BrowserRouter>
       );
 
-      const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
+      // Find the dashboard link in the navigation (not the logo)
+      const nav = screen.getByRole('navigation', { name: /primary navigation/i });
+      const dashboardLink = within(nav).getByRole('link', { name: 'Dashboard' });
       expect(dashboardLink).toHaveAttribute('aria-current', 'page');
     });
 

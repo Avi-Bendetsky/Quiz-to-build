@@ -583,10 +583,11 @@ describe('Screen Reader Accessibility', () => {
     it('checkbox and radio inputs should be properly labeled', () => {
       render(<MockAccessibleForm />);
 
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/low/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/high/i)).toBeInTheDocument();
+      // Check checkbox inputs specifically by their labels
+      expect(screen.getByLabelText('Email')).toBeInTheDocument();
+      expect(screen.getByLabelText('Phone')).toBeInTheDocument();
+      expect(screen.getByLabelText('Low')).toBeInTheDocument();
+      expect(screen.getByLabelText('High')).toBeInTheDocument();
     });
   });
 

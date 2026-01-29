@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+import React from 'react';
 
 expect.extend(toHaveNoViolations);
 
@@ -29,47 +30,59 @@ function MockFileUploadInput({
   onFilesChange?: (files: FileWithPreview[]) => void;
   onRemove?: (id: string) => void;
 }) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  };
+
   return (
     <div className="file-upload-input" role="region" aria-label="File upload area">
-      {/* Drop zone */}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        disabled={disabled}
+        aria-label="Select files to upload"
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json"
+        className="sr-only"
+        onChange={(e) => {
+          if (e.target.files && onFilesChange) {
+            const newFiles: FileWithPreview[] = Array.from(e.target.files).map((file) => ({
+              file,
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+            }));
+            onFilesChange([...files, ...newFiles]);
+          }
+        }}
+      />
+      
+      {/* Drop zone - using div with button behavior */}
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
-        aria-describedby="upload-instructions upload-error"
+        aria-describedby={`upload-instructions${error ? ' upload-error' : ''}`}
+        onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            // Trigger file input click
-          }
-        }}
+        onKeyDown={handleKeyDown}
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                     ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
       >
-        <input
-          type="file"
-          multiple
-          disabled={disabled}
-          aria-label="Select files to upload"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json"
-          className="sr-only"
-          onChange={(e) => {
-            if (e.target.files && onFilesChange) {
-              const newFiles: FileWithPreview[] = Array.from(e.target.files).map((file) => ({
-                file,
-                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-              }));
-              onFilesChange([...files, ...newFiles]);
-            }
-          }}
-        />
         <svg
           className="mx-auto h-12 w-12 text-gray-400"
           fill="none"

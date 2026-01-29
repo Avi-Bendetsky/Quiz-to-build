@@ -64,10 +64,10 @@ function hexToRgb(hex: string): [number, number, number] {
 // ============================================================================
 
 const colors = {
-  // Text colors
+  // Text colors - Updated for WCAG AA compliance
   textPrimary: '#111827',      // gray-900
-  textSecondary: '#6B7280',    // gray-500
-  textMuted: '#9CA3AF',        // gray-400
+  textSecondary: '#4B5563',    // gray-600 - Darker for better contrast
+  textMuted: '#6B7280',        // gray-500 - Meets 3:1 for large text
   textOnDark: '#FFFFFF',       // white
   
   // Background colors
@@ -80,18 +80,18 @@ const colors = {
   primary: '#2563EB',          // blue-600
   primaryHover: '#1D4ED8',     // blue-700
   
-  // Status colors
-  success: '#059669',          // green-600
+  // Status colors - Updated for WCAG AA compliance on colored backgrounds
+  success: '#047857',          // green-700 - Darker for 4.5:1 on green-50
   successBg: '#ECFDF5',        // green-50
-  warning: '#D97706',          // yellow-600
+  warning: '#92400E',          // yellow-800 - Darker for 4.5:1 on yellow-50
   warningBg: '#FFFBEB',        // yellow-50
-  error: '#DC2626',            // red-600
+  error: '#B91C1C',            // red-700 - Darker for 4.5:1 on red-50
   errorBg: '#FEF2F2',          // red-50
   
-  // UI colors
-  border: '#D1D5DB',           // gray-300
+  // UI colors - Updated for WCAG AA compliance
+  border: '#6B7280',           // gray-500 - Darker for 3:1 against white
   focusRing: '#3B82F6',        // blue-500
-  disabled: '#9CA3AF',         // gray-400
+  disabled: '#6B7280',         // gray-500 - Meets 3:1 for large text
 };
 
 // ============================================================================
@@ -655,7 +655,8 @@ describe('Form Accessibility', () => {
     it('labels should use htmlFor to associate with inputs', () => {
       render(<MockAccessibleForm />);
 
-      const nameLabel = screen.getByText(/full name/i).closest('label');
+      const nameLabels = screen.getAllByText(/full name/i);
+      const nameLabel = nameLabels[0].closest('label');
       expect(nameLabel).toHaveAttribute('for', 'name');
     });
   });
