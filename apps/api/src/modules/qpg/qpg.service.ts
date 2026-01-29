@@ -54,7 +54,11 @@ export class QpgService {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
     });
-    const scoreAtGeneration = session?.readinessScore?.toNumber() ?? 0;
+    const scoreAtGeneration = session?.readinessScore 
+      ? (typeof session.readinessScore === 'number' 
+          ? session.readinessScore 
+          : (session.readinessScore as any).toNumber?.() ?? Number(session.readinessScore))
+      : 0;
 
     const batch: PromptBatch = {
       id: `batch-${Date.now()}`,

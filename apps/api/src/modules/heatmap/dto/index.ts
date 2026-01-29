@@ -152,18 +152,37 @@ export class HeatmapResultDto {
  * Drilldown result showing questions contributing to a specific cell.
  */
 export class HeatmapDrilldownDto {
-  @ApiProperty({ type: HeatmapCellDto, description: 'The cell being drilled into' })
-  cell: HeatmapCellDto;
+  @ApiProperty({ description: 'Dimension key' })
+  dimensionKey: string;
+
+  @ApiProperty({ description: 'Dimension display name' })
+  dimensionName: string;
+
+  @ApiProperty({ description: 'Severity bucket (Low, Medium, High, Critical)' })
+  severityBucket: SeverityBucket | string;
+
+  @ApiProperty({ description: 'Cell value: Sum(Severity × (1 - Coverage))' })
+  cellValue: number;
+
+  @ApiProperty({ description: 'Color code based on residual risk' })
+  colorCode: HeatmapColor;
+
+  @ApiProperty({ description: 'Number of questions in this cell' })
+  questionCount: number;
 
   @ApiProperty({ description: 'Questions contributing to this cell' })
-  contributingQuestions: Array<{
+  questions: Array<{
     questionId: string;
-    text: string;
+    questionText: string;
     severity: number;
-    currentCoverage: number;
-    residualContribution: number;
+    coverage: number;
+    residualRisk: number;
+    responseValue?: string;
   }>;
 
-  @ApiProperty({ description: 'Potential improvement if all questions fully covered' })
-  potentialImprovement: number;
+  @ApiPropertyOptional({ type: HeatmapCellDto, description: 'The cell being drilled into (optional)' })
+  cell?: HeatmapCellDto;
+
+  @ApiPropertyOptional({ description: 'Potential improvement if all questions fully covered' })
+  potentialImprovement?: number;
 }

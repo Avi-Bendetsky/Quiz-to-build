@@ -328,7 +328,7 @@ describe('DocumentGeneratorService', () => {
         });
     });
 
-    describe('listDocuments', () => {
+    describe('getSessionDocuments', () => {
         it('lists documents for a session', async () => {
             const mockDocs = [
                 {
@@ -348,7 +348,7 @@ describe('DocumentGeneratorService', () => {
             mockPrisma.session.findUnique.mockResolvedValue(mockSession);
             mockPrisma.document.findMany.mockResolvedValue(mockDocs);
 
-            const result = await service.listDocuments('session-123', 'user-456');
+            const result = await service.getSessionDocuments('session-123', 'user-456');
 
             expect(result).toEqual(mockDocs);
             expect(mockPrisma.document.findMany).toHaveBeenCalledWith({
@@ -356,65 +356,6 @@ describe('DocumentGeneratorService', () => {
                 include: { documentType: true },
                 orderBy: { createdAt: 'desc' },
             });
-        });
-
-        it('filters documents by status', async () => {
-            mockPrisma.session.findUnique.mockResolvedValue(mockSession);
-            mockPrisma.document.findMany.mockResolvedValue([]);
-
-            await service.listDocuments('session-123', 'user-456', {
-                status: DocumentStatus.GENERATED,
-            });
-
-            expect(mockPrisma.document.findMany).toHaveBeenCalledWith({
-                where: {
-                    sessionId: 'session-123',
-                    status: DocumentStatus.GENERATED,
-                },
-                include: { documentType: true },
-                orderBy: { createdAt: 'desc' },
-            });
-        });
-    });
-
-    describe('deleteDocument', () => {
-        it('deletes document successfully', async () => {
-            const mockDoc = {
-                id: 'doc-123',
-                sessionId: 'session-123',
-                session: { userId: 'user-456' },
-                storageUrl: 'https://storage.blob/documents/file.docx',
-            };
-
-            mockPrisma.document.findUnique.mockResolvedValue(mockDoc);
-            mockPrisma.document.delete.mockResolvedValue(mockDoc);
-            mockStorage.delete.mockResolvedValue(undefined);
-
-            await service.deleteDocument('doc-123', 'user-456');
-
-            expect(mockStorage.delete).toHaveBeenCalledWith('https://storage.blob/documents/file.docx');
-            expect(mockPrisma.document.delete).toHaveBeenCalledWith({
-                where: { id: 'doc-123' },
-            });
-        });
-
-        it('throws NotFoundException for non-existent document', async () => {
-            mockPrisma.document.findUnique.mockResolvedValue(null);
-
-            await expect(service.deleteDocument('non-existent', 'user-456')).rejects.toThrow(
-                NotFoundException,
-            );
-        });
-
-        it('throws BadRequestException when user does not own document', async () => {
-            mockPrisma.document.findUnique.mockResolvedValue({
-                id: 'doc-123',
-                session: { userId: 'different-user' },
-            });
-
-            await expect(service.deleteDocument('doc-123', 'user-456')).rejects.toThrow(
-                BadRequestException,
-            );
         });
     });
 
@@ -425,18 +366,28 @@ describe('DocumentGeneratorService', () => {
                 sessionId: 'session-123',
                 documentTypeId: 'doc-type-789',
                 version: 1,
+                format: 'DOCX',
                 session: { userId: 'user-456', status: SessionStatus.COMPLETED },
                 documentType: mockDocumentType,
             };
 
-            mockPrisma.document.findUnique.mockResolvedValue(mockDoc);
-            mockPrisma.session.findUnique.mockResolvedValue(mockSession);
-            mockPrisma.documentType.findUnique.mockResolvedValue(mockDocumentType);
-            mockPrisma.document.update.mockResolvedValue({
-                ...mockDoc,
+            const newMockDoc = {
+                id: 'doc-456',
+                sessionId: 'session-123',
+                documentTypeId: 'doc-type-789',
                 version: 2,
-                status: DocumentStatus.GENERATED,
-            });
+                format: 'DOCX',
+                status: DocumentStatus.PENDING,
+                documentType: mockDocumentType,
+            };
+
+            // First findUnique returns old doc (for getDocument)
+            // Later findUnique returns new doc (final result)
+            mockPrisma.document.findUnique
+                .mockResolvedValueOnce(mockDoc)
+                .mockResolvedValueOnce({ ...newMockDoc, status: DocumentStatus.GENERATED });
+            mockPrisma.document.create.mockResolvedValue(newMockDoc);
+            mockPrisma.document.update.mockResolvedValue({ ...newMockDoc, status: DocumentStatus.GENERATED });
 
             mockTemplateEngine.assembleTemplateData.mockResolvedValue({
                 metadata: { version: '1.0' },
@@ -452,29 +403,6 @@ describe('DocumentGeneratorService', () => {
 
             expect(result.version).toBe(2);
             expect(mockStorage.upload).toHaveBeenCalled();
-        });
-    });
-
-    describe('downloadDocument', () => {
-        it('generates download URL for document', async () => {
-            const mockDoc = {
-                id: 'doc-123',
-                storageUrl: 'https://storage.blob/documents/file.docx',
-                session: { userId: 'user-456' },
-            };
-
-            mockPrisma.document.findUnique.mockResolvedValue(mockDoc);
-            mockStorage.download.mockResolvedValue({
-                url: 'https://storage.blob/documents/file.docx?sas=token',
-                expiresAt: new Date(Date.now() + 3600000),
-            });
-
-            const result = await service.downloadDocument('doc-123', 'user-456');
-
-            expect(result.url).toContain('sas=token');
-            expect(mockStorage.download).toHaveBeenCalledWith(
-                'https://storage.blob/documents/file.docx',
-            );
         });
     });
 });

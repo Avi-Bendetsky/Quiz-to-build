@@ -404,11 +404,11 @@ describe('EvidenceRegistryController', () => {
             };
 
             const mockResult = {
-                buildId: 'build-456',
                 totalArtifacts: 2,
-                ingested: 2,
-                failed: 0,
-                evidenceIds: ['evidence-1', 'evidence-2'],
+                successCount: 2,
+                errorCount: 0,
+                results: [],
+                errors: [],
             };
 
             mockCIIngestionService.bulkIngestArtifacts.mockResolvedValue(mockResult);
@@ -416,7 +416,7 @@ describe('EvidenceRegistryController', () => {
             const result = await controller.bulkIngestCIArtifacts(dto);
 
             expect(result.totalArtifacts).toBe(2);
-            expect(result.failed).toBe(0);
+            expect(result.errorCount).toBe(0);
             expect(mockCIIngestionService.bulkIngestArtifacts).toHaveBeenCalledWith(dto);
         });
     });
@@ -450,16 +450,16 @@ describe('EvidenceRegistryController', () => {
     describe('getCIBuildSummary', () => {
         it('retrieves build summary with aggregated metrics', async () => {
             const mockSummary = {
-                sessionId: 'session-123',
                 buildId: 'build-456',
                 buildNumber: '42',
                 pipelineName: 'CI Pipeline',
+                branch: 'main',
+                commitSha: 'abc123',
                 ciProvider: 'azure-devops',
-                artifacts: [
-                    { artifactType: 'junit', metrics: { tests: 100, failures: 0 } },
-                    { artifactType: 'lcov', metrics: { coverage: 85 } },
-                ],
-                aggregatedMetrics: {
+                totalArtifacts: 2,
+                verifiedArtifacts: 2,
+                artifactTypes: ['junit', 'lcov'],
+                metrics: {
                     totalTests: 100,
                     testPassRate: 100,
                     codeCoverage: 85,
@@ -472,7 +472,7 @@ describe('EvidenceRegistryController', () => {
             const result = await controller.getCIBuildSummary('session-123', 'build-456');
 
             expect(result.buildId).toBe('build-456');
-            expect(result.aggregatedMetrics.totalTests).toBe(100);
+            expect((result.metrics as any).totalTests).toBe(100);
             expect(mockCIIngestionService.getBuildSummary).toHaveBeenCalledWith('session-123', 'build-456');
         });
     });

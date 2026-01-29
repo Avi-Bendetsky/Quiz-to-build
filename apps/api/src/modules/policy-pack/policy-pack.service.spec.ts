@@ -78,14 +78,19 @@ describe('PolicyPackService', () => {
         it('generates complete policy pack from gaps', async () => {
             const gaps: GapContext[] = [
                 {
+                    sessionId: 'session-123',
                     questionId: 'q1',
                     dimensionKey: 'security',
+                    dimensionName: 'Security',
                     persona: 'CTO',
                     severity: 0.8,
                     currentCoverage: 0.25,
                     residualRisk: 0.6,
                     questionText: 'Do you have MFA?',
                     answer: 'No',
+                    bestPractice: 'Implement MFA for all users',
+                    practicalExplainer: 'MFA adds a second layer of security',
+                    standardRefs: ['ISO 27001 A.9.4.2'],
                 } as GapContext,
             ];
 
@@ -130,14 +135,19 @@ describe('PolicyPackService', () => {
         it('handles policy generation failures gracefully', async () => {
             const gaps: GapContext[] = [
                 {
+                    sessionId: 'session-123',
                     questionId: 'q1',
                     dimensionKey: 'security',
+                    dimensionName: 'Security',
                     persona: 'CTO',
                     severity: 0.8,
                     currentCoverage: 0.25,
                     residualRisk: 0.6,
                     questionText: 'Do you have MFA?',
                     answer: 'No',
+                    bestPractice: 'Implement MFA for all users',
+                    practicalExplainer: 'MFA adds a second layer of security',
+                    standardRefs: ['ISO 27001 A.9.4.2'],
                 } as GapContext,
             ];
 

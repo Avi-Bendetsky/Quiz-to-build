@@ -231,13 +231,13 @@ export class HeatmapService {
 
     // Build response lookup
     const responseLookup = new Map(
-      responses.map((r: { questionId: string; coverage: any }) => [r.questionId, r]),
+      responses.map((r: { questionId: string; coverage: any; value?: any }) => [r.questionId, r]),
     );
 
     // Get questions for this cell
     const bucket = severityBucket as SeverityBucket;
     const dim = dimensions.find(
-      (d: { key: string }) => d.key.toLowerCase() === dimensionKey.toLowerCase(),
+      (d: { key: string; displayName: string }) => d.key.toLowerCase() === dimensionKey.toLowerCase(),
     );
 
     const cellQuestions = questions
@@ -246,23 +246,30 @@ export class HeatmapService {
         (q: { severity: any }) => SeverityBuckets.getBucket(Number(q.severity || 0.5)) === bucket,
       )
       .map((q: { id: string; text: string; severity: any }) => {
-        const response = responseLookup.get(q.id) as { coverage: any } | undefined;
+        const response = responseLookup.get(q.id) as { coverage: any; value?: any } | undefined;
         const coverage = response?.coverage ? Number(response.coverage) : 0;
         const severity = Number(q.severity || 0.5);
         return {
           questionId: q.id,
-          text: q.text,
+          questionText: q.text,
           severity,
-          currentCoverage: coverage,
-          residualContribution: severity * (1 - coverage),
+          coverage,
+          residualRisk: severity * (1 - coverage),
+          responseValue: response?.value?.toString(),
         };
       });
 
-    const potentialImprovement = cellQuestions.reduce((sum, q) => sum + q.residualContribution, 0);
+    const potentialImprovement = cellQuestions.reduce((sum, q) => sum + q.residualRisk, 0);
 
     return {
+      dimensionKey: cell.dimensionKey,
+      dimensionName: dim?.displayName || cell.dimensionKey,
+      severityBucket: cell.severityBucket,
+      cellValue: cell.cellValue,
+      colorCode: cell.colorCode,
+      questionCount: cellQuestions.length,
+      questions: cellQuestions,
       cell,
-      contributingQuestions: cellQuestions,
       potentialImprovement,
     };
   }

@@ -91,7 +91,7 @@ describe('PaymentService', () => {
                 url: 'https://checkout.stripe.com/pay/cs_test_123',
             };
 
-            mockStripe.checkout.sessions.create.mockResolvedValue(mockSession as any);
+            (mockStripe.checkout.sessions.create as jest.Mock).mockResolvedValue(mockSession as any);
 
             const result = await service.createCheckoutSession({
                 organizationId: 'org-123',
@@ -124,7 +124,7 @@ describe('PaymentService', () => {
         });
 
         it('includes customer ID when provided', async () => {
-            mockStripe.checkout.sessions.create.mockResolvedValue({
+            (mockStripe.checkout.sessions.create as jest.Mock).mockResolvedValue({
                 id: 'cs_test_123',
                 url: 'https://checkout.stripe.com/pay/cs_test_123',
             } as any);
@@ -183,7 +183,7 @@ describe('PaymentService', () => {
 
     describe('createPortalSession', () => {
         it('creates billing portal session', async () => {
-            mockStripe.billingPortal.sessions.create.mockResolvedValue({
+            (mockStripe.billingPortal.sessions.create as jest.Mock).mockResolvedValue({
                 url: 'https://billing.stripe.com/session/123',
             } as any);
 
@@ -205,7 +205,7 @@ describe('PaymentService', () => {
                 name: 'Test Org',
             };
 
-            mockStripe.customers.create.mockResolvedValue(mockCustomer as any);
+            (mockStripe.customers.create as jest.Mock).mockResolvedValue(mockCustomer as any);
 
             const result = await service.createCustomer({
                 email: 'test@example.com',
@@ -234,7 +234,7 @@ describe('PaymentService', () => {
                 },
             };
 
-            mockStripe.subscriptions.retrieve.mockResolvedValue(mockSubscription as any);
+            (mockStripe.subscriptions.retrieve as jest.Mock).mockResolvedValue(mockSubscription as any);
 
             const result = await service.getSubscription('sub_123');
 
@@ -246,7 +246,7 @@ describe('PaymentService', () => {
         it('cancels subscription at period end', async () => {
             const mockSubscription = { id: 'sub_123', cancel_at_period_end: true };
 
-            mockStripe.subscriptions.update.mockResolvedValue(mockSubscription as any);
+            (mockStripe.subscriptions.update as jest.Mock).mockResolvedValue(mockSubscription as any);
 
             const result = await service.cancelSubscription('sub_123', true);
 
@@ -259,7 +259,7 @@ describe('PaymentService', () => {
         it('cancels subscription immediately', async () => {
             const mockSubscription = { id: 'sub_123', status: 'canceled' };
 
-            mockStripe.subscriptions.cancel.mockResolvedValue(mockSubscription as any);
+            (mockStripe.subscriptions.cancel as jest.Mock).mockResolvedValue(mockSubscription as any);
 
             const result = await service.cancelSubscription('sub_123', false);
 
@@ -282,8 +282,8 @@ describe('PaymentService', () => {
                 status: 'active',
             };
 
-            mockStripe.subscriptions.retrieve.mockResolvedValue(existingSubscription as any);
-            mockStripe.subscriptions.update.mockResolvedValue(updatedSubscription as any);
+            (mockStripe.subscriptions.retrieve as jest.Mock).mockResolvedValue(existingSubscription as any);
+            (mockStripe.subscriptions.update as jest.Mock).mockResolvedValue(updatedSubscription as any);
 
             const result = await service.updateSubscription('sub_123', 'ENTERPRISE');
 
@@ -313,7 +313,7 @@ describe('PaymentService', () => {
             const webhookSecret = 'whsec_test';
             const mockEvent = { type: 'checkout.session.completed' };
 
-            mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent as any);
+            (mockStripe.webhooks.constructEvent as jest.Mock).mockReturnValue(mockEvent as any);
 
             const result = service.constructWebhookEvent(payload, signature, webhookSecret);
 
@@ -335,7 +335,7 @@ describe('PaymentService', () => {
                 ],
             };
 
-            mockStripe.invoices.list.mockResolvedValue(mockInvoices as any);
+            (mockStripe.invoices.list as jest.Mock).mockResolvedValue(mockInvoices as any);
 
             const result = await service.getInvoices('cus_123', 10);
 
@@ -355,7 +355,7 @@ describe('PaymentService', () => {
                 next_payment_attempt: 1640000000,
             };
 
-            mockStripe.invoices.createPreview.mockResolvedValue(mockUpcoming as any);
+            (mockStripe.invoices.createPreview as jest.Mock).mockResolvedValue(mockUpcoming as any);
 
             const result = await service.getUpcomingInvoice('cus_123');
 
@@ -363,7 +363,7 @@ describe('PaymentService', () => {
         });
 
         it('returns null when no upcoming invoice', async () => {
-            mockStripe.invoices.createPreview.mockRejectedValue(new Error('No upcoming invoice'));
+            (mockStripe.invoices.createPreview as jest.Mock).mockRejectedValue(new Error('No upcoming invoice'));
 
             const result = await service.getUpcomingInvoice('cus_123');
 

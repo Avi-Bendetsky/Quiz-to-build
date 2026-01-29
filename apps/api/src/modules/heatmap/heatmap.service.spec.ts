@@ -14,7 +14,7 @@ describe('HeatmapService', () => {
         session: {
             findUnique: jest.fn(),
         },
-        dimension: {
+        dimensionCatalog: {
             findMany: jest.fn(),
         },
         question: {
@@ -100,7 +100,7 @@ describe('HeatmapService', () => {
     describe('generateHeatmap', () => {
         it('generates heatmap with correct cell calculations', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null); // No cache
@@ -116,12 +116,12 @@ describe('HeatmapService', () => {
 
         it('calculates residual risk correctly', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue([
                 {
                     id: 'q-high-severity',
                     dimensionKey: 'security',
-                    severity: 0.9, // High severity
+                    severity: 0.9, // High severity -> CRITICAL bucket
                     text: 'Critical security question',
                 },
             ]);
@@ -137,14 +137,17 @@ describe('HeatmapService', () => {
             const result = await service.generateHeatmap('session-123');
 
             // Residual = Severity × (1 - Coverage) = 0.9 × 0.9 = 0.81
-            const highSeverityCell = result.cells.find((c) => c.dimensionKey === 'security');
-            expect(highSeverityCell).toBeDefined();
-            expect(highSeverityCell!.cellValue).toBeGreaterThan(0.5);
+            // Severity 0.9 -> CRITICAL bucket
+            const criticalCell = result.cells.find(
+                (c) => c.dimensionKey === 'security' && c.severityBucket === SeverityBucket.CRITICAL
+            );
+            expect(criticalCell).toBeDefined();
+            expect(criticalCell!.cellValue).toBeGreaterThan(0.5);
         });
 
         it('assigns color codes correctly', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
 
             // Create questions with different residual values
             mockPrisma.question.findMany.mockResolvedValue([
@@ -191,12 +194,12 @@ describe('HeatmapService', () => {
             const result = await service.generateHeatmap('session-123');
 
             expect(result).toEqual(cachedHeatmap);
-            expect(mockPrisma.dimension.findMany).not.toHaveBeenCalled();
+            expect(mockPrisma.dimensionCatalog.findMany).not.toHaveBeenCalled();
         });
 
         it('caches generated heatmap', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -222,7 +225,7 @@ describe('HeatmapService', () => {
     describe('exportToCsv', () => {
         it('exports heatmap to CSV format', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -239,7 +242,7 @@ describe('HeatmapService', () => {
 
         it('formats cell values with 4 decimal places', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
             mockPrisma.question.findMany.mockResolvedValue([
                 { id: 'q1', dimensionKey: 'security', severity: 0.333, text: 'Test question' },
             ]);
@@ -258,7 +261,7 @@ describe('HeatmapService', () => {
     describe('exportToMarkdown', () => {
         it('exports heatmap to Markdown format', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -277,7 +280,7 @@ describe('HeatmapService', () => {
 
         it('includes color indicators in cells', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
             mockPrisma.question.findMany.mockResolvedValue([
                 { id: 'q1', dimensionKey: 'security', severity: 0.9, text: 'High risk question' },
             ]);
@@ -295,7 +298,7 @@ describe('HeatmapService', () => {
     describe('getSummary', () => {
         it('returns summary statistics only', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -314,7 +317,7 @@ describe('HeatmapService', () => {
 
         it('calculates overall risk score correctly', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
             mockPrisma.question.findMany.mockResolvedValue([
                 { id: 'q1', dimensionKey: 'security', severity: 1.0, text: 'Critical question' },
             ]);
@@ -333,7 +336,7 @@ describe('HeatmapService', () => {
     describe('getCells', () => {
         it('returns all cells without filters', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -349,7 +352,7 @@ describe('HeatmapService', () => {
 
         it('filters cells by dimension', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -361,7 +364,7 @@ describe('HeatmapService', () => {
 
         it('filters cells by severity bucket', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -373,7 +376,7 @@ describe('HeatmapService', () => {
 
         it('filters cells by both dimension and severity', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -387,7 +390,7 @@ describe('HeatmapService', () => {
     describe('drilldown', () => {
         it('returns questions contributing to a cell', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue(mockQuestions);
             mockPrisma.response.findMany.mockResolvedValue(mockResponses);
             mockRedis.get.mockResolvedValue(null);
@@ -403,7 +406,7 @@ describe('HeatmapService', () => {
 
         it('includes question details in drilldown', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
             mockPrisma.question.findMany.mockResolvedValue([
                 { id: 'q1', dimensionKey: 'security', severity: 0.8, text: 'Do you have MFA?' },
             ]);
@@ -426,7 +429,7 @@ describe('HeatmapService', () => {
 
         it('throws NotFoundException for non-existent cell', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue(mockDimensions);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue(mockDimensions);
             mockPrisma.question.findMany.mockResolvedValue([]);
             mockPrisma.response.findMany.mockResolvedValue([]);
             mockRedis.get.mockResolvedValue(null);
@@ -438,7 +441,7 @@ describe('HeatmapService', () => {
     describe('severity bucket mapping', () => {
         it('maps severity values to correct buckets', async () => {
             mockPrisma.session.findUnique.mockResolvedValue({ id: 'session-123' });
-            mockPrisma.dimension.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
+            mockPrisma.dimensionCatalog.findMany.mockResolvedValue([{ key: 'security', displayName: 'Security', weight: 1.0 }]);
             mockPrisma.question.findMany.mockResolvedValue([
                 { id: 'q-low', dimensionKey: 'security', severity: 0.2, text: 'Low severity' },
                 { id: 'q-medium', dimensionKey: 'security', severity: 0.4, text: 'Medium severity' },
