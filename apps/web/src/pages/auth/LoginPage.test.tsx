@@ -35,8 +35,8 @@ describe('LoginPage', () => {
         renderLoginPage();
 
         expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument();
-        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/enter your password/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
@@ -54,10 +54,10 @@ describe('LoginPage', () => {
     it('shows password visibility toggle', () => {
         renderLoginPage();
         
-        const passwordField = screen.getByLabelText(/password/i);
+        const passwordField = screen.getByPlaceholderText(/enter your password/i);
         expect(passwordField).toHaveAttribute('type', 'password');
         
-        const toggleButton = passwordField.parentElement?.querySelector('button');
+        const toggleButton = screen.getByRole('button', { name: /show password/i });
         expect(toggleButton).toBeInTheDocument();
     });
 
