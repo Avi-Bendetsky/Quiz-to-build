@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { OAuthService } from './oauth/oauth.service';
 import { OAuthController } from './oauth/oauth.controller';
+import { CsrfService, CsrfGuard } from '../../common/guards/csrf.guard';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { OAuthController } from './oauth/oauth.controller';
     }),
   ],
   controllers: [AuthController, OAuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, OAuthService],
-  exports: [AuthService, JwtAuthGuard, RolesGuard, OAuthService],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, OAuthService, CsrfService, CsrfGuard],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, OAuthService, CsrfService, CsrfGuard],
 })
 export class AuthModule {}

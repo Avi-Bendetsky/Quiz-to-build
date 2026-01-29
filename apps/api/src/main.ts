@@ -12,6 +12,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -86,8 +87,56 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  // Permissions-Policy header (formerly Feature-Policy)
+  // Restricts which browser features the site can use
+  app.use((req, res, next) => {
+    res.setHeader(
+      'Permissions-Policy',
+      [
+        // Disable potentially dangerous features
+        'accelerometer=()',
+        'ambient-light-sensor=()',
+        'autoplay=()',
+        'battery=()',
+        'browsing-topics=()',
+        'camera=()',
+        'display-capture=()',
+        'document-domain=()',
+        'encrypted-media=()',
+        'execution-while-not-rendered=()',
+        'execution-while-out-of-viewport=()',
+        'gamepad=()',
+        'geolocation=()',
+        'gyroscope=()',
+        'hid=()',
+        'identity-credentials-get=()',
+        'idle-detection=()',
+        'local-fonts=()',
+        'magnetometer=()',
+        'microphone=()',
+        'midi=()',
+        'otp-credentials=()',
+        'payment=(self)', // Allow Stripe payment
+        'picture-in-picture=()',
+        'publickey-credentials-create=()',
+        'publickey-credentials-get=()',
+        'screen-wake-lock=()',
+        'serial=()',
+        'speaker-selection=()',
+        'storage-access=()',
+        'usb=()',
+        'web-share=()',
+        'xr-spatial-tracking=()',
+      ].join(', '),
+    );
+    next();
+  });
+
   // Application Insights request tracking
   app.use(createRequestTrackingMiddleware());
+
+  // Cookie parser for CSRF tokens
+  app.use(cookieParser());
 
   // CORS configuration
   app.enableCors({
@@ -119,34 +168,86 @@ async function bootstrap(): Promise<void> {
   // Global interceptors
   app.useGlobalInterceptors(new TransformInterceptor(), new LoggingInterceptor());
 
-  // Swagger documentation (only in development)
-  if (nodeEnv !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('Adaptive Questionnaire API')
-      .setDescription('API documentation for the Adaptive Client Questionnaire System')
-      .setVersion('1.0')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'JWT',
-          description: 'Enter JWT token',
-          in: 'header',
-        },
-        'JWT-auth',
-      )
-      .addTag('auth', 'Authentication endpoints')
-      .addTag('users', 'User management endpoints')
-      .addTag('questionnaires', 'Questionnaire endpoints')
-      .addTag('sessions', 'Session management endpoints')
-      .addTag('health', 'Health check endpoints')
-      .build();
+  // Swagger/OpenAPI documentation - available in all environments
+  // Production APIs benefit from self-documenting endpoints
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Quiz2Biz API')
+    .setDescription(
+      `## Adaptive Questionnaire System API
+      
+This API powers the Quiz2Biz platform - an intelligent assessment tool for organizational readiness.
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('docs', app, document);
-    logger.log(`Swagger documentation available at /docs`);
-  }
+### Features
+- **Authentication**: JWT-based auth with OAuth2 support (Google, Microsoft)
+- **Questionnaires**: Adaptive questionnaire flow with 11 question types
+- **Scoring**: Real-time readiness scoring across 11 dimensions
+- **Documents**: Automated document generation (Technology Roadmap, Business Plan, etc.)
+- **Evidence**: Evidence collection and integrity verification
+
+### Rate Limits
+- 100 requests per minute per IP
+- 1000 requests per hour per authenticated user
+
+### Support
+For API issues, contact: support@quiz2biz.com`,
+    )
+    .setVersion('1.0.0')
+    .setContact('Quiz2Biz Team', 'https://quiz2biz.com', 'support@quiz2biz.com')
+    .setLicense('Proprietary', 'https://quiz2biz.com/terms')
+    .addServer(
+      nodeEnv === 'production'
+        ? 'https://api.quiz2biz.com'
+        : `http://localhost:${port}`,
+      nodeEnv === 'production' ? 'Production' : 'Development',
+    )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter your JWT access token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addTag('auth', 'Authentication & authorization endpoints')
+    .addTag('users', 'User profile management')
+    .addTag('questionnaires', 'Questionnaire templates and management')
+    .addTag('sessions', 'Assessment sessions and progress')
+    .addTag('responses', 'Question responses and validation')
+    .addTag('scoring', 'Readiness scoring and heatmaps')
+    .addTag('evidence', 'Evidence collection and verification')
+    .addTag('documents', 'Document generation and export')
+    .addTag('admin', 'Administrative operations')
+    .addTag('payment', 'Subscription and billing')
+    .addTag('health', 'Health check endpoints')
+    .build();
+
+  const openApiDocument = SwaggerModule.createDocument(app, swaggerConfig, {
+    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+  });
+  
+  // Set up Swagger UI at /api/v1/docs
+  SwaggerModule.setup(`${apiPrefix}/docs`, app, openApiDocument, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none',
+      filter: true,
+      showRequestDuration: true,
+      syntaxHighlight: {
+        activate: true,
+        theme: 'monokai',
+      },
+    },
+    customSiteTitle: 'Quiz2Biz API Documentation',
+    customCss: `
+      .swagger-ui .topbar { display: none; }
+      .swagger-ui .info .title { font-size: 2rem; }
+    `,
+  });
+  
+  logger.log(`Swagger documentation available at /${apiPrefix}/docs`);
 
   // Graceful shutdown
   app.enableShutdownHooks();

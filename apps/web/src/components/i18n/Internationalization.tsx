@@ -884,7 +884,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
                   <div style={styles.nativeName}>{config.nativeName}</div>
                 )}
               </div>
-              {locale === config.code && <span>✓</span>}
+              {locale === config.code && <span aria-hidden="true">✓</span>}
             </button>
           ))}
         </div>

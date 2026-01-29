@@ -885,7 +885,7 @@ const SuggestionBox: React.FC<SuggestionBoxProps> = ({
 }) => (
   <div style={styles.suggestionBox}>
     <p style={styles.suggestionTitle}>
-      <span>💡</span>
+      <span aria-hidden="true">💡</span>
       Suggestion
     </p>
     <p style={styles.suggestionText}>{suggestion.reason}</p>
@@ -959,7 +959,7 @@ export const AdaptiveSidebar: React.FC<AdaptiveSidebarProps> = ({
             >
               <span>{qa.navItem.icon}</span>
               <span>{qa.navItem.label}</span>
-              {qa.pinned && <span style={{ fontSize: '10px' }}>📌</span>}
+              {qa.pinned && <span style={{ fontSize: '10px' }} aria-hidden="true">📌</span>}
               <button
                 style={styles.removeButton}
                 onClick={(e) => {
@@ -967,7 +967,7 @@ export const AdaptiveSidebar: React.FC<AdaptiveSidebarProps> = ({
                   removeFromQuickAccess(qa.navItem.id);
                 }}
               >
-                ✕
+                <span aria-hidden="true">✕</span>
               </button>
             </div>
           ))}

@@ -47,13 +47,50 @@ export function RegisterPage() {
   });
 
   const password = watch('password', '');
+  const confirmPassword = watch('confirmPassword', '');
+
+  // Real-time password match validation
+  const passwordsMatch = confirmPassword.length === 0 || password === confirmPassword;
+  const showPasswordMismatch = confirmPassword.length > 0 && !passwordsMatch;
 
   const passwordRequirements = [
     { label: 'At least 12 characters', met: password.length >= 12 },
     { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
     { label: 'One lowercase letter', met: /[a-z]/.test(password) },
     { label: 'One number', met: /[0-9]/.test(password) },
+    { label: 'One special character (!@#$%^&*)', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
   ];
+
+  // Calculate password strength for visual meter
+  const calculateStrength = () => {
+    if (!password) return { score: 0, label: '', color: 'bg-gray-200' };
+    
+    let score = 0;
+    
+    // Length scoring
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (password.length >= 16) score += 1;
+    
+    // Character variety
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+    
+    // Bonus for mixing
+    if (password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password)) {
+      score += 1;
+    }
+    
+    // Return strength level
+    if (score <= 2) return { score: 25, label: 'Weak', color: 'bg-red-500' };
+    if (score <= 4) return { score: 50, label: 'Fair', color: 'bg-yellow-500' };
+    if (score <= 6) return { score: 75, label: 'Good', color: 'bg-blue-500' };
+    return { score: 100, label: 'Strong', color: 'bg-green-500' };
+  };
+
+  const passwordStrength = calculateStrength();
 
   const onSubmit = async (data: RegisterForm) => {
     setError(null);
@@ -75,8 +112,17 @@ export function RegisterPage() {
     <div>
       <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Create your account</h2>
 
+      {/* Status announcements for screen readers */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {isSubmitting && 'Creating your account, please wait...'}
+      </div>
+
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div 
+          className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm"
+          role="alert"
+          aria-live="assertive"
+        >
           {error}
         </div>
       )}
@@ -151,7 +197,40 @@ export function RegisterPage() {
             </button>
           </div>
           {password && (
-            <div id="password-requirements" className="mt-2 space-y-1" aria-label="Password requirements">
+            <div className="mt-2 space-y-2">
+              {/* Password Strength Meter */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-gray-700">Password strength:</span>
+                  <span 
+                    className={`font-semibold ${
+                      passwordStrength.label === 'Weak' ? 'text-red-600' :
+                      passwordStrength.label === 'Fair' ? 'text-yellow-600' :
+                      passwordStrength.label === 'Good' ? 'text-blue-600' :
+                      'text-green-600'
+                    }`}
+                    aria-live="polite"
+                  >
+                    {passwordStrength.label}
+                  </span>
+                </div>
+                <div 
+                  className="h-2 bg-gray-200 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={passwordStrength.score}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Password strength: ${passwordStrength.label}`}
+                >
+                  <div 
+                    className={`h-full transition-all duration-300 ease-out ${passwordStrength.color}`}
+                    style={{ width: `${passwordStrength.score}%` }}
+                  />
+                </div>
+              </div>
+              
+              {/* Password Requirements Checklist */}
+              <div id="password-requirements" className="space-y-1 pt-1" aria-label="Password requirements">
               {passwordRequirements.map((req) => (
                 <div
                   key={req.label}
@@ -165,6 +244,7 @@ export function RegisterPage() {
                   {req.label}
                 </div>
               ))}
+              </div>
             </div>
           )}
           {errors.password && (
@@ -183,13 +263,31 @@ export function RegisterPage() {
             autoComplete="new-password"
             required
             aria-required="true"
-            aria-invalid={errors.confirmPassword ? 'true' : 'false'}
-            aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            aria-invalid={errors.confirmPassword || showPasswordMismatch ? 'true' : 'false'}
+            aria-describedby={errors.confirmPassword || showPasswordMismatch ? 'confirmPassword-error' : undefined}
+            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+              showPasswordMismatch ? 'border-red-300 bg-red-50' : 'border-gray-300'
+            }`}
             placeholder="Confirm your password"
           />
+          {/* Real-time password mismatch warning */}
+          {showPasswordMismatch && !errors.confirmPassword && (
+            <p id="confirmPassword-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
+              <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              Passwords do not match. Please ensure both passwords are identical.
+            </p>
+          )}
           {errors.confirmPassword && (
             <p id="confirmPassword-error" className="mt-1 text-sm text-red-600" role="alert">{errors.confirmPassword.message}</p>
+          )}
+          {/* Password match success indicator */}
+          {confirmPassword.length > 0 && passwordsMatch && (
+            <p className="mt-1 text-sm text-green-600 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-1" aria-hidden="true" />
+              Passwords match
+            </p>
           )}
         </div>
 

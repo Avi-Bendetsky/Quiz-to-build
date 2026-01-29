@@ -8,6 +8,8 @@ import { MainLayout, AuthLayout } from './components/layout';
 import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/auth';
 import { DashboardPage } from './pages/dashboard';
 import { BillingPage, InvoicesPage, UpgradePage } from './pages/billing';
+import { PrivacyPage, TermsPage } from './pages/legal';
+import { HelpPage } from './pages/help';
 import { useAuthStore } from './stores/auth';
 import type { ReactNode } from 'react';
 
@@ -95,6 +97,11 @@ export default function App() {
             <Route path="billing/upgrade" element={<UpgradePage />} />
             {/* Add more protected routes here */}
           </Route>
+
+          {/* Public legal and help pages */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/help" element={<HelpPage />} />
 
           {/* Fallback - redirect to login */}
           <Route path="*" element={<Navigate to="/auth/login" replace />} />

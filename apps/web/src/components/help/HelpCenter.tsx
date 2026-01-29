@@ -710,7 +710,7 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ searchQuery }) => {
           }`}
           className="help-contact__option"
         >
-          <span className="help-contact__option-icon">📧</span>
+          <span className="help-contact__option-icon" aria-hidden="true">📧</span>
           <span className="help-contact__option-label">Email Support</span>
           <span className="help-contact__option-detail">support@quiz2biz.com</span>
         </a>
@@ -719,7 +719,7 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ searchQuery }) => {
           // Open chat widget
           (window as any).Intercom?.('show');
         }}>
-          <span className="help-contact__option-icon">💬</span>
+          <span className="help-contact__option-icon" aria-hidden="true">💬</span>
           <span className="help-contact__option-label">Live Chat</span>
           <span className="help-contact__option-detail">Avg response: 5 min</span>
         </button>
@@ -730,7 +730,7 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ searchQuery }) => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <span className="help-contact__option-icon">📖</span>
+          <span className="help-contact__option-icon" aria-hidden="true">📖</span>
           <span className="help-contact__option-label">Documentation</span>
           <span className="help-contact__option-detail">Full technical docs</span>
         </a>
@@ -841,7 +841,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
       <main className="help-center__content" role="tabpanel">
         {filteredItems.length === 0 ? (
           <div className="help-center__no-results">
-            <span className="help-center__no-results-icon">🔍</span>
+            <span className="help-center__no-results-icon" aria-hidden="true">🔍</span>
             <h2>No results found</h2>
             <p>Try different keywords or browse categories above</p>
             <button

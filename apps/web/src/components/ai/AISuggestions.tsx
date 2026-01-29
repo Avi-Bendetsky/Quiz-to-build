@@ -303,10 +303,20 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
     history: '📜 Based on History',
   };
 
+  // Source icons for aria-hidden rendering
+  const sourceIcon = {
+    ai: '🤖',
+    template: '📋',
+    history: '📜',
+  };
+
   return (
     <div style={styles.card}>
       <div style={styles.cardHeader}>
-        <span style={styles.sourceLabel}>{sourceLabel[suggestion.source]}</span>
+        <span style={styles.sourceLabel}>
+          <span aria-hidden="true">{sourceIcon[suggestion.source]}</span>
+          {' '}{sourceLabel[suggestion.source].split(' ').slice(1).join(' ')}
+        </span>
         <div style={styles.confidenceContainer}>
           <span style={styles.confidenceLabel}>Confidence:</span>
           <span style={{ ...styles.confidenceValue, color: confidenceColor }}>
@@ -320,7 +330,7 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
 
         {showReasoning && suggestion.reasoning && (
           <div style={styles.reasoning}>
-            <span style={styles.reasoningIcon}>💡</span>
+            <span style={styles.reasoningIcon} aria-hidden="true">💡</span>
             <span style={styles.reasoningText}>{suggestion.reasoning}</span>
           </div>
         )}
@@ -374,11 +384,11 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
     return (
       <div className={className} style={styles.panel}>
         <div style={styles.panelHeader}>
-          <span style={styles.panelIcon}>✨</span>
+          <span style={styles.panelIcon} aria-hidden="true">✨</span>
           <span style={styles.panelTitle}>{title}</span>
         </div>
         <div style={styles.loading}>
-          <span style={styles.loadingSpinner}>⏳</span>
+          <span style={styles.loadingSpinner} aria-hidden="true">⏳</span>
           <span>Generating suggestions...</span>
         </div>
       </div>
@@ -388,7 +398,7 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
   return (
     <div className={className} style={styles.panel}>
       <div style={styles.panelHeader}>
-        <span style={styles.panelIcon}>✨</span>
+        <span style={styles.panelIcon} aria-hidden="true">✨</span>
         <span style={styles.panelTitle}>{title}</span>
         {suggestions.length > 0 && (
           <span style={styles.suggestionCount}>{suggestions.length}</span>
@@ -397,13 +407,13 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
 
       {error && (
         <div style={styles.errorBanner}>
-          <span>⚠️ {error}</span>
+          <span aria-hidden="true">⚠️</span> {error}
         </div>
       )}
 
       {suggestions.length === 0 ? (
         <div style={styles.emptyState}>
-          <span style={styles.emptyIcon}>💭</span>
+          <span style={styles.emptyIcon} aria-hidden="true">💭</span>
           <span style={styles.emptyText}>{emptyMessage}</span>
         </div>
       ) : (
@@ -441,7 +451,7 @@ export const InlineSuggestion: React.FC<InlineSuggestionProps> = ({
 }) => (
   <div style={compact ? styles.inlineCompact : styles.inline}>
     <div style={styles.inlineContent}>
-      <span style={styles.inlineIcon}>💡</span>
+      <span style={styles.inlineIcon} aria-hidden="true">💡</span>
       <span style={styles.inlineText}>
         {compact ? suggestion.text.slice(0, 100) + '...' : suggestion.text}
       </span>

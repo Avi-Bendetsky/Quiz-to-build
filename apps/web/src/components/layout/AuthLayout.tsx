@@ -30,11 +30,11 @@ export function AuthLayout() {
         </div>
       </main>
 
-      <div className="mt-8 text-center">
+      <footer className="mt-8 text-center" role="contentinfo">
         <p className="text-xs text-gray-500">
           &copy; {new Date().getFullYear()} Quiz2Biz. All rights reserved.
         </p>
-      </div>
+      </footer>
     </div>
   );
 }

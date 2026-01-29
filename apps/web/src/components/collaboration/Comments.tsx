@@ -1268,8 +1268,8 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
         <span style={styles.authorName}>{comment.author.name}</span>
         <span style={styles.timestamp}>{formatTimestamp(comment.createdAt)}</span>
         {comment.isEdited && <span style={styles.editedBadge}>(edited)</span>}
-        {comment.isPinned && <span style={styles.pinnedBadge}>📌 Pinned</span>}
-        {comment.isResolved && <span style={styles.resolvedBadge}>✓ Resolved</span>}
+        {comment.isPinned && <span style={styles.pinnedBadge}><span aria-hidden="true">📌</span> Pinned</span>}
+        {comment.isResolved && <span style={styles.resolvedBadge}><span aria-hidden="true">✓</span> Resolved</span>}
       </div>
 
       {isEditing ? (
@@ -1328,7 +1328,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
             style={styles.actionButton}
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           >
-            😊 React
+            <span aria-hidden="true">😊</span> React
           </button>
           {showEmojiPicker && (
             <div style={{ ...styles.emojiPicker, position: 'absolute', top: '100%', left: 0 }}>
@@ -1347,14 +1347,14 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
 
         {!isReply && (
           <button style={styles.actionButton} onClick={onReply}>
-            💬 Reply
+            <span aria-hidden="true">💬</span> Reply
           </button>
         )}
 
         {isAuthor && (
           <>
             <button style={styles.actionButton} onClick={() => setIsEditing(true)}>
-              ✏️ Edit
+              <span aria-hidden="true">✏️</span> Edit
             </button>
             <button
               style={styles.actionButton}
@@ -1364,14 +1364,14 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
                 }
               }}
             >
-              🗑️ Delete
+              <span aria-hidden="true">🗑️</span> Delete
             </button>
           </>
         )}
 
         {!isReply && (
           <button style={styles.actionButton} onClick={() => pinComment(comment.id)}>
-            {comment.isPinned ? '📌 Unpin' : '📌 Pin'}
+            <span aria-hidden="true">📌</span> {comment.isPinned ? 'Unpin' : 'Pin'}
           </button>
         )}
       </div>
@@ -1442,7 +1442,7 @@ export const CommentThreadDisplay: React.FC<CommentThreadProps> = ({ thread }) =
           style={styles.actionButton}
           onClick={() => resolveThread(thread.id)}
         >
-          {thread.rootComment.isResolved ? '↩️ Reopen' : '✓ Resolve'}
+          {thread.rootComment.isResolved ? <><span aria-hidden="true">↩️</span> Reopen</> : <><span aria-hidden="true">✓</span> Resolve</>}
         </button>
       </div>
     </div>
@@ -1496,7 +1496,7 @@ export const QuestionComments: React.FC<QuestionCommentsProps> = ({
         </div>
       ) : (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>💬</div>
+          <div style={styles.emptyIcon} aria-hidden="true">💬</div>
           <p>No comments yet. Be the first to start a discussion!</p>
         </div>
       )}
@@ -1537,7 +1537,7 @@ export const NotificationBell: React.FC = () => {
         onClick={() => setIsOpen(!isOpen)}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
-        🔔
+        <span aria-hidden="true">🔔</span>
         {unreadCount > 0 && (
           <span style={styles.notificationBadge}>{unreadCount}</span>
         )}
@@ -1627,7 +1627,7 @@ export const CommentCountBadge: React.FC<CommentCountBadgeProps> = ({
       }}
       aria-label={`${count} comment${count !== 1 ? 's' : ''}`}
     >
-      💬 {count}
+      <span aria-hidden="true">💬</span> {count}
     </button>
   );
 };

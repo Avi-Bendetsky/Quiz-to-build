@@ -453,7 +453,7 @@ export const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
                   gap: 4,
                 }}
               >
-                <span>⚠️</span> {error.message}
+                <span aria-hidden="true">⚠️</span> {error.message}
               </p>
             ))}
           </div>
@@ -475,7 +475,7 @@ export const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
               fontSize: 12,
             }}
           >
-            ✓
+            <span aria-hidden="true">✓</span>
           </span>
         ) : (
           <span
@@ -490,7 +490,7 @@ export const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
               fontSize: 12,
             }}
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </span>
         )}
 
@@ -506,7 +506,7 @@ export const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
           }}
           aria-label={`Remove ${preview.file.name}`}
         >
-          ✕
+          <span aria-hidden="true">✕</span>
         </button>
       </div>
     </div>
@@ -710,7 +710,7 @@ export const ValidatedDropzone: React.FC<ValidatedDropzoneProps> = ({
 
       {children || (
         <>
-          <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }}>📁</span>
+          <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }} aria-hidden="true">📁</span>
           <p style={{ margin: 0, fontSize: 16, fontWeight: 500, color: '#2d3748' }}>
             {isDragging ? 'Drop files here' : 'Drag and drop files, or click to select'}
           </p>
@@ -742,7 +742,7 @@ export const ValidatedDropzone: React.FC<ValidatedDropzoneProps> = ({
                 gap: 4,
               }}
             >
-              <span>⚠️</span> {error.message}
+              <span aria-hidden="true">⚠️</span> {error.message}
             </p>
           ))}
           {errors.length > 3 && (

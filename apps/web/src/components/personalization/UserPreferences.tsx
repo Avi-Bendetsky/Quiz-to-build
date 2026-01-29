@@ -1108,7 +1108,7 @@ export const InsightsPanel: React.FC = () => {
     return (
       <div style={styles.panel}>
         <h2 style={styles.title}>
-          <span>💡</span>
+          <span aria-hidden="true">💡</span>
           Personalized Insights
         </h2>
         <p style={{ color: '#6b7280', fontSize: '14px' }}>
@@ -1121,7 +1121,7 @@ export const InsightsPanel: React.FC = () => {
   return (
     <div style={styles.panel}>
       <h2 style={styles.title}>
-        <span>💡</span>
+        <span aria-hidden="true">💡</span>
         Personalized Insights
       </h2>
 
@@ -1165,7 +1165,7 @@ export const UsageStatsPanel: React.FC = () => {
   return (
     <div style={styles.panel}>
       <h2 style={styles.title}>
-        <span>📊</span>
+        <span aria-hidden="true">📊</span>
         Usage Statistics
       </h2>
 

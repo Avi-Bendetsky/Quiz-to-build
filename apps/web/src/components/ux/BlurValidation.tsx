@@ -803,7 +803,7 @@ export const FormErrorSummary: React.FC<FormErrorSummaryProps> = ({
           gap: 8,
         }}
       >
-        <span>⚠️</span>
+        <span aria-hidden="true">⚠️</span>
         Please fix the following errors:
       </h3>
       <ul style={{ margin: 0, paddingLeft: 20 }}>

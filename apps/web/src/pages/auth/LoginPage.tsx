@@ -49,8 +49,17 @@ export function LoginPage() {
     <div>
       <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Sign in to your account</h2>
 
+      {/* Status announcements for screen readers */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {isSubmitting && 'Signing in, please wait...'}
+      </div>
+      
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div 
+          className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm"
+          role="alert"
+          aria-live="assertive"
+        >
           {error}
         </div>
       )}

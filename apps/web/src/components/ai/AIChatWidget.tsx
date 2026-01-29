@@ -326,7 +326,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message }) => 
       >
         {!isUser && (
           <div style={styles.messageHeader}>
-            <span style={styles.avatarIcon}>🤖</span>
+            <span style={styles.avatarIcon} aria-hidden="true">🤖</span>
             <span style={styles.assistantLabel}>Quiz2Biz AI</span>
           </div>
         )}
@@ -336,7 +336,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message }) => 
         </div>
         {message.error && (
           <div style={styles.errorBadge}>
-            ⚠️ Error: {message.error}
+            <span aria-hidden="true">⚠️</span> Error: {message.error}
           </div>
         )}
         <div style={styles.timestamp}>
@@ -408,7 +408,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }}
         aria-label="Send message"
       >
-        ➤
+        <span aria-hidden="true">➤</span>
       </button>
     </div>
   );
@@ -453,7 +453,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           style={styles.quickActionButton}
           title={action.prompt}
         >
-          {action.icon && <span>{action.icon}</span>}
+          {action.icon && <span aria-hidden="true">{action.icon}</span>}
           <span>{action.label}</span>
         </button>
       ))}
@@ -500,7 +500,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
           aria-label="Open AI Chat Assistant"
           aria-expanded={isOpen}
         >
-          <span style={styles.toggleIcon}>💬</span>
+          <span style={styles.toggleIcon} aria-hidden="true">💬</span>
           <span style={styles.toggleLabel}>AI Help</span>
         </button>
       )}
@@ -516,7 +516,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
           {/* Header */}
           <div style={styles.header}>
             <div style={styles.headerTitle}>
-              <span style={styles.headerIcon}>🤖</span>
+              <span style={styles.headerIcon} aria-hidden="true">🤖</span>
               <div>
                 <div style={styles.headerText}>Quiz2Biz AI</div>
                 <div style={styles.headerSubtext}>
@@ -531,14 +531,14 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
                 aria-label="Clear chat history"
                 title="Clear history"
               >
-                🗑️
+                <span aria-hidden="true">🗑️</span>
               </button>
               <button
                 onClick={closeChat}
                 style={styles.headerButton}
                 aria-label="Close chat"
               >
-                ✕
+                <span aria-hidden="true">✕</span>
               </button>
             </div>
           </div>
@@ -547,7 +547,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
           <div style={styles.messagesContainer}>
             {messages.length === 0 ? (
               <div style={styles.welcomeMessage}>
-                <div style={styles.welcomeIcon}>👋</div>
+                <div style={styles.welcomeIcon} aria-hidden="true">👋</div>
                 <div style={styles.welcomeTitle}>Hello!</div>
                 <div style={styles.welcomeText}>
                   I'm your AI assistant. Ask me anything about the questionnaire, compliance frameworks, or how to improve your scores.

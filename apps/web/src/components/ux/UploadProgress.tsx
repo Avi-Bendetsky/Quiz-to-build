@@ -668,7 +668,7 @@ export const UploadList: React.FC<UploadListProps> = ({
   if (files.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: 40, color: '#718096' }}>
-        <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }}>📁</span>
+        <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }} aria-hidden="true">📁</span>
         <p>No files to upload</p>
         <p style={{ fontSize: 13 }}>Drag and drop files or click to select</p>
       </div>
