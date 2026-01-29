@@ -10,7 +10,10 @@ import {
   BadRequestException,
   Logger,
   RawBodyRequest,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { PaymentService, SubscriptionTier, SUBSCRIPTION_TIERS } from './payment.service';
@@ -27,6 +30,7 @@ import Stripe from 'stripe';
 /**
  * PaymentController - API endpoints for payment and subscription management
  */
+@ApiTags('payment')
 @Controller('api/payment')
 export class PaymentController {
   private readonly logger = new Logger(PaymentController.name);
@@ -78,6 +82,8 @@ export class PaymentController {
    * Get subscription status for an organization
    */
   @Get('subscription/:organizationId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   async getSubscription(
     @Req() req: Request & { params: { organizationId: string } },
   ): Promise<SubscriptionResponseDto> {
@@ -91,6 +97,8 @@ export class PaymentController {
    * Get billing history (invoices)
    */
   @Get('invoices/:customerId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   async getInvoices(
     @Req() req: Request & { params: { customerId: string } },
   ): Promise<InvoiceResponseDto[]> {

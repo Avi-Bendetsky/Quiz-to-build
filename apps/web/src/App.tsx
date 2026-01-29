@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MainLayout, AuthLayout } from './components/layout';
 import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/auth';
 import { DashboardPage } from './pages/dashboard';
+import { QuestionnairePage } from './pages/questionnaire';
+import { DocumentsPage } from './pages/documents';
 import { BillingPage, InvoicesPage, UpgradePage } from './pages/billing';
 import { PrivacyPage, TermsPage } from './pages/legal';
 import { HelpPage } from './pages/help';
@@ -92,6 +94,8 @@ export default function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="questionnaire/:action?" element={<QuestionnairePage />} />
+            <Route path="documents" element={<DocumentsPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="billing/invoices" element={<InvoicesPage />} />
             <Route path="billing/upgrade" element={<UpgradePage />} />

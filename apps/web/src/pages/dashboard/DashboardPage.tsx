@@ -2,11 +2,13 @@
  * Dashboard page component
  */
 
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth';
 import { ClipboardList, FileText, Clock, CheckCircle } from 'lucide-react';
 
 export function DashboardPage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   const stats = [
     { name: 'Active Sessions', value: '2', icon: ClipboardList, color: 'bg-blue-500' },
@@ -63,12 +65,20 @@ export function DashboardPage() {
           <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
         </div>
         <div className="p-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <button className="flex items-center justify-center px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-            <ClipboardList className="h-5 w-5 mr-2" />
+          <button
+            onClick={() => navigate('/questionnaire/new')}
+            className="flex items-center justify-center px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+            aria-label="Start a new questionnaire"
+          >
+            <ClipboardList className="h-5 w-5 mr-2" aria-hidden="true" />
             Start New Questionnaire
           </button>
-          <button className="flex items-center justify-center px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            <FileText className="h-5 w-5 mr-2" />
+          <button
+            onClick={() => navigate('/documents')}
+            className="flex items-center justify-center px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            aria-label="View your documents"
+          >
+            <FileText className="h-5 w-5 mr-2" aria-hidden="true" />
             View Documents
           </button>
         </div>
