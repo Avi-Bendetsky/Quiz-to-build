@@ -1,5 +1,5 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 
 export class LoginDto {
   @ApiProperty({ example: 'user@example.com' })
@@ -12,5 +12,8 @@ export class LoginDto {
   password: string;
 
   // Populated by controller, not from request body
+  @ApiHideProperty()
+  @IsOptional()
+  @IsString()
   ip?: string;
 }
