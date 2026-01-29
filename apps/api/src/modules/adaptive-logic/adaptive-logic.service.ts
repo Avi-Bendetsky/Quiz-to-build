@@ -127,6 +127,7 @@ export class AdaptiveLogicService {
       }
     }
 
+<<<<<<< Local
     return state;
   }
 
@@ -260,6 +261,146 @@ export class AdaptiveLogicService {
             graph.set(sourceQuestionId, new Set());
           }
           graph.get(sourceQuestionId)!.add(targetId);
+=======
+    return state;
+  }
+
+  /**
+   * Get the next question in the flow based on branching rules
+   */
+  async getNextQuestion(
+    currentQuestionId: string,
+    responses: Map<string, unknown>,
+  ): Promise<Question | null> {
+    // Get current question
+    const currentQuestion = await this.prisma.question.findUnique({
+      where: { id: currentQuestionId },
+      include: {
+        section: {
+          include: {
+            questionnaire: true,
+          },
+        },
+        visibilityRules: {
+          where: { isActive: true },
+        },
+      },
+    });
+
+    if (!currentQuestion) {
+      return null;
+    }
+
+    // Get all visible questions
+    const visibleQuestions = await this.getVisibleQuestions(
+      currentQuestion.section.questionnaireId,
+      responses,
+    );
+
+    // Find current position and return next
+    const currentIndex = visibleQuestions.findIndex((q) => q.id === currentQuestionId);
+    
+    if (currentIndex === -1 || currentIndex >= visibleQuestions.length - 1) {
+      return null;
+    }
+
+    return visibleQuestions[currentIndex + 1];
+  }
+
+  /**
+   * Evaluate a condition against responses
+   */
+  evaluateCondition(condition: Condition, responses: Map<string, unknown>): boolean {
+    return this.conditionEvaluator.evaluate(condition, responses);
+  }
+
+  /**
+   * Evaluate multiple conditions with a logical operator
+   */
+  evaluateConditions(
+    conditions: Condition[],
+    operator: LogicalOperator,
+    responses: Map<string, unknown>,
+  ): boolean {
+    if (conditions.length === 0) {
+      return true;
+    }
+
+    const results = conditions.map((c) => this.evaluateCondition(c, responses));
+
+    if (operator === 'AND') {
+      return results.every((r) => r);
+    } else {
+      return results.some((r) => r);
+    }
+  }
+
+  /**
+   * Calculate which questions were added or removed due to a response change
+   */
+  async calculateAdaptiveChanges(
+    questionnaireId: string,
+    previousResponses: Map<string, unknown>,
+    currentResponses: Map<string, unknown>,
+  ): Promise<{ added: string[]; removed: string[] }> {
+    const previousVisible = await this.getVisibleQuestions(questionnaireId, previousResponses);
+    const currentVisible = await this.getVisibleQuestions(questionnaireId, currentResponses);
+
+    const previousIds = new Set(previousVisible.map((q) => q.id));
+    const currentIds = new Set(currentVisible.map((q) => q.id));
+
+    const added = currentVisible.filter((q) => !previousIds.has(q.id)).map((q) => q.id);
+    const removed = previousVisible.filter((q) => !currentIds.has(q.id)).map((q) => q.id);
+
+    return { added, removed };
+  }
+
+  /**
+   * Get all rules that affect a specific question
+   */
+  async getRulesForQuestion(questionId: string): Promise<VisibilityRule[]> {
+    return this.prisma.visibilityRule.findMany({
+      where: {
+        OR: [
+          { questionId },
+          { targetQuestionIds: { has: questionId } },
+        ],
+        isActive: true,
+      },
+      orderBy: { priority: 'desc' },
+    });
+  }
+
+  /**
+   * Build a dependency graph for questions
+   */
+  async buildDependencyGraph(
+    questionnaireId: string,
+  ): Promise<Map<string, Set<string>>> {
+    const rules = await this.prisma.visibilityRule.findMany({
+      where: {
+        question: {
+          section: {
+            questionnaireId,
+          },
+        },
+        isActive: true,
+      },
+    });
+
+    const graph = new Map<string, Set<string>>();
+
+    for (const rule of rules) {
+      const condition = rule.condition as Condition;
+      const sourceQuestionId = this.extractQuestionIdFromCondition(condition);
+
+      if (sourceQuestionId) {
+        for (const targetId of rule.targetQuestionIds) {
+          if (!graph.has(sourceQuestionId)) {
+            graph.set(sourceQuestionId, new Set());
+          }
+          graph.get(sourceQuestionId)!.add(targetId);
+>>>>>>> Remote
         }
       }
     }

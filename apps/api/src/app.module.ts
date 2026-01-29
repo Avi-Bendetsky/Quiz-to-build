@@ -10,6 +10,7 @@ import { QuestionnaireModule } from './modules/questionnaire/questionnaire.modul
 import { SessionModule } from './modules/session/session.module';
 import { AdaptiveLogicModule } from './modules/adaptive-logic/adaptive-logic.module';
 import { StandardsModule } from './modules/standards/standards.module';
+<<<<<<< Local
 import { AdminModule } from './modules/admin/admin.module';
 import { DocumentGeneratorModule } from './modules/document-generator/document-generator.module';
 import { ScoringEngineModule } from './modules/scoring-engine/scoring-engine.module';
@@ -21,6 +22,10 @@ import { QpgModule } from './modules/qpg/qpg.module';
 import { PolicyPackModule } from './modules/policy-pack/policy-pack.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { AdaptersModule } from './modules/adapters/adapters.module';
+=======
+import { AdminModule } from './modules/admin/admin.module';
+import { DocumentGeneratorModule } from './modules/document-generator/document-generator.module';
+>>>>>>> Remote
 import { HealthController } from './health.controller';
 import configuration from './config/configuration';
 
@@ -65,6 +70,7 @@ import configuration from './config/configuration';
     SessionModule,
     AdaptiveLogicModule,
     StandardsModule,
+<<<<<<< Local
     AdminModule,
     DocumentGeneratorModule,
     ScoringEngineModule,
@@ -76,6 +82,10 @@ import configuration from './config/configuration';
     PolicyPackModule,
     PaymentModule,
     AdaptersModule,
+=======
+    AdminModule,
+    DocumentGeneratorModule,
+>>>>>>> Remote
   ],
   controllers: [HealthController],
   providers: [
