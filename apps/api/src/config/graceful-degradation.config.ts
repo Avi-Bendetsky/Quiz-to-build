@@ -1,6 +1,6 @@
 /**
  * Graceful Degradation Configuration
- * 
+ *
  * Implements resilience patterns including:
  * - Circuit Breakers (with Hystrix-like patterns)
  * - Fallback Mechanisms
@@ -263,7 +263,7 @@ export class FallbackHandler {
         expiresAt: cached.expiresAt,
       };
     }
-    
+
     if (config.staleWhileRevalidate && cached) {
       // Return stale data but mark for revalidation
       return {
@@ -425,13 +425,7 @@ export function getRetryConfigs(): Record<string, RetryConfig> {
       maxDelayMs: 20000,
       backoffMultiplier: 2,
       jitterFactor: 0.2,
-      retryableErrors: [
-        'ECONNRESET',
-        'ETIMEDOUT',
-        '500',
-        '502',
-        '503',
-      ],
+      retryableErrors: ['ECONNRESET', 'ETIMEDOUT', '500', '502', '503'],
       nonRetryableErrors: [
         '413', // Payload too large
         '415', // Unsupported media type
@@ -444,11 +438,11 @@ export class RetryExecutor {
   async executeWithRetry<T>(
     operation: () => Promise<T>,
     config: RetryConfig,
-    context?: string
+    context?: string,
   ): Promise<RetryResult<T>> {
     let lastError: Error | undefined;
     let totalDelayMs = 0;
-    
+
     for (let attempt = 1; attempt <= config.maxRetries + 1; attempt++) {
       try {
         const data = await operation();
@@ -480,7 +474,7 @@ export class RetryExecutor {
           totalDelayMs += delay;
           console.log(
             `[Retry] ${context}: Attempt ${attempt} failed with ${errorCode}, ` +
-            `retrying in ${delay}ms (${config.maxRetries - attempt} retries left)`
+              `retrying in ${delay}ms (${config.maxRetries - attempt} retries left)`,
           );
           await this.sleep(delay);
         }
@@ -498,25 +492,32 @@ export class RetryExecutor {
 
   private calculateDelay(attempt: number, config: RetryConfig): number {
     // Exponential backoff
-    const exponentialDelay = config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt - 1);
-    
+    const exponentialDelay =
+      config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt - 1);
+
     // Apply max cap
     const cappedDelay = Math.min(exponentialDelay, config.maxDelayMs);
-    
+
     // Add jitter
     const jitter = cappedDelay * config.jitterFactor * Math.random();
-    
+
     return Math.floor(cappedDelay + jitter);
   }
 
   private extractErrorCode(error: unknown): string {
     if (error instanceof Error) {
       // HTTP status code
-      if ('status' in error) return String((error as { status: number }).status);
+      if ('status' in error) {
+        return String((error as { status: number }).status);
+      }
       // Prisma error code
-      if ('code' in error) return String((error as { code: string }).code);
+      if ('code' in error) {
+        return String((error as { code: string }).code);
+      }
       // Node.js error code
-      if ('code' in error) return String((error as { code: string }).code);
+      if ('code' in error) {
+        return String((error as { code: string }).code);
+      }
     }
     return 'UNKNOWN';
   }
@@ -591,7 +592,8 @@ export class Bulkhead {
   private name: string;
   private maxConcurrent: number;
   private currentConcurrent = 0;
-  private queue: Array<{ resolve: () => void; reject: (err: Error) => void; enqueuedAt: Date }> = [];
+  private queue: Array<{ resolve: () => void; reject: (err: Error) => void; enqueuedAt: Date }> =
+    [];
   private maxQueueSize: number;
   private maxWaitMs: number;
   private rejectedCount = 0;
@@ -827,7 +829,7 @@ export class GracefulDegradationService {
       this.currentLevel = level;
       console.log(
         `[GracefulDegradation] Level changed from ${previousLevel} (${this.degradationLevels[previousLevel].name}) ` +
-        `to ${level} (${this.degradationLevels[level].name})`
+          `to ${level} (${this.degradationLevels[level].name})`,
       );
     }
   }
@@ -851,14 +853,22 @@ export class GracefulDegradationService {
     let suggestedLevel = 0;
 
     // Error rate based escalation
-    if (metrics.errorRate > 50) suggestedLevel = 3;
-    else if (metrics.errorRate > 20) suggestedLevel = 2;
-    else if (metrics.errorRate > 5) suggestedLevel = 1;
+    if (metrics.errorRate > 50) {
+      suggestedLevel = 3;
+    } else if (metrics.errorRate > 20) {
+      suggestedLevel = 2;
+    } else if (metrics.errorRate > 5) {
+      suggestedLevel = 1;
+    }
 
     // Response time based escalation
-    if (metrics.avgResponseTimeMs > 10000) suggestedLevel = Math.max(suggestedLevel, 3);
-    else if (metrics.avgResponseTimeMs > 5000) suggestedLevel = Math.max(suggestedLevel, 2);
-    else if (metrics.avgResponseTimeMs > 2000) suggestedLevel = Math.max(suggestedLevel, 1);
+    if (metrics.avgResponseTimeMs > 10000) {
+      suggestedLevel = Math.max(suggestedLevel, 3);
+    } else if (metrics.avgResponseTimeMs > 5000) {
+      suggestedLevel = Math.max(suggestedLevel, 2);
+    } else if (metrics.avgResponseTimeMs > 2000) {
+      suggestedLevel = Math.max(suggestedLevel, 1);
+    }
 
     // Resource usage based escalation
     if (metrics.cpuUsage > 95 || metrics.memoryUsage > 95) {
@@ -868,8 +878,11 @@ export class GracefulDegradationService {
     }
 
     // Circuit breaker based escalation
-    if (metrics.openCircuitBreakers >= 3) suggestedLevel = Math.max(suggestedLevel, 2);
-    else if (metrics.openCircuitBreakers >= 1) suggestedLevel = Math.max(suggestedLevel, 1);
+    if (metrics.openCircuitBreakers >= 3) {
+      suggestedLevel = Math.max(suggestedLevel, 2);
+    } else if (metrics.openCircuitBreakers >= 1) {
+      suggestedLevel = Math.max(suggestedLevel, 1);
+    }
 
     return suggestedLevel;
   }

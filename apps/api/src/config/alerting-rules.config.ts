@@ -1,6 +1,6 @@
 /**
  * Alerting Rules Configuration
- * 
+ *
  * Defines alerting thresholds, notification channels, and escalation policies
  * for production monitoring and incident response.
  */
@@ -99,7 +99,8 @@ export const AlertingConfiguration: AlertingConfig = {
       },
       annotations: {
         summary: 'Error rate is {{ $value }}% (threshold: 1%)',
-        description: 'The API error rate has exceeded 1% for the past 5 minutes. Immediate investigation required.',
+        description:
+          'The API error rate has exceeded 1% for the past 5 minutes. Immediate investigation required.',
       },
     },
     {
@@ -244,7 +245,8 @@ export const AlertingConfiguration: AlertingConfig = {
       },
       annotations: {
         summary: 'Potential brute force attack detected',
-        description: '{{ $value }} authentication failures in the past 5 minutes. May indicate a brute force attack.',
+        description:
+          '{{ $value }} authentication failures in the past 5 minutes. May indicate a brute force attack.',
       },
     },
     {
@@ -692,7 +694,11 @@ export function getEscalationPolicy(severity: Severity): EscalationPolicy {
 /**
  * Format alert message for notification
  */
-export function formatAlertMessage(alert: AlertRule, currentValue: number, state: AlertState): string {
+export function formatAlertMessage(
+  alert: AlertRule,
+  currentValue: number,
+  state: AlertState,
+): string {
   const emoji = state === 'firing' ? '🔴' : state === 'resolved' ? '✅' : '🟡';
   const severityEmoji = {
     critical: '🚨',
@@ -759,7 +765,7 @@ export const AlertingSummary = {
   totalAlerts: getAlertSummary(),
   categories: ['error', 'performance', 'security', 'business', 'resource'],
   channels: Object.keys(NotificationChannels).filter(
-    (k) => NotificationChannels[k as keyof ChannelConfig].enabled
+    (k) => NotificationChannels[k as keyof ChannelConfig].enabled,
   ),
   escalationPolicies: ['default', 'critical'],
 };

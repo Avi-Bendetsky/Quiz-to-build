@@ -180,7 +180,10 @@ export class HeatmapDrilldownDto {
     responseValue?: string;
   }>;
 
-  @ApiPropertyOptional({ type: HeatmapCellDto, description: 'The cell being drilled into (optional)' })
+  @ApiPropertyOptional({
+    type: HeatmapCellDto,
+    description: 'The cell being drilled into (optional)',
+  })
   cell?: HeatmapCellDto;
 
   @ApiPropertyOptional({ description: 'Potential improvement if all questions fully covered' })

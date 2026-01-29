@@ -47,9 +47,7 @@ interface ReadinessResponse {
 export class HealthController {
   private readonly startTime: Date;
 
-  constructor(
-    @Optional() @Inject(PrismaService) private readonly prisma?: PrismaService,
-  ) {
+  constructor(@Optional() @Inject(PrismaService) private readonly prisma?: PrismaService) {
     this.startTime = new Date();
   }
 
@@ -58,7 +56,7 @@ export class HealthController {
   // ===========================================================================
 
   @Get('health')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Full health check with dependency status',
     description: 'Returns comprehensive health status including all dependencies',
   })
@@ -121,9 +119,10 @@ export class HealthController {
   // ===========================================================================
 
   @Get('health/live')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Kubernetes liveness probe',
-    description: 'Simple check to verify the process is running. Should always return 200 if the process is alive.',
+    description:
+      'Simple check to verify the process is running. Should always return 200 if the process is alive.',
   })
   @ApiResponse({ status: 200, description: 'Process is alive' })
   live(): LivenessResponse {
@@ -140,7 +139,7 @@ export class HealthController {
   // ===========================================================================
 
   @Get('health/ready')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Kubernetes readiness probe',
     description: 'Check if the service is ready to accept traffic. Verifies database connectivity.',
   })
@@ -184,9 +183,10 @@ export class HealthController {
   // ===========================================================================
 
   @Get('health/startup')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Kubernetes startup probe',
-    description: 'Check if the application has started successfully. Similar to readiness but used during initial startup.',
+    description:
+      'Check if the application has started successfully. Similar to readiness but used during initial startup.',
   })
   @ApiResponse({ status: 200, description: 'Application has started' })
   @ApiResponse({ status: 503, description: 'Application is still starting' })
@@ -196,7 +196,7 @@ export class HealthController {
     const isStarted = dbCheck.status === 'healthy';
 
     const response = {
-      status: isStarted ? 'ok' as const : 'starting' as const,
+      status: isStarted ? ('ok' as const) : ('starting' as const),
       timestamp: new Date().toISOString(),
     };
 

@@ -650,10 +650,12 @@ export class CanaryDeploymentManager {
    */
   private checkRollbackTriggers(
     triggers: RollbackTrigger[],
-    metrics: MetricSnapshot
+    metrics: MetricSnapshot,
   ): { triggered: boolean; reason: string } | null {
     for (const trigger of triggers) {
-      if (!trigger.enabled) continue;
+      if (!trigger.enabled) {
+        continue;
+      }
 
       let currentValue: number;
       switch (trigger.type) {
@@ -717,7 +719,9 @@ export class CanaryDeploymentManager {
     }
 
     const recentMetrics = this.state.metricsHistory.slice(-10);
-    if (recentMetrics.length === 0) return false;
+    if (recentMetrics.length === 0) {
+      return false;
+    }
 
     const avgErrorRate =
       recentMetrics.reduce((sum, m) => sum + m.errorRate, 0) / recentMetrics.length;
@@ -819,17 +823,19 @@ export class CanaryDeploymentManager {
     // In production, this would call Azure Container Apps API
     // az containerapp ingress traffic set --name <app> --resource-group <rg> \
     //   --revision-weight <stable>=<100-canaryPercentage> <canary>=<canaryPercentage>
-    console.log(`[Canary] Traffic weight updated: canary=${canaryPercentage}%, stable=${100 - canaryPercentage}%`);
+    console.log(
+      `[Canary] Traffic weight updated: canary=${canaryPercentage}%, stable=${100 - canaryPercentage}%`,
+    );
   }
 
   private async notifyEvent(event: CanaryEvent, data: Record<string, unknown>): Promise<void> {
     const eventConfig = this.config.notificationConfig.events.find((e) => e.event === event);
-    if (!eventConfig) return;
+    if (!eventConfig) {
+      return;
+    }
 
     for (const channelName of eventConfig.channels) {
-      const channel = this.config.notificationConfig.channels.find(
-        (c) => c.type === channelName
-      );
+      const channel = this.config.notificationConfig.channels.find((c) => c.type === channelName);
       if (channel) {
         console.log(`[Canary] Notifying ${channel.type}: ${event}`, data);
         // In production, send actual notifications
@@ -837,9 +843,7 @@ export class CanaryDeploymentManager {
     }
   }
 
-  private async httpRequest(
-    endpoint: HealthEndpoint
-  ): Promise<{ status: number; body: string }> {
+  private async httpRequest(endpoint: HealthEndpoint): Promise<{ status: number; body: string }> {
     // In production, use actual HTTP client (fetch/axios)
     return { status: 200, body: '{"status":"healthy"}' };
   }
@@ -877,7 +881,7 @@ export interface StickySessionConfig {
 export function getAzureContainerAppsTrafficConfig(
   stableRevision: string,
   canaryRevision: string,
-  canaryPercentage: number
+  canaryPercentage: number,
 ): AzureContainerAppsTrafficConfig {
   return {
     revisionMode: 'Multiple',
@@ -904,9 +908,7 @@ export function getAzureContainerAppsTrafficConfig(
 /**
  * Generate Terraform configuration snippet for canary traffic weights
  */
-export function generateTerraformTrafficConfig(
-  canaryPercentage: number
-): string {
+export function generateTerraformTrafficConfig(canaryPercentage: number): string {
   const stablePercentage = 100 - canaryPercentage;
 
   return `
@@ -940,7 +942,7 @@ export function generateTerraformTrafficConfig(
 export function getCanaryAzureCliCommands(
   appName: string,
   resourceGroup: string,
-  containerImage: string
+  containerImage: string,
 ): string[] {
   return [
     `# Create new revision for canary deployment`,

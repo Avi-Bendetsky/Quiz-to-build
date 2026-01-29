@@ -1,9 +1,9 @@
 /**
  * Chaos Engineering Configuration
- * 
+ *
  * Defines chaos experiments for resilience testing using Azure Chaos Studio
  * and Chaos Mesh for Kubernetes environments.
- * 
+ *
  * Purpose:
  * - Test system resilience under failure conditions
  * - Validate graceful degradation mechanisms
@@ -46,7 +46,13 @@ export type ChaosExperimentType =
   | 'stress-ng';
 
 export interface ChaosTarget {
-  resourceType: 'container-app' | 'kubernetes-pod' | 'virtual-machine' | 'database' | 'storage' | 'network';
+  resourceType:
+    | 'container-app'
+    | 'kubernetes-pod'
+    | 'virtual-machine'
+    | 'database'
+    | 'storage'
+    | 'network';
   resourceGroup?: string;
   namespace?: string;
   selector?: Record<string, string>;
@@ -283,7 +289,8 @@ export function getDefaultChaosExperiments(): ChaosExperimentConfig[] {
     {
       id: 'exp-db-timeout',
       name: 'Database Connection Timeout',
-      description: 'Simulate database connection timeout to test circuit breaker and fallback mechanisms',
+      description:
+        'Simulate database connection timeout to test circuit breaker and fallback mechanisms',
       type: 'network-latency',
       target: {
         resourceType: 'database',
@@ -476,7 +483,12 @@ export function getDefaultChaosExperiments(): ChaosExperimentConfig[] {
       rollback: {
         automatic: true,
         triggerConditions: [
-          { metric: 'response_time_avg_ms', operator: 'gt', threshold: 3000, evaluationWindow: '1m' },
+          {
+            metric: 'response_time_avg_ms',
+            operator: 'gt',
+            threshold: 3000,
+            evaluationWindow: '1m',
+          },
         ],
         timeoutSeconds: 300,
       },
@@ -576,7 +588,12 @@ export function getDefaultChaosExperiments(): ChaosExperimentConfig[] {
       rollback: {
         automatic: true,
         triggerConditions: [
-          { metric: 'dns_resolution_failures', operator: 'gt', threshold: 50, evaluationWindow: '1m' },
+          {
+            metric: 'dns_resolution_failures',
+            operator: 'gt',
+            threshold: 50,
+            evaluationWindow: '1m',
+          },
         ],
         timeoutSeconds: 180,
       },
@@ -668,9 +685,7 @@ export function getAzureChaosStudioConfig(): AzureChaosStudioConfig {
                       name: 'urn:csci:microsoft:containerApp:cpuPressure/1.0',
                       selectorId: 'selector-api',
                       duration: 'PT5M',
-                      parameters: [
-                        { key: 'pressureLevel', value: '90' },
-                      ],
+                      parameters: [{ key: 'pressureLevel', value: '90' }],
                     },
                   ],
                 },
@@ -1075,12 +1090,42 @@ export function getDefaultGameDayConfig(): GameDayConfig {
     date: new Date(),
     duration: '4h',
     experiments: [
-      { experimentId: 'exp-network-latency-500ms', order: 1, startDelayMinutes: 0, expectedOutcome: 'System handles 500ms latency with degraded but acceptable performance' },
-      { experimentId: 'exp-network-latency-2000ms', order: 2, startDelayMinutes: 30, expectedOutcome: 'Circuit breakers activate, fallback mechanisms engage' },
-      { experimentId: 'exp-pod-kill', order: 3, startDelayMinutes: 60, expectedOutcome: 'Auto-scaling replaces killed pods within 60 seconds' },
-      { experimentId: 'exp-db-timeout', order: 4, startDelayMinutes: 90, expectedOutcome: 'Database connection pool handles timeout gracefully' },
-      { experimentId: 'exp-cpu-pressure', order: 5, startDelayMinutes: 120, expectedOutcome: 'HPA scales out, request latency stays under 1s' },
-      { experimentId: 'exp-memory-pressure', order: 6, startDelayMinutes: 150, expectedOutcome: 'No OOM kills, garbage collection keeps memory stable' },
+      {
+        experimentId: 'exp-network-latency-500ms',
+        order: 1,
+        startDelayMinutes: 0,
+        expectedOutcome: 'System handles 500ms latency with degraded but acceptable performance',
+      },
+      {
+        experimentId: 'exp-network-latency-2000ms',
+        order: 2,
+        startDelayMinutes: 30,
+        expectedOutcome: 'Circuit breakers activate, fallback mechanisms engage',
+      },
+      {
+        experimentId: 'exp-pod-kill',
+        order: 3,
+        startDelayMinutes: 60,
+        expectedOutcome: 'Auto-scaling replaces killed pods within 60 seconds',
+      },
+      {
+        experimentId: 'exp-db-timeout',
+        order: 4,
+        startDelayMinutes: 90,
+        expectedOutcome: 'Database connection pool handles timeout gracefully',
+      },
+      {
+        experimentId: 'exp-cpu-pressure',
+        order: 5,
+        startDelayMinutes: 120,
+        expectedOutcome: 'HPA scales out, request latency stays under 1s',
+      },
+      {
+        experimentId: 'exp-memory-pressure',
+        order: 6,
+        startDelayMinutes: 150,
+        expectedOutcome: 'No OOM kills, garbage collection keeps memory stable',
+      },
     ],
     participants: [
       { name: 'SRE Lead', role: 'facilitator', notificationChannel: 'slack-sre' },
@@ -1090,10 +1135,30 @@ export function getDefaultGameDayConfig(): GameDayConfig {
     ],
     runbook: 'https://docs.quiz2biz.com/runbooks/game-day-procedures',
     successCriteria: [
-      { metric: 'data_loss', operator: 'eq', threshold: 0, description: 'No data loss during any experiment' },
-      { metric: 'recovery_time_minutes', operator: 'lt', threshold: 5, description: 'System recovers within 5 minutes of chaos end' },
-      { metric: 'error_rate_peak', operator: 'lt', threshold: 10, description: 'Peak error rate stays under 10%' },
-      { metric: 'user_impact_minutes', operator: 'lt', threshold: 2, description: 'User-visible impact under 2 minutes' },
+      {
+        metric: 'data_loss',
+        operator: 'eq',
+        threshold: 0,
+        description: 'No data loss during any experiment',
+      },
+      {
+        metric: 'recovery_time_minutes',
+        operator: 'lt',
+        threshold: 5,
+        description: 'System recovers within 5 minutes of chaos end',
+      },
+      {
+        metric: 'error_rate_peak',
+        operator: 'lt',
+        threshold: 10,
+        description: 'Peak error rate stays under 10%',
+      },
+      {
+        metric: 'user_impact_minutes',
+        operator: 'lt',
+        threshold: 2,
+        description: 'User-visible impact under 2 minutes',
+      },
     ],
   };
 }
@@ -1173,7 +1238,8 @@ export function getSteadyStateHypotheses(): SteadyStateHypothesis[] {
           type: 'metric',
           provider: {
             type: 'azure-monitor',
-            query: 'requests | summarize error_rate = countif(success == false) * 100.0 / count() by bin(timestamp, 1m)',
+            query:
+              'requests | summarize error_rate = countif(success == false) * 100.0 / count() by bin(timestamp, 1m)',
           },
           tolerance: {
             type: 'range',

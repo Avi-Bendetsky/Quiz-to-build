@@ -6,474 +6,480 @@ import { CIArtifactIngestionService } from './ci-artifact-ingestion.service';
 import { EvidenceType } from '@prisma/client';
 
 describe('EvidenceRegistryController', () => {
-    let controller: EvidenceRegistryController;
-    let evidenceService: EvidenceRegistryService;
-    let integrityService: EvidenceIntegrityService;
-    let ciIngestionService: CIArtifactIngestionService;
+  let controller: EvidenceRegistryController;
+  let evidenceService: EvidenceRegistryService;
+  let integrityService: EvidenceIntegrityService;
+  let ciIngestionService: CIArtifactIngestionService;
 
-    const mockEvidenceService = {
-        uploadEvidence: jest.fn(),
-        verifyEvidence: jest.fn(),
-        getEvidence: jest.fn(),
-        listEvidence: jest.fn(),
-        getEvidenceStats: jest.fn(),
-        deleteEvidence: jest.fn(),
-    };
+  const mockEvidenceService = {
+    uploadEvidence: jest.fn(),
+    verifyEvidence: jest.fn(),
+    getEvidence: jest.fn(),
+    listEvidence: jest.fn(),
+    getEvidenceStats: jest.fn(),
+    deleteEvidence: jest.fn(),
+  };
 
-    const mockIntegrityService = {
-        chainEvidence: jest.fn(),
-        getEvidenceChain: jest.fn(),
-        verifyChain: jest.fn(),
-        verifyEvidenceIntegrity: jest.fn(),
-        generateIntegrityReport: jest.fn(),
-    };
+  const mockIntegrityService = {
+    chainEvidence: jest.fn(),
+    getEvidenceChain: jest.fn(),
+    verifyChain: jest.fn(),
+    verifyEvidenceIntegrity: jest.fn(),
+    generateIntegrityReport: jest.fn(),
+  };
 
-    const mockCIIngestionService = {
-        ingestArtifact: jest.fn(),
-        bulkIngestArtifacts: jest.fn(),
-        getSessionArtifacts: jest.fn(),
-        getBuildSummary: jest.fn(),
-    };
+  const mockCIIngestionService = {
+    ingestArtifact: jest.fn(),
+    bulkIngestArtifacts: jest.fn(),
+    getSessionArtifacts: jest.fn(),
+    getBuildSummary: jest.fn(),
+  };
 
-    const mockRequest = {
-        user: { userId: 'user-123' },
-    };
+  const mockRequest = {
+    user: { userId: 'user-123' },
+  };
 
-    beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-            controllers: [EvidenceRegistryController],
-            providers: [
-                {
-                    provide: EvidenceRegistryService,
-                    useValue: mockEvidenceService,
-                },
-                {
-                    provide: EvidenceIntegrityService,
-                    useValue: mockIntegrityService,
-                },
-                {
-                    provide: CIArtifactIngestionService,
-                    useValue: mockCIIngestionService,
-                },
-            ],
-        }).compile();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [EvidenceRegistryController],
+      providers: [
+        {
+          provide: EvidenceRegistryService,
+          useValue: mockEvidenceService,
+        },
+        {
+          provide: EvidenceIntegrityService,
+          useValue: mockIntegrityService,
+        },
+        {
+          provide: CIArtifactIngestionService,
+          useValue: mockCIIngestionService,
+        },
+      ],
+    }).compile();
 
-        controller = module.get<EvidenceRegistryController>(EvidenceRegistryController);
-        evidenceService = module.get<EvidenceRegistryService>(EvidenceRegistryService);
-        integrityService = module.get<EvidenceIntegrityService>(EvidenceIntegrityService);
-        ciIngestionService = module.get<CIArtifactIngestionService>(CIArtifactIngestionService);
+    controller = module.get<EvidenceRegistryController>(EvidenceRegistryController);
+    evidenceService = module.get<EvidenceRegistryService>(EvidenceRegistryService);
+    integrityService = module.get<EvidenceIntegrityService>(EvidenceIntegrityService);
+    ciIngestionService = module.get<CIArtifactIngestionService>(CIArtifactIngestionService);
 
-        jest.clearAllMocks();
+    jest.clearAllMocks();
+  });
+
+  describe('uploadEvidence', () => {
+    it('uploads file and returns evidence response', async () => {
+      const mockFile = {
+        fieldname: 'file',
+        originalname: 'test.pdf',
+        encoding: '7bit',
+        mimetype: 'application/pdf',
+        size: 1024,
+        buffer: Buffer.from('test content'),
+      };
+
+      const dto = {
+        sessionId: 'session-123',
+        questionId: 'question-456',
+        artifactType: 'FILE' as EvidenceType,
+      };
+
+      const mockResponse = {
+        id: 'evidence-789',
+        sessionId: 'session-123',
+        questionId: 'question-456',
+        artifactUrl: 'https://storage.blob/file.pdf',
+        artifactType: 'FILE' as EvidenceType,
+        fileName: 'test.pdf',
+        fileSize: BigInt(1024),
+        mimeType: 'application/pdf',
+        hashSignature: 'abc123',
+        verified: false,
+        verifierId: null,
+        verifiedAt: null,
+        createdAt: new Date(),
+      };
+
+      mockEvidenceService.uploadEvidence.mockResolvedValue(mockResponse);
+
+      const result = await controller.uploadEvidence(mockFile, dto, mockRequest as any);
+
+      expect(result).toEqual(mockResponse);
+      expect(mockEvidenceService.uploadEvidence).toHaveBeenCalledWith(mockFile, dto, 'user-123');
     });
+  });
 
-    describe('uploadEvidence', () => {
-        it('uploads file and returns evidence response', async () => {
-            const mockFile = {
-                fieldname: 'file',
-                originalname: 'test.pdf',
-                encoding: '7bit',
-                mimetype: 'application/pdf',
-                size: 1024,
-                buffer: Buffer.from('test content'),
-            };
+  describe('verifyEvidence', () => {
+    it('verifies evidence with coverage update', async () => {
+      const dto = {
+        evidenceId: 'evidence-123',
+        verified: true,
+        coverageValue: 0.75,
+      };
 
-            const dto = {
-                sessionId: 'session-123',
-                questionId: 'question-456',
-                artifactType: 'FILE' as EvidenceType,
-            };
+      const mockResponse = {
+        id: 'evidence-123',
+        verified: true,
+        verifierId: 'user-123',
+        verifiedAt: new Date(),
+      } as any;
 
-            const mockResponse = {
-                id: 'evidence-789',
-                sessionId: 'session-123',
-                questionId: 'question-456',
-                artifactUrl: 'https://storage.blob/file.pdf',
-                artifactType: 'FILE' as EvidenceType,
-                fileName: 'test.pdf',
-                fileSize: BigInt(1024),
-                mimeType: 'application/pdf',
-                hashSignature: 'abc123',
-                verified: false,
-                verifierId: null,
-                verifiedAt: null,
-                createdAt: new Date(),
-            };
+      mockEvidenceService.verifyEvidence.mockResolvedValue(mockResponse);
 
-            mockEvidenceService.uploadEvidence.mockResolvedValue(mockResponse);
+      const result = await controller.verifyEvidence(dto, mockRequest as any);
 
-            const result = await controller.uploadEvidence(mockFile, dto, mockRequest as any);
-
-            expect(result).toEqual(mockResponse);
-            expect(mockEvidenceService.uploadEvidence).toHaveBeenCalledWith(mockFile, dto, 'user-123');
-        });
+      expect(result.verified).toBe(true);
+      expect(mockEvidenceService.verifyEvidence).toHaveBeenCalledWith(dto, 'user-123');
     });
+  });
 
-    describe('verifyEvidence', () => {
-        it('verifies evidence with coverage update', async () => {
-            const dto = {
-                evidenceId: 'evidence-123',
-                verified: true,
-                coverageValue: 0.75,
-            };
+  describe('getEvidence', () => {
+    it('retrieves evidence by ID', async () => {
+      const mockEvidence = {
+        id: 'evidence-123',
+        sessionId: 'session-456',
+        questionId: 'question-789',
+        artifactType: 'FILE' as EvidenceType,
+      } as any;
 
-            const mockResponse = {
-                id: 'evidence-123',
-                verified: true,
-                verifierId: 'user-123',
-                verifiedAt: new Date(),
-            } as any;
+      mockEvidenceService.getEvidence.mockResolvedValue(mockEvidence);
 
-            mockEvidenceService.verifyEvidence.mockResolvedValue(mockResponse);
+      const result = await controller.getEvidence('evidence-123');
 
-            const result = await controller.verifyEvidence(dto, mockRequest as any);
-
-            expect(result.verified).toBe(true);
-            expect(mockEvidenceService.verifyEvidence).toHaveBeenCalledWith(dto, 'user-123');
-        });
+      expect(result).toEqual(mockEvidence);
+      expect(mockEvidenceService.getEvidence).toHaveBeenCalledWith('evidence-123');
     });
+  });
 
-    describe('getEvidence', () => {
-        it('retrieves evidence by ID', async () => {
-            const mockEvidence = {
-                id: 'evidence-123',
-                sessionId: 'session-456',
-                questionId: 'question-789',
-                artifactType: 'FILE' as EvidenceType,
-            } as any;
+  describe('listEvidence', () => {
+    it('lists evidence with filters', async () => {
+      const filters = {
+        sessionId: 'session-123',
+        verified: true,
+      };
 
-            mockEvidenceService.getEvidence.mockResolvedValue(mockEvidence);
+      const mockList = [
+        { id: 'evidence-1', verified: true } as any,
+        { id: 'evidence-2', verified: true } as any,
+      ];
 
-            const result = await controller.getEvidence('evidence-123');
+      mockEvidenceService.listEvidence.mockResolvedValue(mockList);
 
-            expect(result).toEqual(mockEvidence);
-            expect(mockEvidenceService.getEvidence).toHaveBeenCalledWith('evidence-123');
-        });
+      const result = await controller.listEvidence(filters);
+
+      expect(result).toEqual(mockList);
+      expect(mockEvidenceService.listEvidence).toHaveBeenCalledWith(filters);
     });
+  });
 
-    describe('listEvidence', () => {
-        it('lists evidence with filters', async () => {
-            const filters = {
-                sessionId: 'session-123',
-                verified: true,
-            };
+  describe('getEvidenceStats', () => {
+    it('returns evidence statistics for session', async () => {
+      const mockStats = {
+        total: 10,
+        verified: 7,
+        pending: 3,
+        byType: {
+          FILE: 5,
+          IMAGE: 3,
+          SBOM: 2,
+        },
+      };
 
-            const mockList = [
-                { id: 'evidence-1', verified: true } as any,
-                { id: 'evidence-2', verified: true } as any,
-            ];
+      mockEvidenceService.getEvidenceStats.mockResolvedValue(mockStats);
 
-            mockEvidenceService.listEvidence.mockResolvedValue(mockList);
+      const result = await controller.getEvidenceStats('session-123');
 
-            const result = await controller.listEvidence(filters);
-
-            expect(result).toEqual(mockList);
-            expect(mockEvidenceService.listEvidence).toHaveBeenCalledWith(filters);
-        });
+      expect(result).toEqual(mockStats);
+      expect(mockEvidenceService.getEvidenceStats).toHaveBeenCalledWith('session-123');
     });
+  });
 
-    describe('getEvidenceStats', () => {
-        it('returns evidence statistics for session', async () => {
-            const mockStats = {
-                total: 10,
-                verified: 7,
-                pending: 3,
-                byType: {
-                    FILE: 5,
-                    IMAGE: 3,
-                    SBOM: 2,
-                },
-            };
+  describe('deleteEvidence', () => {
+    it('deletes evidence', async () => {
+      mockEvidenceService.deleteEvidence.mockResolvedValue(undefined);
 
-            mockEvidenceService.getEvidenceStats.mockResolvedValue(mockStats);
+      await controller.deleteEvidence('evidence-123', mockRequest as any);
 
-            const result = await controller.getEvidenceStats('session-123');
-
-            expect(result).toEqual(mockStats);
-            expect(mockEvidenceService.getEvidenceStats).toHaveBeenCalledWith('session-123');
-        });
+      expect(mockEvidenceService.deleteEvidence).toHaveBeenCalledWith('evidence-123', 'user-123');
     });
+  });
 
-    describe('deleteEvidence', () => {
-        it('deletes evidence', async () => {
-            mockEvidenceService.deleteEvidence.mockResolvedValue(undefined);
+  describe('chainEvidence', () => {
+    it('adds evidence to integrity chain', async () => {
+      const mockChainEntry = {
+        id: 'chain-123',
+        evidenceId: 'evidence-456',
+        sessionId: 'session-789',
+        sequenceNumber: 5,
+        previousHash: 'prev-hash',
+        chainHash: 'new-chain-hash',
+        evidenceHash: 'evidence-hash',
+        timestampToken: 'token-xyz',
+        tsaUrl: 'https://freetsa.org/tsr',
+        createdAt: new Date(),
+      };
 
-            await controller.deleteEvidence('evidence-123', mockRequest as any);
+      mockIntegrityService.chainEvidence.mockResolvedValue(mockChainEntry);
 
-            expect(mockEvidenceService.deleteEvidence).toHaveBeenCalledWith('evidence-123', 'user-123');
-        });
+      const result = await controller.chainEvidence('evidence-456', { sessionId: 'session-789' });
+
+      expect(result).toEqual(mockChainEntry);
+      expect(mockIntegrityService.chainEvidence).toHaveBeenCalledWith(
+        'evidence-456',
+        'session-789',
+      );
     });
+  });
 
-    describe('chainEvidence', () => {
-        it('adds evidence to integrity chain', async () => {
-            const mockChainEntry = {
-                id: 'chain-123',
-                evidenceId: 'evidence-456',
-                sessionId: 'session-789',
-                sequenceNumber: 5,
-                previousHash: 'prev-hash',
-                chainHash: 'new-chain-hash',
-                evidenceHash: 'evidence-hash',
-                timestampToken: 'token-xyz',
-                tsaUrl: 'https://freetsa.org/tsr',
-                createdAt: new Date(),
-            };
+  describe('getEvidenceChain', () => {
+    it('retrieves full evidence chain for session', async () => {
+      const mockChain = [
+        {
+          id: 'chain-1',
+          sequenceNumber: 0,
+          chainHash: 'hash-1',
+        } as any,
+        {
+          id: 'chain-2',
+          sequenceNumber: 1,
+          chainHash: 'hash-2',
+        } as any,
+      ];
 
-            mockIntegrityService.chainEvidence.mockResolvedValue(mockChainEntry);
+      mockIntegrityService.getEvidenceChain.mockResolvedValue(mockChain);
 
-            const result = await controller.chainEvidence('evidence-456', { sessionId: 'session-789' });
+      const result = await controller.getEvidenceChain('session-123');
 
-            expect(result).toEqual(mockChainEntry);
-            expect(mockIntegrityService.chainEvidence).toHaveBeenCalledWith('evidence-456', 'session-789');
-        });
+      expect(result).toEqual(mockChain);
+      expect(mockIntegrityService.getEvidenceChain).toHaveBeenCalledWith('session-123');
     });
+  });
 
-    describe('getEvidenceChain', () => {
-        it('retrieves full evidence chain for session', async () => {
-            const mockChain = [
-                {
-                    id: 'chain-1',
-                    sequenceNumber: 0,
-                    chainHash: 'hash-1',
-                } as any,
-                {
-                    id: 'chain-2',
-                    sequenceNumber: 1,
-                    chainHash: 'hash-2',
-                } as any,
-            ];
+  describe('verifyChain', () => {
+    it('verifies evidence chain integrity', async () => {
+      const mockVerification = {
+        sessionId: 'session-123',
+        isValid: true,
+        totalEntries: 5,
+        validEntries: 5,
+        invalidEntries: [],
+        verifiedAt: new Date(),
+      };
 
-            mockIntegrityService.getEvidenceChain.mockResolvedValue(mockChain);
+      mockIntegrityService.verifyChain.mockResolvedValue(mockVerification);
 
-            const result = await controller.getEvidenceChain('session-123');
+      const result = await controller.verifyChain('session-123');
 
-            expect(result).toEqual(mockChain);
-            expect(mockIntegrityService.getEvidenceChain).toHaveBeenCalledWith('session-123');
-        });
+      expect(result).toEqual(mockVerification);
+      expect(result.isValid).toBe(true);
+      expect(mockIntegrityService.verifyChain).toHaveBeenCalledWith('session-123');
     });
+  });
 
-    describe('verifyChain', () => {
-        it('verifies evidence chain integrity', async () => {
-            const mockVerification = {
-                sessionId: 'session-123',
-                isValid: true,
-                totalEntries: 5,
-                validEntries: 5,
-                invalidEntries: [],
-                verifiedAt: new Date(),
-            };
+  describe('verifyEvidenceIntegrity', () => {
+    it('performs comprehensive integrity check', async () => {
+      const mockIntegrityResult = {
+        evidenceId: 'evidence-123',
+        fileName: 'test.pdf',
+        originalHash: 'abc123',
+        checks: {
+          hashStored: true,
+          chainLinked: true,
+          timestamped: true,
+        },
+        chainPosition: {
+          sequenceNumber: 10,
+          chainHash: 'chain-hash',
+          linkedAt: new Date(),
+        },
+        timestamp: {
+          token: 'token-xyz...',
+          tsaUrl: 'https://freetsa.org/tsr',
+        },
+        overallStatus: 'FULLY_VERIFIED' as const,
+        verifiedAt: new Date(),
+      };
 
-            mockIntegrityService.verifyChain.mockResolvedValue(mockVerification);
+      mockIntegrityService.verifyEvidenceIntegrity.mockResolvedValue(mockIntegrityResult);
 
-            const result = await controller.verifyChain('session-123');
+      const result = await controller.verifyEvidenceIntegrity('evidence-123');
 
-            expect(result).toEqual(mockVerification);
-            expect(result.isValid).toBe(true);
-            expect(mockIntegrityService.verifyChain).toHaveBeenCalledWith('session-123');
-        });
+      expect(result.overallStatus).toBe('FULLY_VERIFIED');
+      expect(result.checks.hashStored).toBe(true);
+      expect(mockIntegrityService.verifyEvidenceIntegrity).toHaveBeenCalledWith('evidence-123');
     });
+  });
 
-    describe('verifyEvidenceIntegrity', () => {
-        it('performs comprehensive integrity check', async () => {
-            const mockIntegrityResult = {
-                evidenceId: 'evidence-123',
-                fileName: 'test.pdf',
-                originalHash: 'abc123',
-                checks: {
-                    hashStored: true,
-                    chainLinked: true,
-                    timestamped: true,
-                },
-                chainPosition: {
-                    sequenceNumber: 10,
-                    chainHash: 'chain-hash',
-                    linkedAt: new Date(),
-                },
-                timestamp: {
-                    token: 'token-xyz...',
-                    tsaUrl: 'https://freetsa.org/tsr',
-                },
-                overallStatus: 'FULLY_VERIFIED' as const,
-                verifiedAt: new Date(),
-            };
+  describe('generateIntegrityReport', () => {
+    it('generates comprehensive session integrity report', async () => {
+      const mockReport = {
+        sessionId: 'session-123',
+        generatedAt: new Date(),
+        summary: {
+          totalEvidence: 10,
+          chainedEvidence: 8,
+          timestampedEvidence: 6,
+          chainIntegrity: 'VALID' as const,
+          chainErrors: 0,
+        },
+        chainVerification: {
+          sessionId: 'session-123',
+          isValid: true,
+          totalEntries: 8,
+          validEntries: 8,
+          invalidEntries: [],
+          verifiedAt: new Date(),
+        },
+        evidenceItems: [
+          {
+            evidenceId: 'evidence-1',
+            fileName: 'file1.pdf',
+            hash: 'hash-1',
+            hasChainEntry: true,
+            hasTimestamp: true,
+            sequenceNumber: 0,
+            status: 'FULLY_VERIFIED' as const,
+          },
+        ],
+      };
 
-            mockIntegrityService.verifyEvidenceIntegrity.mockResolvedValue(mockIntegrityResult);
+      mockIntegrityService.generateIntegrityReport.mockResolvedValue(mockReport);
 
-            const result = await controller.verifyEvidenceIntegrity('evidence-123');
+      const result = await controller.generateIntegrityReport('session-123');
 
-            expect(result.overallStatus).toBe('FULLY_VERIFIED');
-            expect(result.checks.hashStored).toBe(true);
-            expect(mockIntegrityService.verifyEvidenceIntegrity).toHaveBeenCalledWith('evidence-123');
-        });
+      expect(result.summary.totalEvidence).toBe(10);
+      expect(result.summary.chainIntegrity).toBe('VALID');
+      expect(mockIntegrityService.generateIntegrityReport).toHaveBeenCalledWith('session-123');
     });
+  });
 
-    describe('generateIntegrityReport', () => {
-        it('generates comprehensive session integrity report', async () => {
-            const mockReport = {
-                sessionId: 'session-123',
-                generatedAt: new Date(),
-                summary: {
-                    totalEvidence: 10,
-                    chainedEvidence: 8,
-                    timestampedEvidence: 6,
-                    chainIntegrity: 'VALID' as const,
-                    chainErrors: 0,
-                },
-                chainVerification: {
-                    sessionId: 'session-123',
-                    isValid: true,
-                    totalEntries: 8,
-                    validEntries: 8,
-                    invalidEntries: [],
-                    verifiedAt: new Date(),
-                },
-                evidenceItems: [
-                    {
-                        evidenceId: 'evidence-1',
-                        fileName: 'file1.pdf',
-                        hash: 'hash-1',
-                        hasChainEntry: true,
-                        hasTimestamp: true,
-                        sequenceNumber: 0,
-                        status: 'FULLY_VERIFIED' as const,
-                    },
-                ],
-            };
+  describe('ingestCIArtifact', () => {
+    it('ingests CI artifact as evidence', async () => {
+      const dto = {
+        sessionId: 'session-123',
+        questionId: 'question-456',
+        ciProvider: 'azure-devops' as const,
+        buildId: 'build-789',
+        buildNumber: '42',
+        pipelineName: 'CI Pipeline',
+        artifactType: 'junit' as const,
+        content: '<testsuite tests="10" failures="0"></testsuite>',
+        branch: 'main',
+        commitSha: 'abc123',
+        autoVerify: true,
+      };
 
-            mockIntegrityService.generateIntegrityReport.mockResolvedValue(mockReport);
+      const mockResult = {
+        evidenceId: 'evidence-ci-123',
+        artifactType: 'junit',
+        parsedMetrics: {
+          tests: 10,
+          failures: 0,
+          passRate: 100,
+        },
+        autoVerified: true,
+      };
 
-            const result = await controller.generateIntegrityReport('session-123');
+      mockCIIngestionService.ingestArtifact.mockResolvedValue(mockResult);
 
-            expect(result.summary.totalEvidence).toBe(10);
-            expect(result.summary.chainIntegrity).toBe('VALID');
-            expect(mockIntegrityService.generateIntegrityReport).toHaveBeenCalledWith('session-123');
-        });
+      const result = await controller.ingestCIArtifact(dto);
+
+      expect(result).toEqual(mockResult);
+      expect(mockCIIngestionService.ingestArtifact).toHaveBeenCalledWith(dto);
     });
+  });
 
-    describe('ingestCIArtifact', () => {
-        it('ingests CI artifact as evidence', async () => {
-            const dto = {
-                sessionId: 'session-123',
-                questionId: 'question-456',
-                ciProvider: 'azure-devops' as const,
-                buildId: 'build-789',
-                buildNumber: '42',
-                pipelineName: 'CI Pipeline',
-                artifactType: 'junit' as const,
-                content: '<testsuite tests="10" failures="0"></testsuite>',
-                branch: 'main',
-                commitSha: 'abc123',
-                autoVerify: true,
-            };
+  describe('bulkIngestCIArtifacts', () => {
+    it('ingests multiple CI artifacts', async () => {
+      const dto = {
+        sessionId: 'session-123',
+        ciProvider: 'github-actions' as const,
+        buildId: 'build-456',
+        artifacts: [
+          {
+            artifactType: 'junit' as const,
+            content: '<testsuite tests="5"></testsuite>',
+          },
+          {
+            artifactType: 'lcov' as const,
+            content: 'TN:\nSF:file.ts\nend_of_record',
+          },
+        ],
+      };
 
-            const mockResult = {
-                evidenceId: 'evidence-ci-123',
-                artifactType: 'junit',
-                parsedMetrics: {
-                    tests: 10,
-                    failures: 0,
-                    passRate: 100,
-                },
-                autoVerified: true,
-            };
+      const mockResult = {
+        totalArtifacts: 2,
+        successCount: 2,
+        errorCount: 0,
+        results: [],
+        errors: [],
+      };
 
-            mockCIIngestionService.ingestArtifact.mockResolvedValue(mockResult);
+      mockCIIngestionService.bulkIngestArtifacts.mockResolvedValue(mockResult);
 
-            const result = await controller.ingestCIArtifact(dto);
+      const result = await controller.bulkIngestCIArtifacts(dto);
 
-            expect(result).toEqual(mockResult);
-            expect(mockCIIngestionService.ingestArtifact).toHaveBeenCalledWith(dto);
-        });
+      expect(result.totalArtifacts).toBe(2);
+      expect(result.errorCount).toBe(0);
+      expect(mockCIIngestionService.bulkIngestArtifacts).toHaveBeenCalledWith(dto);
     });
+  });
 
-    describe('bulkIngestCIArtifacts', () => {
-        it('ingests multiple CI artifacts', async () => {
-            const dto = {
-                sessionId: 'session-123',
-                ciProvider: 'github-actions' as const,
-                buildId: 'build-456',
-                artifacts: [
-                    {
-                        artifactType: 'junit' as const,
-                        content: '<testsuite tests="5"></testsuite>',
-                    },
-                    {
-                        artifactType: 'lcov' as const,
-                        content: 'TN:\nSF:file.ts\nend_of_record',
-                    },
-                ],
-            };
+  describe('getSessionCIArtifacts', () => {
+    it('retrieves all CI artifacts for session', async () => {
+      const mockArtifacts = [
+        {
+          id: 'artifact-1',
+          buildId: 'build-123',
+          artifactType: 'junit',
+          metrics: { tests: 10 },
+        },
+        {
+          id: 'artifact-2',
+          buildId: 'build-123',
+          artifactType: 'lcov',
+          metrics: { coverage: 85 },
+        },
+      ];
 
-            const mockResult = {
-                totalArtifacts: 2,
-                successCount: 2,
-                errorCount: 0,
-                results: [],
-                errors: [],
-            };
+      mockCIIngestionService.getSessionArtifacts.mockResolvedValue(mockArtifacts);
 
-            mockCIIngestionService.bulkIngestArtifacts.mockResolvedValue(mockResult);
+      const result = await controller.getSessionCIArtifacts('session-123');
 
-            const result = await controller.bulkIngestCIArtifacts(dto);
-
-            expect(result.totalArtifacts).toBe(2);
-            expect(result.errorCount).toBe(0);
-            expect(mockCIIngestionService.bulkIngestArtifacts).toHaveBeenCalledWith(dto);
-        });
+      expect(result).toEqual(mockArtifacts);
+      expect(mockCIIngestionService.getSessionArtifacts).toHaveBeenCalledWith('session-123');
     });
+  });
 
-    describe('getSessionCIArtifacts', () => {
-        it('retrieves all CI artifacts for session', async () => {
-            const mockArtifacts = [
-                {
-                    id: 'artifact-1',
-                    buildId: 'build-123',
-                    artifactType: 'junit',
-                    metrics: { tests: 10 },
-                },
-                {
-                    id: 'artifact-2',
-                    buildId: 'build-123',
-                    artifactType: 'lcov',
-                    metrics: { coverage: 85 },
-                },
-            ];
+  describe('getCIBuildSummary', () => {
+    it('retrieves build summary with aggregated metrics', async () => {
+      const mockSummary = {
+        buildId: 'build-456',
+        buildNumber: '42',
+        pipelineName: 'CI Pipeline',
+        branch: 'main',
+        commitSha: 'abc123',
+        ciProvider: 'azure-devops',
+        totalArtifacts: 2,
+        verifiedArtifacts: 2,
+        artifactTypes: ['junit', 'lcov'],
+        metrics: {
+          totalTests: 100,
+          testPassRate: 100,
+          codeCoverage: 85,
+        },
+        createdAt: new Date(),
+      };
 
-            mockCIIngestionService.getSessionArtifacts.mockResolvedValue(mockArtifacts);
+      mockCIIngestionService.getBuildSummary.mockResolvedValue(mockSummary);
 
-            const result = await controller.getSessionCIArtifacts('session-123');
+      const result = await controller.getCIBuildSummary('session-123', 'build-456');
 
-            expect(result).toEqual(mockArtifacts);
-            expect(mockCIIngestionService.getSessionArtifacts).toHaveBeenCalledWith('session-123');
-        });
+      expect(result.buildId).toBe('build-456');
+      expect((result.metrics as any).totalTests).toBe(100);
+      expect(mockCIIngestionService.getBuildSummary).toHaveBeenCalledWith(
+        'session-123',
+        'build-456',
+      );
     });
-
-    describe('getCIBuildSummary', () => {
-        it('retrieves build summary with aggregated metrics', async () => {
-            const mockSummary = {
-                buildId: 'build-456',
-                buildNumber: '42',
-                pipelineName: 'CI Pipeline',
-                branch: 'main',
-                commitSha: 'abc123',
-                ciProvider: 'azure-devops',
-                totalArtifacts: 2,
-                verifiedArtifacts: 2,
-                artifactTypes: ['junit', 'lcov'],
-                metrics: {
-                    totalTests: 100,
-                    testPassRate: 100,
-                    codeCoverage: 85,
-                },
-                createdAt: new Date(),
-            };
-
-            mockCIIngestionService.getBuildSummary.mockResolvedValue(mockSummary);
-
-            const result = await controller.getCIBuildSummary('session-123', 'build-456');
-
-            expect(result.buildId).toBe('build-456');
-            expect((result.metrics as any).totalTests).toBe(100);
-            expect(mockCIIngestionService.getBuildSummary).toHaveBeenCalledWith('session-123', 'build-456');
-        });
-    });
+  });
 });

@@ -1,6 +1,6 @@
 /**
  * Azure Application Insights Configuration
- * 
+ *
  * Provides Application Performance Monitoring (APM) for production environments.
  * Tracks requests, dependencies, exceptions, and custom metrics.
  */
@@ -31,7 +31,7 @@ export interface AppInsightsConfig {
 
 export function getAppInsightsConfig(): AppInsightsConfig {
   const isProd = process.env.NODE_ENV === 'production';
-  
+
   return {
     connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING || '',
     instrumentationKey: process.env.APPINSIGHTS_INSTRUMENTATIONKEY || '',
@@ -61,15 +61,17 @@ let client: appInsights.TelemetryClient | null = null;
  */
 export function initializeAppInsights(): void {
   const config = getAppInsightsConfig();
-  
+
   // Skip if already initialized or no connection string
   if (isInitialized) {
     console.log('Application Insights already initialized');
     return;
   }
-  
+
   if (!config.connectionString && !config.instrumentationKey) {
-    console.log('Application Insights not configured (no connection string or instrumentation key)');
+    console.log(
+      'Application Insights not configured (no connection string or instrumentation key)',
+    );
     return;
   }
 
@@ -83,21 +85,26 @@ export function initializeAppInsights(): void {
 
     // Configure auto-collection
     appInsights.defaultClient.config.samplingPercentage = config.samplingPercentage;
-    
+
     // Set cloud role for application map
-    appInsights.defaultClient.context.tags[appInsights.defaultClient.context.keys.cloudRole] = config.cloudRole;
-    appInsights.defaultClient.context.tags[appInsights.defaultClient.context.keys.cloudRoleInstance] = config.cloudRoleInstance;
+    appInsights.defaultClient.context.tags[appInsights.defaultClient.context.keys.cloudRole] =
+      config.cloudRole;
+    appInsights.defaultClient.context.tags[
+      appInsights.defaultClient.context.keys.cloudRoleInstance
+    ] = config.cloudRoleInstance;
 
     // Configure auto-collection features
     appInsights.defaultClient.config.samplingPercentage = config.samplingPercentage;
 
     // Start the SDK
     appInsights.start();
-    
+
     client = appInsights.defaultClient;
     isInitialized = true;
-    
-    console.log(`Application Insights initialized: role=${config.cloudRole}, instance=${config.cloudRoleInstance}`);
+
+    console.log(
+      `Application Insights initialized: role=${config.cloudRole}, instance=${config.cloudRoleInstance}`,
+    );
   } catch (error) {
     console.error('Failed to initialize Application Insights:', error);
   }
@@ -128,8 +135,10 @@ export interface CustomMetricOptions {
  * Track a custom metric
  */
 export function trackMetric(options: CustomMetricOptions): void {
-  if (!client) return;
-  
+  if (!client) {
+    return;
+  }
+
   client.trackMetric({
     name: options.name,
     value: options.value,
@@ -144,7 +153,12 @@ export function trackMetric(options: CustomMetricOptions): void {
 /**
  * Track response time for an operation
  */
-export function trackResponseTime(operationName: string, durationMs: number, success: boolean, properties?: Record<string, string>): void {
+export function trackResponseTime(
+  operationName: string,
+  durationMs: number,
+  success: boolean,
+  properties?: Record<string, string>,
+): void {
   trackMetric({
     name: `${operationName}_response_time`,
     value: durationMs,
@@ -158,13 +172,18 @@ export function trackResponseTime(operationName: string, durationMs: number, suc
 /**
  * Track questionnaire completion metrics
  */
-export function trackQuestionnaireMetrics(sessionId: string, metrics: {
-  questionsAnswered: number;
-  totalQuestions: number;
-  completionPercentage: number;
-  timeSpentSeconds: number;
-}): void {
-  if (!client) return;
+export function trackQuestionnaireMetrics(
+  sessionId: string,
+  metrics: {
+    questionsAnswered: number;
+    totalQuestions: number;
+    completionPercentage: number;
+    timeSpentSeconds: number;
+  },
+): void {
+  if (!client) {
+    return;
+  }
 
   trackMetric({
     name: 'questionnaire_completion_percentage',
@@ -188,8 +207,14 @@ export function trackQuestionnaireMetrics(sessionId: string, metrics: {
 /**
  * Track readiness score calculation
  */
-export function trackReadinessScore(sessionId: string, score: number, dimensionScores: Record<string, number>): void {
-  if (!client) return;
+export function trackReadinessScore(
+  sessionId: string,
+  score: number,
+  dimensionScores: Record<string, number>,
+): void {
+  if (!client) {
+    return;
+  }
 
   trackMetric({
     name: 'readiness_score_overall',
@@ -221,8 +246,10 @@ export interface CustomEventOptions {
  * Track a custom event
  */
 export function trackEvent(options: CustomEventOptions): void {
-  if (!client) return;
-  
+  if (!client) {
+    return;
+  }
+
   client.trackEvent({
     name: options.name,
     properties: options.properties,
@@ -233,7 +260,11 @@ export function trackEvent(options: CustomEventOptions): void {
 /**
  * Track user authentication events
  */
-export function trackAuthEvent(eventType: 'login' | 'logout' | 'register' | 'password_reset', userId?: string, method?: string): void {
+export function trackAuthEvent(
+  eventType: 'login' | 'logout' | 'register' | 'password_reset',
+  userId?: string,
+  method?: string,
+): void {
   trackEvent({
     name: `auth_${eventType}`,
     properties: {
@@ -246,7 +277,12 @@ export function trackAuthEvent(eventType: 'login' | 'logout' | 'register' | 'pas
 /**
  * Track document generation events
  */
-export function trackDocumentGeneration(documentType: string, sessionId: string, success: boolean, durationMs: number): void {
+export function trackDocumentGeneration(
+  documentType: string,
+  sessionId: string,
+  success: boolean,
+  durationMs: number,
+): void {
   trackEvent({
     name: 'document_generated',
     properties: {
@@ -263,7 +299,13 @@ export function trackDocumentGeneration(documentType: string, sessionId: string,
 /**
  * Track API endpoint usage
  */
-export function trackEndpointUsage(endpoint: string, method: string, statusCode: number, durationMs: number, userId?: string): void {
+export function trackEndpointUsage(
+  endpoint: string,
+  method: string,
+  statusCode: number,
+  durationMs: number,
+  userId?: string,
+): void {
   trackEvent({
     name: 'api_request',
     properties: {
@@ -285,9 +327,15 @@ export function trackEndpointUsage(endpoint: string, method: string, statusCode:
 /**
  * Track an exception
  */
-export function trackException(error: Error, properties?: Record<string, string>, measurements?: Record<string, number>): void {
-  if (!client) return;
-  
+export function trackException(
+  error: Error,
+  properties?: Record<string, string>,
+  measurements?: Record<string, number>,
+): void {
+  if (!client) {
+    return;
+  }
+
   client.trackException({
     exception: error,
     properties,
@@ -309,7 +357,11 @@ export function trackHandledException(error: Error, context: string, userId?: st
 /**
  * Track a critical exception (requires immediate attention)
  */
-export function trackCriticalException(error: Error, context: string, additionalData?: Record<string, string>): void {
+export function trackCriticalException(
+  error: Error,
+  context: string,
+  additionalData?: Record<string, string>,
+): void {
   trackException(error, {
     context,
     severity: 'critical',
@@ -334,8 +386,10 @@ export function trackDependency(options: {
   resultCode?: string;
   properties?: Record<string, string>;
 }): void {
-  if (!client) return;
-  
+  if (!client) {
+    return;
+  }
+
   client.trackDependency({
     name: options.name,
     data: options.data,
@@ -351,7 +405,12 @@ export function trackDependency(options: {
 /**
  * Track database query performance
  */
-export function trackDatabaseQuery(queryName: string, durationMs: number, success: boolean, tableName?: string): void {
+export function trackDatabaseQuery(
+  queryName: string,
+  durationMs: number,
+  success: boolean,
+  tableName?: string,
+): void {
   trackDependency({
     name: queryName,
     data: queryName,
@@ -366,7 +425,12 @@ export function trackDatabaseQuery(queryName: string, durationMs: number, succes
 /**
  * Track external API call
  */
-export function trackExternalApiCall(apiName: string, endpoint: string, durationMs: number, statusCode: number): void {
+export function trackExternalApiCall(
+  apiName: string,
+  endpoint: string,
+  durationMs: number,
+  statusCode: number,
+): void {
   trackDependency({
     name: apiName,
     data: endpoint,
@@ -390,20 +454,20 @@ export const PerformanceMetrics = {
   API_RESPONSE_TIME: 'api_response_time_ms',
   DATABASE_QUERY_TIME: 'database_query_time_ms',
   EXTERNAL_API_TIME: 'external_api_time_ms',
-  
+
   // Throughput
   REQUESTS_PER_SECOND: 'requests_per_second',
   CONCURRENT_USERS: 'concurrent_users',
-  
+
   // Questionnaire
   QUESTIONS_ANSWERED: 'questions_answered_total',
   SESSIONS_ACTIVE: 'sessions_active',
   COMPLETION_RATE: 'questionnaire_completion_rate',
-  
+
   // Scoring
   SCORE_CALCULATION_TIME: 'score_calculation_time_ms',
   AVERAGE_READINESS_SCORE: 'average_readiness_score',
-  
+
   // Document Generation
   DOCUMENT_GENERATION_TIME: 'document_generation_time_ms',
   DOCUMENTS_GENERATED: 'documents_generated_total',
@@ -412,7 +476,11 @@ export const PerformanceMetrics = {
 /**
  * Track standard performance metric
  */
-export function trackPerformance(metricName: keyof typeof PerformanceMetrics, value: number, properties?: Record<string, string>): void {
+export function trackPerformance(
+  metricName: keyof typeof PerformanceMetrics,
+  value: number,
+  properties?: Record<string, string>,
+): void {
   trackMetric({
     name: PerformanceMetrics[metricName],
     value,
@@ -427,9 +495,17 @@ export function trackPerformance(metricName: keyof typeof PerformanceMetrics, va
 /**
  * Track an availability test result (health check)
  */
-export function trackAvailability(testName: string, success: boolean, durationMs: number, runLocation?: string, message?: string): void {
-  if (!client) return;
-  
+export function trackAvailability(
+  testName: string,
+  success: boolean,
+  durationMs: number,
+  runLocation?: string,
+  message?: string,
+): void {
+  if (!client) {
+    return;
+  }
+
   client.trackAvailability({
     id: `${testName}-${Date.now()}`,
     name: testName,
@@ -475,19 +551,13 @@ export async function shutdown(): Promise<void> {
 export function createRequestTrackingMiddleware() {
   return (req: any, res: any, next: () => void) => {
     const startTime = Date.now();
-    
+
     res.on('finish', () => {
       const durationMs = Date.now() - startTime;
       const userId = req.user?.id;
-      
-      trackEndpointUsage(
-        req.path,
-        req.method,
-        res.statusCode,
-        durationMs,
-        userId,
-      );
-      
+
+      trackEndpointUsage(req.path, req.method, res.statusCode, durationMs, userId);
+
       // Track slow requests (>500ms)
       if (durationMs > 500) {
         trackEvent({
@@ -502,7 +572,7 @@ export function createRequestTrackingMiddleware() {
         });
       }
     });
-    
+
     next();
   };
 }

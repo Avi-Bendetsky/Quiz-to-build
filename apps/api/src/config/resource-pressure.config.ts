@@ -1,6 +1,6 @@
 /**
  * Resource Pressure Test Configuration
- * 
+ *
  * Defines resource exhaustion tests for CPU, memory, disk, and network
  * to verify system behavior under resource constraints.
  */
@@ -22,7 +22,13 @@ export interface ResourcePressureTest {
   validationChecks: ValidationCheck[];
 }
 
-export type ResourceType = 'cpu' | 'memory' | 'disk' | 'network-bandwidth' | 'file-descriptors' | 'connections';
+export type ResourceType =
+  | 'cpu'
+  | 'memory'
+  | 'disk'
+  | 'network-bandwidth'
+  | 'file-descriptors'
+  | 'connections';
 
 export type PressureLevel = 'moderate' | 'high' | 'critical';
 
@@ -100,10 +106,30 @@ export function getCpuPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'CPU utilization reaches target', type: 'metric', condition: 'cpu_usage >= 80', expectedResult: true },
-        { name: 'HPA triggers scale-out', type: 'behavior', condition: 'replica_count > initial_count', expectedResult: true },
-        { name: 'Error rate within bounds', type: 'metric', condition: 'error_rate < 5', expectedResult: true },
-        { name: 'Health check passes', type: 'health-check', condition: '/health returns 200', expectedResult: true },
+        {
+          name: 'CPU utilization reaches target',
+          type: 'metric',
+          condition: 'cpu_usage >= 80',
+          expectedResult: true,
+        },
+        {
+          name: 'HPA triggers scale-out',
+          type: 'behavior',
+          condition: 'replica_count > initial_count',
+          expectedResult: true,
+        },
+        {
+          name: 'Error rate within bounds',
+          type: 'metric',
+          condition: 'error_rate < 5',
+          expectedResult: true,
+        },
+        {
+          name: 'Health check passes',
+          type: 'health-check',
+          condition: '/health returns 200',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -140,10 +166,30 @@ export function getCpuPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'CPU utilization reaches target', type: 'metric', condition: 'cpu_usage >= 90', expectedResult: true },
-        { name: 'CPU throttling occurs', type: 'metric', condition: 'cpu_throttled_seconds > 0', expectedResult: true },
-        { name: 'Critical alerts triggered', type: 'behavior', condition: 'alert_count > 0', expectedResult: true },
-        { name: 'No pod crashes', type: 'metric', condition: 'pod_restart_count == 0', expectedResult: true },
+        {
+          name: 'CPU utilization reaches target',
+          type: 'metric',
+          condition: 'cpu_usage >= 90',
+          expectedResult: true,
+        },
+        {
+          name: 'CPU throttling occurs',
+          type: 'metric',
+          condition: 'cpu_throttled_seconds > 0',
+          expectedResult: true,
+        },
+        {
+          name: 'Critical alerts triggered',
+          type: 'behavior',
+          condition: 'alert_count > 0',
+          expectedResult: true,
+        },
+        {
+          name: 'No pod crashes',
+          type: 'metric',
+          condition: 'pod_restart_count == 0',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -180,9 +226,24 @@ export function getCpuPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Spike detected', type: 'metric', condition: 'cpu_usage >= 95', expectedResult: true },
-        { name: 'System recovers', type: 'metric', condition: 'cpu_usage < 80 after chaos ends', expectedResult: true },
-        { name: 'No data loss', type: 'behavior', condition: 'data_integrity_check passes', expectedResult: true },
+        {
+          name: 'Spike detected',
+          type: 'metric',
+          condition: 'cpu_usage >= 95',
+          expectedResult: true,
+        },
+        {
+          name: 'System recovers',
+          type: 'metric',
+          condition: 'cpu_usage < 80 after chaos ends',
+          expectedResult: true,
+        },
+        {
+          name: 'No data loss',
+          type: 'behavior',
+          condition: 'data_integrity_check passes',
+          expectedResult: true,
+        },
       ],
     },
   ];
@@ -228,10 +289,30 @@ export function getMemoryPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Memory reaches target', type: 'metric', condition: 'memory_usage >= 80', expectedResult: true },
-        { name: 'No OOM kills', type: 'metric', condition: 'oom_kill_count == 0', expectedResult: true },
-        { name: 'GC activity increases', type: 'metric', condition: 'gc_pause_time increases', expectedResult: true },
-        { name: 'Health check passes', type: 'health-check', condition: '/health returns 200', expectedResult: true },
+        {
+          name: 'Memory reaches target',
+          type: 'metric',
+          condition: 'memory_usage >= 80',
+          expectedResult: true,
+        },
+        {
+          name: 'No OOM kills',
+          type: 'metric',
+          condition: 'oom_kill_count == 0',
+          expectedResult: true,
+        },
+        {
+          name: 'GC activity increases',
+          type: 'metric',
+          condition: 'gc_pause_time increases',
+          expectedResult: true,
+        },
+        {
+          name: 'Health check passes',
+          type: 'health-check',
+          condition: '/health returns 200',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -276,10 +357,30 @@ export function getMemoryPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Memory reaches target', type: 'metric', condition: 'memory_usage >= 90', expectedResult: true },
-        { name: 'No OOM kills', type: 'metric', condition: 'oom_kill_count == 0', expectedResult: true },
-        { name: 'Memory protection activated', type: 'log', condition: 'memory_protection log entry', expectedResult: true },
-        { name: 'Graceful rejection of new requests', type: 'behavior', condition: '503 responses under extreme load', expectedResult: true },
+        {
+          name: 'Memory reaches target',
+          type: 'metric',
+          condition: 'memory_usage >= 90',
+          expectedResult: true,
+        },
+        {
+          name: 'No OOM kills',
+          type: 'metric',
+          condition: 'oom_kill_count == 0',
+          expectedResult: true,
+        },
+        {
+          name: 'Memory protection activated',
+          type: 'log',
+          condition: 'memory_protection log entry',
+          expectedResult: true,
+        },
+        {
+          name: 'Graceful rejection of new requests',
+          type: 'behavior',
+          condition: '503 responses under extreme load',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -316,9 +417,24 @@ export function getMemoryPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Gradual memory increase detected', type: 'metric', condition: 'memory_trend == increasing', expectedResult: true },
-        { name: 'Anomaly alert triggered', type: 'behavior', condition: 'memory_growth_anomaly alert', expectedResult: true },
-        { name: 'System remains stable', type: 'health-check', condition: '/health returns 200', expectedResult: true },
+        {
+          name: 'Gradual memory increase detected',
+          type: 'metric',
+          condition: 'memory_trend == increasing',
+          expectedResult: true,
+        },
+        {
+          name: 'Anomaly alert triggered',
+          type: 'behavior',
+          condition: 'memory_growth_anomaly alert',
+          expectedResult: true,
+        },
+        {
+          name: 'System remains stable',
+          type: 'health-check',
+          condition: '/health returns 200',
+          expectedResult: true,
+        },
       ],
     },
   ];
@@ -363,9 +479,24 @@ export function getDiskPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Disk usage reaches target', type: 'metric', condition: 'disk_usage >= 85', expectedResult: true },
-        { name: 'Log rotation triggered', type: 'log', condition: 'log rotation completed', expectedResult: true },
-        { name: 'No write errors', type: 'metric', condition: 'disk_write_errors == 0', expectedResult: true },
+        {
+          name: 'Disk usage reaches target',
+          type: 'metric',
+          condition: 'disk_usage >= 85',
+          expectedResult: true,
+        },
+        {
+          name: 'Log rotation triggered',
+          type: 'log',
+          condition: 'log rotation completed',
+          expectedResult: true,
+        },
+        {
+          name: 'No write errors',
+          type: 'metric',
+          condition: 'disk_write_errors == 0',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -402,10 +533,30 @@ export function getDiskPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Disk usage reaches target', type: 'metric', condition: 'disk_usage >= 95', expectedResult: true },
-        { name: 'Critical alert triggered', type: 'behavior', condition: 'disk_space_critical alert', expectedResult: true },
-        { name: 'Essential writes continue', type: 'behavior', condition: 'database writes succeed', expectedResult: true },
-        { name: 'Cleanup initiated', type: 'log', condition: 'emergency cleanup started', expectedResult: true },
+        {
+          name: 'Disk usage reaches target',
+          type: 'metric',
+          condition: 'disk_usage >= 95',
+          expectedResult: true,
+        },
+        {
+          name: 'Critical alert triggered',
+          type: 'behavior',
+          condition: 'disk_space_critical alert',
+          expectedResult: true,
+        },
+        {
+          name: 'Essential writes continue',
+          type: 'behavior',
+          condition: 'database writes succeed',
+          expectedResult: true,
+        },
+        {
+          name: 'Cleanup initiated',
+          type: 'log',
+          condition: 'emergency cleanup started',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -442,9 +593,24 @@ export function getDiskPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'I/O utilization saturated', type: 'metric', condition: 'io_util >= 90', expectedResult: true },
-        { name: 'Latency increase detected', type: 'metric', condition: 'disk_latency_ms > baseline', expectedResult: true },
-        { name: 'No data corruption', type: 'behavior', condition: 'data_integrity_check passes', expectedResult: true },
+        {
+          name: 'I/O utilization saturated',
+          type: 'metric',
+          condition: 'io_util >= 90',
+          expectedResult: true,
+        },
+        {
+          name: 'Latency increase detected',
+          type: 'metric',
+          condition: 'disk_latency_ms > baseline',
+          expectedResult: true,
+        },
+        {
+          name: 'No data corruption',
+          type: 'behavior',
+          condition: 'data_integrity_check passes',
+          expectedResult: true,
+        },
       ],
     },
   ];
@@ -489,9 +655,24 @@ export function getNetworkPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Bandwidth limit enforced', type: 'metric', condition: 'bandwidth_usage >= 90%', expectedResult: true },
-        { name: 'Critical requests prioritized', type: 'behavior', condition: 'health_check latency < 500ms', expectedResult: true },
-        { name: 'No connection drops', type: 'metric', condition: 'connection_reset_count == 0', expectedResult: true },
+        {
+          name: 'Bandwidth limit enforced',
+          type: 'metric',
+          condition: 'bandwidth_usage >= 90%',
+          expectedResult: true,
+        },
+        {
+          name: 'Critical requests prioritized',
+          type: 'behavior',
+          condition: 'health_check latency < 500ms',
+          expectedResult: true,
+        },
+        {
+          name: 'No connection drops',
+          type: 'metric',
+          condition: 'connection_reset_count == 0',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -528,9 +709,24 @@ export function getNetworkPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'Connections exhausted', type: 'metric', condition: 'available_connections < 5', expectedResult: true },
-        { name: 'Connection queue formed', type: 'metric', condition: 'connection_queue_depth > 0', expectedResult: true },
-        { name: 'Graceful rejection occurs', type: 'behavior', condition: '503 responses returned', expectedResult: true },
+        {
+          name: 'Connections exhausted',
+          type: 'metric',
+          condition: 'available_connections < 5',
+          expectedResult: true,
+        },
+        {
+          name: 'Connection queue formed',
+          type: 'metric',
+          condition: 'connection_queue_depth > 0',
+          expectedResult: true,
+        },
+        {
+          name: 'Graceful rejection occurs',
+          type: 'behavior',
+          condition: '503 responses returned',
+          expectedResult: true,
+        },
       ],
     },
 
@@ -566,9 +762,24 @@ export function getNetworkPressureTests(): ResourcePressureTest[] {
         },
       ],
       validationChecks: [
-        { name: 'FD usage reaches target', type: 'metric', condition: 'fd_usage >= 95%', expectedResult: true },
-        { name: 'No EMFILE errors', type: 'log', condition: 'EMFILE error count', expectedResult: 0 },
-        { name: 'FD cleanup triggered', type: 'behavior', condition: 'idle connections closed', expectedResult: true },
+        {
+          name: 'FD usage reaches target',
+          type: 'metric',
+          condition: 'fd_usage >= 95%',
+          expectedResult: true,
+        },
+        {
+          name: 'No EMFILE errors',
+          type: 'log',
+          condition: 'EMFILE error count',
+          expectedResult: 0,
+        },
+        {
+          name: 'FD cleanup triggered',
+          type: 'behavior',
+          condition: 'idle connections closed',
+          expectedResult: true,
+        },
       ],
     },
   ];

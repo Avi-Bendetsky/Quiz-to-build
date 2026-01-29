@@ -371,7 +371,8 @@ export function getIncidentRunbooks(): IncidentRunbook[] {
           responsible: 'oncall-primary',
           timeLimit: 5,
           automatable: true,
-          command: 'az containerapp revision list --name ca-quiz2biz-api-prod --resource-group rg-quiz2biz-prod',
+          command:
+            'az containerapp revision list --name ca-quiz2biz-api-prod --resource-group rg-quiz2biz-prod',
         },
         {
           order: 4,
@@ -389,7 +390,8 @@ export function getIncidentRunbooks(): IncidentRunbook[] {
           timeLimit: 10,
           rollbackStep: 3,
           automatable: true,
-          command: 'az containerapp ingress traffic set --name ca-quiz2biz-api-prod --resource-group rg-quiz2biz-prod --revision-weight stable=100',
+          command:
+            'az containerapp ingress traffic set --name ca-quiz2biz-api-prod --resource-group rg-quiz2biz-prod --revision-weight stable=100',
         },
         {
           order: 6,
@@ -494,7 +496,8 @@ Last updated: {{timestamp}}`,
           responsible: 'oncall-primary',
           timeLimit: 5,
           automatable: true,
-          command: 'az monitor metrics list --resource /subscriptions/.../containerApps/ca-quiz2biz-api-prod --metric Requests --filter "StatusCodeClass eq \'5xx\'"',
+          command:
+            'az monitor metrics list --resource /subscriptions/.../containerApps/ca-quiz2biz-api-prod --metric Requests --filter "StatusCodeClass eq \'5xx\'"',
         },
         {
           order: 2,
@@ -667,8 +670,18 @@ Further updates will be provided as the investigation progresses.`,
       description: 'Response procedure for database performance issues or outages',
       applicableSeverities: ['SEV1', 'SEV2', 'SEV3'],
       triggerConditions: [
-        { type: 'metric_threshold', metric: 'db_connection_pool_exhausted', threshold: 95, comparison: 'gt' },
-        { type: 'metric_threshold', metric: 'db_query_latency_p99', threshold: 5000, comparison: 'gt' },
+        {
+          type: 'metric_threshold',
+          metric: 'db_connection_pool_exhausted',
+          threshold: 95,
+          comparison: 'gt',
+        },
+        {
+          type: 'metric_threshold',
+          metric: 'db_query_latency_p99',
+          threshold: 5000,
+          comparison: 'gt',
+        },
         { type: 'alert', condition: 'database_unreachable' },
       ],
       steps: [
@@ -679,7 +692,8 @@ Further updates will be provided as the investigation progresses.`,
           responsible: 'oncall-primary',
           timeLimit: 5,
           automatable: true,
-          command: 'az postgres flexible-server show --resource-group rg-quiz2biz-prod --name psql-quiz2biz-prod',
+          command:
+            'az postgres flexible-server show --resource-group rg-quiz2biz-prod --name psql-quiz2biz-prod',
         },
         {
           order: 2,
@@ -757,18 +771,12 @@ export function getOncallSchedule(): OncallSchedule {
     },
     secondaryRotation: {
       name: 'Secondary Oncall',
-      members: [
-        'sre1@quiz2biz.com',
-        'sre2@quiz2biz.com',
-      ],
+      members: ['sre1@quiz2biz.com', 'sre2@quiz2biz.com'],
       rotationIntervalDays: 14,
       handoffTime: '09:00',
       timezone: 'UTC',
     },
-    escalationManagers: [
-      'engineering-lead@quiz2biz.com',
-      'cto@quiz2biz.com',
-    ],
+    escalationManagers: ['engineering-lead@quiz2biz.com', 'cto@quiz2biz.com'],
     overrides: [],
   };
 }
@@ -863,7 +871,7 @@ export class IncidentManager {
     title: string,
     description: string,
     severity: SeverityLevel,
-    affectedServices: string[] = []
+    affectedServices: string[] = [],
   ): Incident {
     const incident: Incident = {
       id: `INC-${Date.now()}`,
@@ -898,7 +906,9 @@ export class IncidentManager {
    */
   acknowledgeIncident(incidentId: string, acknowledgedBy: string): void {
     const incident = this.activeIncidents.get(incidentId);
-    if (!incident) throw new Error(`Incident ${incidentId} not found`);
+    if (!incident) {
+      throw new Error(`Incident ${incidentId} not found`);
+    }
 
     incident.status = 'acknowledged';
     incident.assignee = acknowledgedBy;
@@ -916,9 +926,16 @@ export class IncidentManager {
   /**
    * Update incident status
    */
-  updateStatus(incidentId: string, newStatus: IncidentStatus, updatedBy: string, notes?: string): void {
+  updateStatus(
+    incidentId: string,
+    newStatus: IncidentStatus,
+    updatedBy: string,
+    notes?: string,
+  ): void {
     const incident = this.activeIncidents.get(incidentId);
-    if (!incident) throw new Error(`Incident ${incidentId} not found`);
+    if (!incident) {
+      throw new Error(`Incident ${incidentId} not found`);
+    }
 
     const oldStatus = incident.status;
     incident.status = newStatus;
@@ -943,7 +960,9 @@ export class IncidentManager {
    */
   addNote(incidentId: string, note: string, author: string): void {
     const incident = this.activeIncidents.get(incidentId);
-    if (!incident) throw new Error(`Incident ${incidentId} not found`);
+    if (!incident) {
+      throw new Error(`Incident ${incidentId} not found`);
+    }
 
     incident.timeline.push({
       timestamp: new Date(),
@@ -984,12 +1003,15 @@ export class IncidentManager {
     if (path.autoEscalate) {
       const nextLevel = level + 1;
       if (escalationPaths.find((p) => p.level === nextLevel)) {
-        setTimeout(() => {
-          const currentIncident = this.activeIncidents.get(incident.id);
-          if (currentIncident && currentIncident.status !== 'resolved') {
-            this.triggerEscalation(currentIncident, nextLevel);
-          }
-        }, path.timeoutMinutes * 60 * 1000);
+        setTimeout(
+          () => {
+            const currentIncident = this.activeIncidents.get(incident.id);
+            if (currentIncident && currentIncident.status !== 'resolved') {
+              this.triggerEscalation(currentIncident, nextLevel);
+            }
+          },
+          path.timeoutMinutes * 60 * 1000,
+        );
       }
     }
   }
@@ -1002,8 +1024,8 @@ export class IncidentManager {
       (rb) =>
         rb.applicableSeverities.includes(incident.severity) &&
         rb.triggerConditions.some((tc) =>
-          incident.affectedServices.some((s) => s.includes(tc.condition || ''))
-        )
+          incident.affectedServices.some((s) => s.includes(tc.condition || '')),
+        ),
     );
   }
 
@@ -1019,7 +1041,7 @@ export class IncidentManager {
    */
   getActiveIncidents(): Incident[] {
     return Array.from(this.activeIncidents.values()).filter(
-      (i) => i.status !== 'resolved' && i.status !== 'postmortem'
+      (i) => i.status !== 'resolved' && i.status !== 'postmortem',
     );
   }
 
@@ -1037,7 +1059,7 @@ export class IncidentManager {
     const severityInfo = this.getSeverityInfo(incident.severity);
     const detectedTime = incident.createdAt.getTime();
     const acknowledgedEntry = incident.timeline.find(
-      (e) => e.type === 'status_change' && e.message.includes('acknowledged')
+      (e) => e.type === 'status_change' && e.message.includes('acknowledged'),
     );
     const resolvedTime = incident.resolvedAt?.getTime();
 
@@ -1045,9 +1067,7 @@ export class IncidentManager {
       ? (acknowledgedEntry.timestamp.getTime() - detectedTime) / 60000
       : undefined;
 
-    const timeToResolve = resolvedTime
-      ? (resolvedTime - detectedTime) / 60000
-      : undefined;
+    const timeToResolve = resolvedTime ? (resolvedTime - detectedTime) / 60000 : undefined;
 
     return {
       timeToAcknowledgeMinutes: timeToAcknowledge,

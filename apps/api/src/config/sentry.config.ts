@@ -1,12 +1,21 @@
 /**
  * Sentry Configuration for Quiz2Biz API
- * 
+ *
  * Provides error tracking, performance monitoring, and alerting
  * for production error capturing.
  */
 
 import * as Sentry from '@sentry/nestjs';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+
+// Profiling is optional - only load if available
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let nodeProfilingIntegration: (() => any) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  nodeProfilingIntegration = require('@sentry/profiling-node').nodeProfilingIntegration;
+} catch {
+  // Profiling not available
+}
 
 export interface SentryConfig {
   dsn: string;
@@ -24,7 +33,8 @@ export function getSentryConfig(): SentryConfig {
   return {
     dsn: process.env.SENTRY_DSN || '',
     environment: process.env.NODE_ENV || 'development',
-    release: process.env.SENTRY_RELEASE || `quiz2biz-api@${process.env.npm_package_version || '1.0.0'}`,
+    release:
+      process.env.SENTRY_RELEASE || `quiz2biz-api@${process.env.npm_package_version || '1.0.0'}`,
     tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
     profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
     debug: process.env.SENTRY_DEBUG === 'true',
@@ -37,32 +47,32 @@ export function getSentryConfig(): SentryConfig {
  */
 export function initializeSentry(): void {
   const config = getSentryConfig();
-  
+
   // Only initialize if DSN is provided
   if (!config.dsn) {
     console.log('Sentry DSN not configured, skipping initialization');
     return;
   }
-  
+
   Sentry.init({
     dsn: config.dsn,
     environment: config.environment,
     release: config.release,
-    
+
     // Performance Monitoring
     tracesSampleRate: config.tracesSampleRate,
-    
+
     // Profiling (requires @sentry/profiling-node)
     profilesSampleRate: config.profilesSampleRate,
-    
+
     integrations: [
-      // Enable profiling
-      nodeProfilingIntegration(),
+      // Enable profiling if available
+      ...(nodeProfilingIntegration ? [nodeProfilingIntegration()] : []),
     ],
-    
+
     // Debug mode for development
     debug: config.debug,
-    
+
     // Filter sensitive data
     beforeSend(event) {
       // Remove sensitive headers
@@ -71,10 +81,10 @@ export function initializeSentry(): void {
         delete event.request.headers['cookie'];
         delete event.request.headers['x-api-key'];
       }
-      
+
       // Remove sensitive data from breadcrumbs
       if (event.breadcrumbs) {
-        event.breadcrumbs = event.breadcrumbs.map(breadcrumb => {
+        event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
           if (breadcrumb.data?.password) {
             breadcrumb.data.password = '[REDACTED]';
           }
@@ -84,21 +94,23 @@ export function initializeSentry(): void {
           return breadcrumb;
         });
       }
-      
+
       return event;
     },
-    
+
     // Configure error sampling
     beforeSendTransaction(event) {
       // Filter out health check transactions
-      if (event.transaction === 'GET /health' || 
-          event.transaction === 'GET /ready' || 
-          event.transaction === 'GET /live') {
+      if (
+        event.transaction === 'GET /health' ||
+        event.transaction === 'GET /ready' ||
+        event.transaction === 'GET /live'
+      ) {
         return null;
       }
       return event;
     },
-    
+
     // Ignore certain errors
     ignoreErrors: [
       'Non-Error promise rejection captured',
@@ -107,7 +119,7 @@ export function initializeSentry(): void {
       'EPIPE',
     ],
   });
-  
+
   console.log(`Sentry initialized for environment: ${config.environment}`);
 }
 
@@ -152,7 +164,7 @@ export function addBreadcrumb(
   category: string,
   message: string,
   data?: Record<string, unknown>,
-  level: Sentry.SeverityLevel = 'info'
+  level: Sentry.SeverityLevel = 'info',
 ): void {
   Sentry.addBreadcrumb({
     category,
@@ -182,21 +194,16 @@ export const ALERTING_RULES = {
     warning: 0.01, // 1% error rate
     critical: 0.05, // 5% error rate
   },
-  
+
   // Response time thresholds (ms)
   responseTime: {
     warning: 500,
     critical: 1000,
   },
-  
+
   // Specific error types to alert on
-  criticalErrors: [
-    'DatabaseError',
-    'AuthenticationError',
-    'PaymentError',
-    'SecurityError',
-  ],
-  
+  criticalErrors: ['DatabaseError', 'AuthenticationError', 'PaymentError', 'SecurityError'],
+
   // Alert channels (configure in Sentry dashboard)
   channels: {
     email: true,

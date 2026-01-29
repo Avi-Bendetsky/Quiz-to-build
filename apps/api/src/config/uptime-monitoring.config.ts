@@ -1,6 +1,6 @@
 /**
  * Uptime Monitoring Configuration
- * 
+ *
  * Configuration for external uptime monitoring services (UptimeRobot, Pingdom, etc.)
  * Defines health check endpoints, SLA targets, and alerting policies.
  */
@@ -12,19 +12,19 @@
 export const SLAConfig = {
   // Target uptime percentage
   uptimeTarget: 99.9, // 99.9% = 8.76 hours downtime/year
-  
+
   // Maximum acceptable response times (ms)
   responseTimeTargets: {
-    healthCheck: 500,    // Health endpoints should respond in <500ms
-    apiEndpoint: 2000,   // API endpoints should respond in <2s
-    pageLoad: 3000,      // Web pages should load in <3s
+    healthCheck: 500, // Health endpoints should respond in <500ms
+    apiEndpoint: 2000, // API endpoints should respond in <2s
+    pageLoad: 3000, // Web pages should load in <3s
   },
-  
+
   // Maintenance windows (UTC)
   maintenanceWindows: [
-    { day: 'Sunday', startHour: 2, endHour: 4 },  // Sunday 2-4 AM UTC
+    { day: 'Sunday', startHour: 2, endHour: 4 }, // Sunday 2-4 AM UTC
   ],
-  
+
   // SLA calculation period
   calculationPeriod: 'monthly',
 };
@@ -46,7 +46,7 @@ export const HealthEndpoints = {
       interval: 30, // seconds
       description: 'Kubernetes liveness probe - process is running',
     },
-    
+
     // Readiness probe - responds if app can handle requests
     ready: {
       path: '/health/ready',
@@ -57,7 +57,7 @@ export const HealthEndpoints = {
       interval: 30,
       description: 'Kubernetes readiness probe - dependencies available',
     },
-    
+
     // Full health check - detailed system status
     full: {
       path: '/health',
@@ -68,7 +68,7 @@ export const HealthEndpoints = {
       description: 'Full health check with all dependencies',
     },
   },
-  
+
   // Web Application Health Checks
   web: {
     // Home page loads
@@ -80,7 +80,7 @@ export const HealthEndpoints = {
       interval: 60,
       description: 'Web application home page loads',
     },
-    
+
     // Login page accessible
     loginPage: {
       url: '/login',
@@ -100,7 +100,7 @@ export const HealthEndpoints = {
 export const UptimeRobotConfig = {
   // Account configuration (set via environment variables)
   apiKey: process.env.UPTIMEROBOT_API_KEY || '',
-  
+
   // Monitor configurations
   monitors: [
     {
@@ -139,7 +139,7 @@ export const UptimeRobotConfig = {
       alert_contacts: process.env.UPTIMEROBOT_ALERT_CONTACTS || '',
     },
   ],
-  
+
   // Status page configuration
   statusPage: {
     friendly_name: 'Quiz2Build Status',
@@ -173,20 +173,20 @@ export const AlertConfig = {
       serviceKey: process.env.PAGERDUTY_SERVICE_KEY || '',
     },
   },
-  
+
   // Alert thresholds
   thresholds: {
     // Consecutive failures before alerting
     consecutiveFailures: 2,
-    
+
     // Response time thresholds (ms)
     responseTimeWarning: 1000,
     responseTimeCritical: 3000,
-    
+
     // Recovery notification
     notifyOnRecovery: true,
   },
-  
+
   // Escalation policy
   escalation: {
     levels: [
@@ -245,7 +245,7 @@ export const IncidentConfig = {
       notifyChannels: ['email'],
     },
   },
-  
+
   // Auto-incident creation rules
   autoIncidentRules: [
     {
@@ -291,7 +291,7 @@ export const MonitoringMetrics = {
     weekly: true,
     monthly: true,
   },
-  
+
   // Response time metrics
   responseTime: {
     average: true,
@@ -300,7 +300,7 @@ export const MonitoringMetrics = {
     p99: true,
     max: true,
   },
-  
+
   // Availability metrics
   availability: {
     successRate: true,
@@ -330,9 +330,9 @@ export function isMaintenanceWindow(): boolean {
   const now = new Date();
   const dayName = now.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
   const hour = now.getUTCHours();
-  
+
   return SLAConfig.maintenanceWindows.some(
-    (window) => window.day === dayName && hour >= window.startHour && hour < window.endHour
+    (window) => window.day === dayName && hour >= window.startHour && hour < window.endHour,
   );
 }
 

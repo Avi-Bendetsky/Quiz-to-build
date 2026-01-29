@@ -237,7 +237,8 @@ export class HeatmapService {
     // Get questions for this cell
     const bucket = severityBucket as SeverityBucket;
     const dim = dimensions.find(
-      (d: { key: string; displayName: string }) => d.key.toLowerCase() === dimensionKey.toLowerCase(),
+      (d: { key: string; displayName: string }) =>
+        d.key.toLowerCase() === dimensionKey.toLowerCase(),
     );
 
     const cellQuestions = questions

@@ -261,9 +261,27 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
       },
       tags: ['questionnaire', 'ux', 'rollout'],
       environments: [
-        { key: 'development', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
-        { key: 'staging', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
-        { key: 'production', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
+        {
+          key: 'development',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
+        {
+          key: 'staging',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
+        {
+          key: 'production',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
       ],
       maintainer: 'product-team',
     },
@@ -291,14 +309,30 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
         fallthrough: { variation: 0 },
         offVariation: 0,
       },
-      prerequisites: [
-        { key: 'new-questionnaire-flow', variation: 1 },
-      ],
+      prerequisites: [{ key: 'new-questionnaire-flow', variation: 1 }],
       tags: ['ai', 'enterprise', 'feature'],
       environments: [
-        { key: 'development', on: true, archived: false, trackEvents: true, trackEventsFallthrough: false },
-        { key: 'staging', on: true, archived: false, trackEvents: true, trackEventsFallthrough: false },
-        { key: 'production', on: false, archived: false, trackEvents: true, trackEventsFallthrough: false },
+        {
+          key: 'development',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'staging',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'production',
+          on: false,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
       ],
       maintainer: 'ai-team',
     },
@@ -329,9 +363,27 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
       },
       tags: ['visualization', 'ab-test', 'ux'],
       environments: [
-        { key: 'development', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
-        { key: 'staging', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
-        { key: 'production', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
+        {
+          key: 'development',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
+        {
+          key: 'staging',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
+        {
+          key: 'production',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
       ],
       maintainer: 'frontend-team',
     },
@@ -366,9 +418,27 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
       },
       tags: ['pricing', 'ab-test', 'conversion'],
       environments: [
-        { key: 'development', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
-        { key: 'staging', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
-        { key: 'production', on: true, archived: false, trackEvents: true, trackEventsFallthrough: true },
+        {
+          key: 'development',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
+        {
+          key: 'staging',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
+        {
+          key: 'production',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: true,
+        },
       ],
       maintainer: 'growth-team',
     },
@@ -398,9 +468,27 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
       },
       tags: ['theme', 'ux', 'accessibility'],
       environments: [
-        { key: 'development', on: true, archived: false, trackEvents: false, trackEventsFallthrough: false },
-        { key: 'staging', on: true, archived: false, trackEvents: false, trackEventsFallthrough: false },
-        { key: 'production', on: false, archived: false, trackEvents: false, trackEventsFallthrough: false },
+        {
+          key: 'development',
+          on: true,
+          archived: false,
+          trackEvents: false,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'staging',
+          on: true,
+          archived: false,
+          trackEvents: false,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'production',
+          on: false,
+          archived: false,
+          trackEvents: false,
+          trackEventsFallthrough: false,
+        },
       ],
       maintainer: 'frontend-team',
     },
@@ -424,9 +512,27 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
       },
       tags: ['operational', 'kill-switch', 'emergency'],
       environments: [
-        { key: 'development', on: false, archived: false, trackEvents: true, trackEventsFallthrough: false },
-        { key: 'staging', on: false, archived: false, trackEvents: true, trackEventsFallthrough: false },
-        { key: 'production', on: false, archived: false, trackEvents: true, trackEventsFallthrough: false },
+        {
+          key: 'development',
+          on: false,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'staging',
+          on: false,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'production',
+          on: false,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
       ],
       maintainer: 'sre-team',
     },
@@ -458,9 +564,27 @@ export function getDefaultFeatureFlags(): FeatureFlagConfig[] {
       },
       tags: ['operational', 'rate-limiting', 'performance'],
       environments: [
-        { key: 'development', on: true, archived: false, trackEvents: false, trackEventsFallthrough: false },
-        { key: 'staging', on: true, archived: false, trackEvents: false, trackEventsFallthrough: false },
-        { key: 'production', on: true, archived: false, trackEvents: true, trackEventsFallthrough: false },
+        {
+          key: 'development',
+          on: true,
+          archived: false,
+          trackEvents: false,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'staging',
+          on: true,
+          archived: false,
+          trackEvents: false,
+          trackEventsFallthrough: false,
+        },
+        {
+          key: 'production',
+          on: true,
+          archived: false,
+          trackEvents: true,
+          trackEventsFallthrough: false,
+        },
       ],
       maintainer: 'platform-team',
     },
@@ -479,7 +603,8 @@ export function getDefaultABTests(): ABTestConfig[] {
     {
       key: 'questionnaire-cta-test',
       name: 'Questionnaire CTA Button Test',
-      hypothesis: 'Changing the CTA button text from "Continue" to "Save & Continue" will increase completion rate by 10%',
+      hypothesis:
+        'Changing the CTA button text from "Continue" to "Save & Continue" will increase completion rate by 10%',
       primaryMetric: 'questionnaire_completion_rate',
       secondaryMetrics: ['time_to_complete', 'abandonment_rate', 'return_visits'],
       variants: [
@@ -517,7 +642,11 @@ export function getDefaultABTests(): ABTestConfig[] {
       name: 'Onboarding Flow Optimization',
       hypothesis: 'A simplified 3-step onboarding flow will increase activation rate by 15%',
       primaryMetric: 'user_activation_rate',
-      secondaryMetrics: ['onboarding_completion_time', 'first_questionnaire_started', 'week1_retention'],
+      secondaryMetrics: [
+        'onboarding_completion_time',
+        'first_questionnaire_started',
+        'week1_retention',
+      ],
       variants: [
         {
           key: 'control',
@@ -694,7 +823,9 @@ export class FeatureFlagService {
 
   private matchesClause(clause: TargetingClause, context: FlagEvaluationContext): boolean {
     const attributeValue = this.getAttributeValue(context, clause.attribute);
-    if (attributeValue === undefined) return false;
+    if (attributeValue === undefined) {
+      return false;
+    }
 
     let matches = false;
     switch (clause.op) {
@@ -703,17 +834,17 @@ export class FeatureFlagService {
         break;
       case 'endsWith':
         matches = clause.values.some(
-          (v) => typeof attributeValue === 'string' && attributeValue.endsWith(String(v))
+          (v) => typeof attributeValue === 'string' && attributeValue.endsWith(String(v)),
         );
         break;
       case 'startsWith':
         matches = clause.values.some(
-          (v) => typeof attributeValue === 'string' && attributeValue.startsWith(String(v))
+          (v) => typeof attributeValue === 'string' && attributeValue.startsWith(String(v)),
         );
         break;
       case 'contains':
         matches = clause.values.some(
-          (v) => typeof attributeValue === 'string' && attributeValue.includes(String(v))
+          (v) => typeof attributeValue === 'string' && attributeValue.includes(String(v)),
         );
         break;
       default:
@@ -743,7 +874,7 @@ export class FeatureFlagService {
   private evaluateRollout(
     flag: FeatureFlagConfig,
     rollout: RolloutConfig,
-    context: FlagEvaluationContext
+    context: FlagEvaluationContext,
   ): unknown {
     const bucketKey = context.userId || context.email || 'anonymous';
     const bucket = this.hashString(`${flag.key}:${bucketKey}`) % 100000;

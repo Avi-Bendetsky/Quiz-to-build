@@ -1,6 +1,6 @@
 /**
  * Failure Injection Scenarios
- * 
+ *
  * Comprehensive chaos experiment definitions for testing system resilience
  * under various failure conditions.
  */
@@ -8,6 +8,7 @@
 import {
   ChaosExperimentConfig,
   ChaosMeshExperiment,
+  ChaosMeshKind,
   ExperimentResult,
 } from './chaos-engineering.config';
 
@@ -205,7 +206,8 @@ export function getDatabaseFailureScenarios(): FailureScenario[] {
         targetPercentage: 50,
       },
       expectedBehavior: {
-        description: 'Connection pool should automatically reconnect, transactions should be retried',
+        description:
+          'Connection pool should automatically reconnect, transactions should be retried',
         maxResponseTimeMs: 5000,
         maxErrorRate: 20,
         acceptableDataLoss: false,
@@ -636,9 +638,7 @@ export function getPodFailureScenarios(): FailureScenario[] {
         alertTriggered: true,
         logsGenerated: true,
       },
-      rollbackTriggers: [
-        { metric: 'oom_kills', threshold: 2, operator: 'gt', action: 'stop' },
-      ],
+      rollbackTriggers: [{ metric: 'oom_kills', threshold: 2, operator: 'gt', action: 'stop' }],
     },
 
     // Pod Startup Failure
@@ -804,9 +804,7 @@ export function getResourcePressureScenarios(): FailureScenario[] {
         alertTriggered: true,
         logsGenerated: true,
       },
-      rollbackTriggers: [
-        { metric: 'oom_imminent', threshold: 1, operator: 'eq', action: 'stop' },
-      ],
+      rollbackTriggers: [{ metric: 'oom_imminent', threshold: 1, operator: 'eq', action: 'stop' }],
     },
 
     // Disk Pressure 95%
@@ -885,8 +883,8 @@ export function generateChaosMeshExperiments(): ChaosMeshExperiment[] {
   }));
 }
 
-function mapToChaosMeshKind(injectionType: InjectionType): string {
-  const mapping: Record<InjectionType, string> = {
+function mapToChaosMeshKind(injectionType: InjectionType): ChaosMeshKind {
+  const mapping: Record<InjectionType, ChaosMeshKind> = {
     latency: 'NetworkChaos',
     timeout: 'NetworkChaos',
     'connection-failure': 'NetworkChaos',
@@ -978,7 +976,7 @@ export class FailureInjectionRunner {
         const metricValue = await this.getMetricValue(trigger.metric);
         if (this.evaluateTrigger(metricValue, trigger)) {
           execution.observations.push(
-            `Rollback trigger activated: ${trigger.metric} ${trigger.operator} ${trigger.threshold} (actual: ${metricValue})`
+            `Rollback trigger activated: ${trigger.metric} ${trigger.operator} ${trigger.threshold} (actual: ${metricValue})`,
           );
           return true;
         }
@@ -1037,7 +1035,7 @@ export class FailureInjectionRunner {
 
   private generateRecommendations(
     scenario: FailureScenario,
-    execution: ExperimentExecution
+    execution: ExperimentExecution,
   ): string[] {
     const recommendations: string[] = [];
 

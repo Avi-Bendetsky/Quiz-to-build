@@ -66,10 +66,10 @@ export class PolicyPackService {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
     });
-    const scoreAtGeneration = session?.readinessScore 
-      ? (typeof session.readinessScore === 'number' 
-          ? session.readinessScore 
-          : (session.readinessScore as any).toNumber?.() ?? Number(session.readinessScore))
+    const scoreAtGeneration = session?.readinessScore
+      ? typeof session.readinessScore === 'number'
+        ? session.readinessScore
+        : ((session.readinessScore as any).toNumber?.() ?? Number(session.readinessScore))
       : 0;
 
     const bundle: PolicyPackBundle = {

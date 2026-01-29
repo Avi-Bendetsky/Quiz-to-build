@@ -1,6 +1,10 @@
 // Initialize Application Insights FIRST (before any other imports)
 // This ensures proper instrumentation of all dependencies
-import { initializeAppInsights, shutdown as shutdownAppInsights, createRequestTrackingMiddleware } from './config/appinsights.config';
+import {
+  initializeAppInsights,
+  shutdown as shutdownAppInsights,
+  createRequestTrackingMiddleware,
+} from './config/appinsights.config';
 initializeAppInsights();
 
 import { NestFactory } from '@nestjs/core';
@@ -113,9 +117,9 @@ async function bootstrap(): Promise<void> {
 bootstrap().catch((error) => {
   const logger = new Logger('Bootstrap');
   logger.error('Failed to start application', error);
-  
+
   // Capture bootstrap errors in Sentry
   captureException(error, { context: 'bootstrap' });
-  
+
   process.exit(1);
 });

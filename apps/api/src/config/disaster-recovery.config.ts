@@ -1,6 +1,6 @@
 /**
  * Disaster Recovery Configuration
- * 
+ *
  * Defines disaster recovery procedures including:
  * - Backup/Restore procedures
  * - Point-in-time recovery
@@ -493,7 +493,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 4,
           name: 'Promote Secondary Database',
           description: 'Promote secondary database to primary',
-          command: 'az postgres flexible-server replica promote --resource-group quiz2biz-prod-rg --name quiz2biz-db-secondary',
+          command:
+            'az postgres flexible-server replica promote --resource-group quiz2biz-prod-rg --name quiz2biz-db-secondary',
           expectedDuration: 'PT10M',
           rollbackProcedure: 'Cannot rollback - must set up new replica',
           verification: 'Database accepting writes',
@@ -502,7 +503,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 5,
           name: 'Update DNS',
           description: 'Switch Traffic Manager to route to secondary',
-          command: 'az network traffic-manager endpoint update --name primary --profile-name quiz2biz-tm --type azureEndpoints --endpoint-status Disabled',
+          command:
+            'az network traffic-manager endpoint update --name primary --profile-name quiz2biz-tm --type azureEndpoints --endpoint-status Disabled',
           expectedDuration: 'PT5M',
           rollbackProcedure: 'Re-enable primary endpoint',
           verification: 'DNS resolving to secondary region',
@@ -554,7 +556,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 2,
           name: 'Stop Application',
           description: 'Stop application to prevent new data loss',
-          command: 'az containerapp revision deactivate --name quiz2biz-api --resource-group quiz2biz-prod-rg',
+          command:
+            'az containerapp revision deactivate --name quiz2biz-api --resource-group quiz2biz-prod-rg',
           expectedDuration: 'PT5M',
           rollbackProcedure: 'Reactivate revision',
           verification: 'Application stopped accepting traffic',
@@ -563,7 +566,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 3,
           name: 'Create PITR Restore',
           description: 'Initiate point-in-time restore',
-          command: 'az postgres flexible-server restore --resource-group quiz2biz-prod-rg --name quiz2biz-db-restored --source-server quiz2biz-db --restore-time ${TARGET_TIME}',
+          command:
+            'az postgres flexible-server restore --resource-group quiz2biz-prod-rg --name quiz2biz-db-restored --source-server quiz2biz-db --restore-time ${TARGET_TIME}',
           expectedDuration: 'PT30M',
           verification: 'Restore operation completed',
         },
@@ -571,7 +575,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 4,
           name: 'Verify Restored Data',
           description: 'Validate restored data integrity',
-          command: 'psql ${RESTORED_DB_URL} -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM sessions;"',
+          command:
+            'psql ${RESTORED_DB_URL} -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM sessions;"',
           expectedDuration: 'PT10M',
           verification: 'Data counts match expected values',
         },
@@ -579,7 +584,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 5,
           name: 'Switch Connection',
           description: 'Update application to use restored database',
-          command: 'az containerapp update --name quiz2biz-api --resource-group quiz2biz-prod-rg --set-env-vars DATABASE_URL=${RESTORED_DB_URL}',
+          command:
+            'az containerapp update --name quiz2biz-api --resource-group quiz2biz-prod-rg --set-env-vars DATABASE_URL=${RESTORED_DB_URL}',
           expectedDuration: 'PT5M',
           rollbackProcedure: 'Revert DATABASE_URL to original',
           verification: 'Application connected to restored database',
@@ -588,7 +594,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 6,
           name: 'Restart Application',
           description: 'Restart application and verify',
-          command: 'az containerapp revision activate --name quiz2biz-api --resource-group quiz2biz-prod-rg',
+          command:
+            'az containerapp revision activate --name quiz2biz-api --resource-group quiz2biz-prod-rg',
           expectedDuration: 'PT5M',
           verification: 'Application healthy and serving requests',
         },
@@ -623,7 +630,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 2,
           name: 'Restore Database',
           description: 'Restore database from latest backup',
-          command: 'az backup restore --vault-name quiz2biz-backup-vault --container-name quiz2biz-db --item-name quiz2biz-db --restore-mode OriginalLocation',
+          command:
+            'az backup restore --vault-name quiz2biz-backup-vault --container-name quiz2biz-db --item-name quiz2biz-db --restore-mode OriginalLocation',
           expectedDuration: 'PT60M',
           verification: 'Database restored and accessible',
         },
@@ -631,7 +639,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 3,
           name: 'Restore File Storage',
           description: 'Restore blob storage from backup',
-          command: 'azcopy copy "https://quiz2bizbackups.blob.core.windows.net/file-backups/*" "https://quiz2bizstorage.blob.core.windows.net/uploads/" --recursive',
+          command:
+            'azcopy copy "https://quiz2bizbackups.blob.core.windows.net/file-backups/*" "https://quiz2bizstorage.blob.core.windows.net/uploads/" --recursive',
           expectedDuration: 'PT30M',
           verification: 'Files restored and accessible',
         },
@@ -639,7 +648,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 4,
           name: 'Restore Configuration',
           description: 'Restore Key Vault secrets and app configuration',
-          command: 'az keyvault restore --vault-name quiz2biz-kv-dr --storage-account-name quiz2bizbackups --blob-container-name config-backups',
+          command:
+            'az keyvault restore --vault-name quiz2biz-kv-dr --storage-account-name quiz2bizbackups --blob-container-name config-backups',
           expectedDuration: 'PT15M',
           verification: 'Secrets and configuration restored',
         },
@@ -647,7 +657,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 5,
           name: 'Deploy Application',
           description: 'Deploy application containers to DR region',
-          command: 'az containerapp update --name quiz2biz-api --resource-group quiz2biz-dr-rg --image ${ACR_URL}/quiz2biz-api:latest',
+          command:
+            'az containerapp update --name quiz2biz-api --resource-group quiz2biz-dr-rg --image ${ACR_URL}/quiz2biz-api:latest',
           expectedDuration: 'PT15M',
           verification: 'Application deployed and starting',
         },
@@ -663,7 +674,8 @@ export function getDRProcedures(): DRProcedure[] {
           order: 7,
           name: 'Switch Traffic',
           description: 'Update DNS to point to DR environment',
-          command: 'az network traffic-manager endpoint update --profile-name quiz2biz-tm --name dr-endpoint --endpoint-status Enabled --priority 1',
+          command:
+            'az network traffic-manager endpoint update --profile-name quiz2biz-tm --name dr-endpoint --endpoint-status Enabled --priority 1',
           expectedDuration: 'PT10M',
           verification: 'Traffic routing to DR environment',
         },
@@ -747,7 +759,13 @@ export function getDRTestConfigurations(): DRTestConfig[] {
       scope: ['full-system-restore', 'region-failover', 'all-services'],
       frequency: 'annually',
       duration: '8h',
-      participants: ['SRE Team', 'Database Team', 'Development Team', 'Product Team', 'Executive Team'],
+      participants: [
+        'SRE Team',
+        'Database Team',
+        'Development Team',
+        'Product Team',
+        'Executive Team',
+      ],
       successCriteria: [
         { metric: 'RTO', target: 240, unit: 'minutes', critical: true },
         { metric: 'RPO', target: 15, unit: 'minutes', critical: true },
