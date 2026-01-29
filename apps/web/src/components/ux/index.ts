@@ -146,3 +146,120 @@ export {
   type FieldState,
   type FormFieldConfig,
 } from './BlurValidation';
+
+// ============================================================================
+// Sprint 33: UX Polish & Enhancements
+// ============================================================================
+
+// Upload Progress Indicators
+export {
+  useUploadProgress,
+  ProgressBar,
+  UploadItem,
+  UploadSummary,
+  UploadList,
+  formatSpeed,
+  formatETA,
+  type UploadFile,
+  type UploadProgressOptions,
+  type UseUploadProgressReturn,
+} from './UploadProgress';
+
+// Network Status Indicator
+export {
+  NetworkStatusProvider,
+  useNetworkStatus,
+  useTrackedFetch,
+  NetworkBanner,
+  NetworkIndicator,
+  PendingRequestsIndicator,
+  type NetworkStatus,
+  type NetworkConfig,
+} from './NetworkStatus';
+
+// Navigation Guards
+export {
+  NavigationGuardProvider,
+  useNavigationGuard,
+  useDirtyForm,
+  NavigationPrompt,
+  UnsavedChangesDialog,
+  GuardedLink,
+  GuardedForm,
+  type NavigationGuardConfig,
+  type UnsavedChangesDialogProps,
+} from './NavigationGuards';
+
+// File Type Preview & Validation
+export {
+  FILE_TYPES,
+  validateFile,
+  validateFiles,
+  useFilePreview,
+  FilePreviewItem,
+  FilePreviewGrid,
+  FileValidationStatus,
+  ValidatedDropzone,
+  type FileTypeConfig,
+  type FileValidationResult,
+  type ValidatedFile,
+} from './FileTypePreview';
+
+// Bulk File Operations
+export {
+  BulkFileProvider,
+  useBulkFiles,
+  SelectAllCheckbox,
+  BulkActionBar,
+  FileItem,
+  FileGrid,
+  MultiFileDropzone,
+  BulkFileManager,
+  type BulkFile,
+  type BulkOperationResult,
+  type BulkFileContextValue,
+} from './BulkFileOperations';
+
+// Design System Documentation
+export {
+  ThemeProvider,
+  useTheme,
+  DesignSystemViewer,
+  ColorSwatch,
+  ColorPaletteDisplay,
+  SpacingScale,
+  TypographyScale,
+  BorderRadiusScale,
+  ShadowScale,
+  Button,
+  ButtonShowcase,
+  Input,
+  InputShowcase,
+  Badge,
+  BadgeShowcase,
+  Card,
+  CardShowcase,
+  Alert,
+  AlertShowcase,
+  SPACING_SCALE,
+  COLOR_PALETTE,
+  TYPOGRAPHY,
+  BORDER_RADIUS,
+  SHADOWS,
+  BREAKPOINTS,
+  TRANSITIONS,
+  Z_INDEX,
+} from './DesignSystem';
+
+// Nielsen Score Verification
+export {
+  NielsenScoreViewer,
+  calculateNielsenScore,
+  ScoreBadge,
+  StatusBadge,
+  HeuristicCard,
+  NIELSEN_HEURISTICS,
+  type NielsenHeuristic,
+  type HeuristicCheck,
+  type NielsenScoreResult,
+} from './NielsenScore';
