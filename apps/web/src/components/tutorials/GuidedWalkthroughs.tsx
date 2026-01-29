@@ -148,7 +148,7 @@ export interface ABMetric {
   name: string;
   type: 'conversion' | 'engagement' | 'retention' | 'revenue';
   definition: string;
-  isP primary: boolean;
+  isPrimary: boolean;
 }
 
 export interface ABResult {
