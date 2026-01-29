@@ -549,7 +549,7 @@ export async function seedBusinessIncubator() {
                 },
                 {
                   text: 'What geographic regions are you targeting?',
-                  type: QuestionType.MULTI_CHOICE,
+                  type: QuestionType.MULTIPLE_CHOICE,
                   isRequired: true,
                   orderIndex: 3,
                   options: [
