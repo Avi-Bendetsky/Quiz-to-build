@@ -30,8 +30,61 @@ async function bootstrap(): Promise<void> {
   const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
-  // Security middleware
-  app.use(helmet());
+  // Security middleware with CSP configuration for React SPA
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            // Allow scripts from same origin and inline scripts for React
+            nodeEnv === 'development' ? "'unsafe-inline'" : "'self'",
+            // Google Analytics, Stripe, etc.
+            'https://www.googletagmanager.com',
+            'https://www.google-analytics.com',
+            'https://js.stripe.com',
+          ].filter(Boolean),
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'", // Required for React styled-components/emotion
+            'https://fonts.googleapis.com',
+          ],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://www.googletagmanager.com',
+            'https://www.google-analytics.com',
+            'https://*.stripe.com',
+          ],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+          connectSrc: [
+            "'self'",
+            'https://www.google-analytics.com',
+            'https://api.stripe.com',
+            'https://dc.services.visualstudio.com', // Application Insights
+            'wss:', // WebSocket for real-time features
+          ],
+          frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
+          upgradeInsecureRequests: nodeEnv === 'production' ? [] : null,
+        },
+      },
+      // HSTS for production
+      strictTransportSecurity:
+        nodeEnv === 'production'
+          ? {
+              maxAge: 31536000, // 1 year
+              includeSubDomains: true,
+              preload: true,
+            }
+          : false,
+    }),
+  );
 
   // Application Insights request tracking
   app.use(createRequestTrackingMiddleware());

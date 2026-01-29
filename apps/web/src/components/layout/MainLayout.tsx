@@ -35,6 +35,14 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Skip link for keyboard accessibility (WCAG 2.4.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[9999] focus:top-1 focus:left-1 focus:px-6 focus:py-3 focus:bg-blue-700 focus:text-white focus:rounded-md focus:font-semibold focus:shadow-lg focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -116,7 +124,7 @@ export function MainLayout() {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">
+        <main id="main-content" className="p-4 lg:p-6" tabIndex={-1}>
           <Outlet />
         </main>
       </div>

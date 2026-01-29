@@ -91,10 +91,14 @@ export function RegisterPage() {
             type="text"
             id="name"
             autoComplete="name"
+            required
+            aria-required="true"
+            aria-invalid={errors.name ? 'true' : 'false'}
+            aria-describedby={errors.name ? 'name-error' : undefined}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder="John Doe"
           />
-          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+          {errors.name && <p id="name-error" className="mt-1 text-sm text-red-600" role="alert">{errors.name.message}</p>}
         </div>
 
         <div>
@@ -106,10 +110,14 @@ export function RegisterPage() {
             type="email"
             id="email"
             autoComplete="email"
+            required
+            aria-required="true"
+            aria-invalid={errors.email ? 'true' : 'false'}
+            aria-describedby={errors.email ? 'email-error' : undefined}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder="you@example.com"
           />
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">{errors.email.message}</p>}
         </div>
 
         <div>
@@ -122,6 +130,10 @@ export function RegisterPage() {
               type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="new-password"
+              required
+              aria-required="true"
+              aria-invalid={errors.password ? 'true' : 'false'}
+              aria-describedby="password-requirements"
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
               placeholder="Create a strong password"
             />
@@ -129,6 +141,7 @@ export function RegisterPage() {
               type="button"
               className="absolute inset-y-0 right-0 flex items-center pr-3"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4 text-gray-400" />
@@ -138,7 +151,7 @@ export function RegisterPage() {
             </button>
           </div>
           {password && (
-            <div className="mt-2 space-y-1">
+            <div id="password-requirements" className="mt-2 space-y-1" aria-label="Password requirements">
               {passwordRequirements.map((req) => (
                 <div
                   key={req.label}
@@ -155,7 +168,7 @@ export function RegisterPage() {
             </div>
           )}
           {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">{errors.password.message}</p>
           )}
         </div>
 
@@ -168,18 +181,22 @@ export function RegisterPage() {
             type="password"
             id="confirmPassword"
             autoComplete="new-password"
+            required
+            aria-required="true"
+            aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+            aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder="Confirm your password"
           />
           {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+            <p id="confirmPassword-error" className="mt-1 text-sm text-red-600" role="alert">{errors.confirmPassword.message}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

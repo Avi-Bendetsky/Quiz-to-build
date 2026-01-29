@@ -93,8 +93,13 @@ export class AuthService {
 
     this.logger.log(`User registered: ${user.id}`);
 
-    // Generate and send verification email
-    await this.sendVerificationEmail(user.id, user.email, dto.name);
+    // Generate and send verification email (non-blocking - user can request new email later)
+    try {
+      await this.sendVerificationEmail(user.id, user.email, dto.name);
+    } catch (error) {
+      this.logger.error(`Failed to send verification email for user ${user.id}:`, error);
+      // Don't throw - registration succeeded, user can request new verification email
+    }
 
     // Generate tokens
     return this.generateTokens(user);
