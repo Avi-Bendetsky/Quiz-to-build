@@ -13,7 +13,8 @@ COPY libs/database/package*.json ./libs/database/
 COPY libs/redis/package*.json ./libs/redis/
 COPY libs/shared/package*.json ./libs/shared/
 
-RUN npm ci
+COPY package-lock.json ./
+RUN npm ci || npm install
 
 # Copy source files
 COPY . .
@@ -21,8 +22,8 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
-RUN npm run build
+# Build the application (API and dependencies only, exclude CLI and web)
+RUN npx turbo run build --filter=api --filter=database --filter=redis --filter=shared
 
 # Development stage
 FROM node:20-alpine AS development
@@ -39,7 +40,8 @@ COPY libs/database/package*.json ./libs/database/
 COPY libs/redis/package*.json ./libs/redis/
 COPY libs/shared/package*.json ./libs/shared/
 
-RUN npm ci
+COPY package-lock.json ./
+RUN npm ci || npm install
 
 # Copy source files
 COPY . .
@@ -66,7 +68,7 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
 # Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
