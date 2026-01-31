@@ -2,11 +2,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
 import { StandardCategory } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const StandardCategoryValues = Object.values(StandardCategory);
+
 export class StandardResponseDto {
   @ApiProperty({ description: 'Standard ID' })
   id: string;
 
-  @ApiProperty({ enum: StandardCategory, description: 'Standard category' })
+  @ApiProperty({ enum: StandardCategoryValues, enumName: 'StandardCategory', description: 'Standard category' })
   category: StandardCategory;
 
   @ApiProperty({ description: 'Standard title' })
@@ -30,7 +33,7 @@ export class StandardResponseDto {
 }
 
 export class StandardCategoryParamDto {
-  @ApiProperty({ enum: StandardCategory, description: 'Standard category' })
+  @ApiProperty({ enum: StandardCategoryValues, enumName: 'StandardCategory', description: 'Standard category' })
   @IsEnum(StandardCategory)
   category: StandardCategory;
 }

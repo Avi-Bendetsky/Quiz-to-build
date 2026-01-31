@@ -11,6 +11,9 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { VisibilityAction } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const VisibilityActionValues = Object.values(VisibilityAction);
+
 export class CreateVisibilityRuleDto {
   @ApiProperty({
     example: {
@@ -24,7 +27,7 @@ export class CreateVisibilityRuleDto {
   @IsObject()
   condition: Record<string, unknown>;
 
-  @ApiProperty({ enum: VisibilityAction, example: VisibilityAction.SHOW })
+  @ApiProperty({ enum: VisibilityActionValues, enumName: 'VisibilityAction', example: 'SHOW' })
   @IsEnum(VisibilityAction)
   action: VisibilityAction;
 

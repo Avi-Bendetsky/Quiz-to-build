@@ -2,6 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsUUID, IsEnum, IsOptional, IsString, MaxLength, IsBoolean } from 'class-validator';
 import { EvidenceType } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const EvidenceTypeValues = Object.values(EvidenceType);
+
 /**
  * DTO for uploading evidence
  */
@@ -15,7 +18,8 @@ export class UploadEvidenceDto {
   questionId: string;
 
   @ApiProperty({
-    enum: EvidenceType,
+    enum: EvidenceTypeValues,
+    enumName: 'EvidenceType',
     description: 'Type of evidence artifact',
   })
   @IsEnum(EvidenceType)
@@ -65,7 +69,7 @@ export class EvidenceItemResponse {
   @ApiProperty({ description: 'Storage URL' })
   artifactUrl: string;
 
-  @ApiProperty({ enum: EvidenceType })
+  @ApiProperty({ enum: EvidenceTypeValues, enumName: 'EvidenceType' })
   artifactType: EvidenceType;
 
   @ApiProperty({ description: 'Original file name' })
@@ -107,7 +111,7 @@ export class ListEvidenceDto {
   @IsUUID()
   questionId?: string;
 
-  @ApiPropertyOptional({ enum: EvidenceType, description: 'Filter by artifact type' })
+  @ApiPropertyOptional({ enum: EvidenceTypeValues, description: 'Filter by artifact type' })
   @IsOptional()
   @IsEnum(EvidenceType)
   artifactType?: EvidenceType;

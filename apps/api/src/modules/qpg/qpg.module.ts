@@ -22,6 +22,6 @@ import { PrismaModule } from '@libs/database';
   imports: [PrismaModule],
   controllers: [QpgController],
   providers: [QpgService, PromptTemplateService, ContextBuilderService, PromptGeneratorService],
-  exports: [QpgService],
+  exports: [QpgService, ContextBuilderService],
 })
 export class QpgModule {}

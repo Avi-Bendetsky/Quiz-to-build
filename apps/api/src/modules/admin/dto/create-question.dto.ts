@@ -12,6 +12,9 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const QuestionTypeValues = Object.values(QuestionType);
+
 export class QuestionOptionDto {
   @ApiProperty({ example: 'option_1' })
   @IsString()
@@ -33,7 +36,7 @@ export class CreateQuestionDto {
   @MaxLength(1000)
   text: string;
 
-  @ApiProperty({ enum: QuestionType, example: QuestionType.TEXT })
+  @ApiProperty({ enum: QuestionTypeValues, enumName: 'QuestionType', example: 'TEXT' })
   @IsEnum(QuestionType)
   type: QuestionType;
 

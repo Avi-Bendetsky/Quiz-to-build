@@ -2,6 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsUUID, IsString, IsOptional, IsEnum, MaxLength } from 'class-validator';
 import { DecisionStatus } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const DecisionStatusValues = Object.values(DecisionStatus);
+
 /**
  * DTO for creating a new decision
  */
@@ -86,7 +89,7 @@ export class ListDecisionsDto {
   ownerId?: string;
 
   @ApiPropertyOptional({
-    enum: DecisionStatus,
+    enum: DecisionStatusValues,
     description: 'Filter by status',
   })
   @IsOptional()
@@ -116,7 +119,7 @@ export class DecisionResponse {
   @ApiProperty({ description: 'Owner user ID' })
   ownerId: string;
 
-  @ApiProperty({ enum: DecisionStatus })
+  @ApiProperty({ enum: DecisionStatusValues, enumName: 'DecisionStatus' })
   status: DecisionStatus;
 
   @ApiPropertyOptional({ description: 'ID of decision this supersedes' })

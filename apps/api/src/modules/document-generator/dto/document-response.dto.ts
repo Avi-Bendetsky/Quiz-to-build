@@ -1,6 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DocumentStatus, DocumentCategory } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const DocumentCategoryValues = Object.values(DocumentCategory);
+const DocumentStatusValues = Object.values(DocumentStatus);
+
 export class DocumentTypeResponseDto {
   @ApiProperty()
   id: string;
@@ -14,7 +18,7 @@ export class DocumentTypeResponseDto {
   @ApiPropertyOptional()
   description?: string;
 
-  @ApiProperty({ enum: DocumentCategory })
+  @ApiProperty({ enum: DocumentCategoryValues, enumName: 'DocumentCategory' })
   category: DocumentCategory;
 
   @ApiPropertyOptional()
@@ -34,7 +38,7 @@ export class DocumentResponseDto {
   @ApiProperty()
   documentTypeId: string;
 
-  @ApiProperty({ enum: DocumentStatus })
+  @ApiProperty({ enum: DocumentStatusValues, enumName: 'DocumentStatus' })
   status: DocumentStatus;
 
   @ApiProperty()

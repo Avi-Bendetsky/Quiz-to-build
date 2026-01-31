@@ -11,6 +11,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
+
+// Extract enum values for Swagger schema generation
+const SessionStatusValues = Object.values(SessionStatus);
 import {
   SessionService,
   SessionResponse,
@@ -45,17 +48,17 @@ export class SessionController {
 
   @Get()
   @ApiOperation({ summary: "List user's sessions" })
-  @ApiQuery({ name: 'status', enum: SessionStatus, required: false })
+  @ApiQuery({ name: 'status', enum: SessionStatusValues, required: false })
   @ApiResponse({ status: 200, description: 'List of sessions' })
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query() pagination: PaginationDto,
-    @Query('status') status?: SessionStatus,
+    @Query('status') status?: string,
   ): Promise<{
     items: SessionResponse[];
     pagination: { page: number; limit: number; totalItems: number; totalPages: number };
   }> {
-    const { items, total } = await this.sessionService.findAllByUser(user.id, pagination, status);
+    const { items, total } = await this.sessionService.findAllByUser(user.id, pagination, status as SessionStatus);
     return {
       items,
       pagination: {

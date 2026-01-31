@@ -11,6 +11,9 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DocumentCategory } from '@prisma/client';
 
+// Extract enum values for Swagger schema generation
+const DocumentCategoryValues = Object.values(DocumentCategory);
+
 export class CreateDocumentTypeDto {
   @ApiProperty({ example: 'Business Plan', maxLength: 200 })
   @IsString()
@@ -27,7 +30,7 @@ export class CreateDocumentTypeDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ enum: DocumentCategory, example: DocumentCategory.CFO })
+  @ApiProperty({ enum: DocumentCategoryValues, enumName: 'DocumentCategory', example: 'CFO' })
   @IsEnum(DocumentCategory)
   category: DocumentCategory;
 

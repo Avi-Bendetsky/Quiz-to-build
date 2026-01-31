@@ -10,6 +10,9 @@ import { CurrentUser } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../auth/auth.service';
 import { PaginationDto } from '@libs/shared';
 
+// Extract enum values for Swagger schema generation
+const UserRoleValues = Object.values(UserRole);
+
 @ApiTags('users')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -38,16 +41,16 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'List all users (Admin only)' })
-  @ApiQuery({ name: 'role', enum: UserRole, required: false })
+  @ApiQuery({ name: 'role', enum: UserRoleValues, required: false })
   @ApiResponse({ status: 200, description: 'List of users' })
   async findAll(
     @Query() pagination: PaginationDto,
-    @Query('role') role?: UserRole,
+    @Query('role') role?: string,
   ): Promise<{
     items: UserProfile[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    const { items, total } = await this.usersService.findAll(pagination, role);
+    const { items, total } = await this.usersService.findAll(pagination, role as UserRole);
     return {
       items,
       pagination: {

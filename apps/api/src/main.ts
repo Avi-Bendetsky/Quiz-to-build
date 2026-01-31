@@ -272,6 +272,7 @@ For API issues, contact: support@quiz2biz.com`,
 bootstrap().catch((error) => {
   const logger = new Logger('Bootstrap');
   logger.error('Failed to start application', error);
+  console.error('Full stack trace:', error.stack);
 
   // Capture bootstrap errors in Sentry
   captureException(error, { context: 'bootstrap' });

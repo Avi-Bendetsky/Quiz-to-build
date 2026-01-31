@@ -1,6 +1,9 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StandardCategory } from '@prisma/client';
+
+// Extract enum values for Swagger schema generation
+const StandardCategoryValues = Object.values(StandardCategory);
 import { StandardsService } from './standards.service';
 import {
   StandardResponseDto,
@@ -31,7 +34,7 @@ export class StandardsController {
   @ApiOperation({ summary: 'Get standard by category' })
   @ApiParam({
     name: 'category',
-    enum: StandardCategory,
+    enum: StandardCategoryValues,
     description: 'Standard category',
   })
   @ApiResponse({
@@ -41,9 +44,9 @@ export class StandardsController {
   })
   @ApiResponse({ status: 404, description: 'Standard category not found' })
   async findByCategory(
-    @Param('category') category: StandardCategory,
+    @Param('category') category: string,
   ): Promise<StandardWithMappingsDto> {
-    return this.standardsService.findWithMappings(category);
+    return this.standardsService.findWithMappings(category as StandardCategory);
   }
 
   @Get('document/:documentTypeId')

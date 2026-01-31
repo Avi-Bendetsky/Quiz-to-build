@@ -5,7 +5,7 @@
  * Creates Policy → Standard → Procedure hierarchy aligned with
  * ISO 27001, NIST CSF, and OWASP ASVS frameworks.
  */
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PolicyPackController } from './policy-pack.controller';
 import { PolicyPackService } from './policy-pack.service';
 import { PolicyGeneratorService } from './services/policy-generator.service';
@@ -14,9 +14,10 @@ import { OpaPolicyService } from './services/opa-policy.service';
 import { TerraformRulesService } from './services/terraform-rules.service';
 import { PolicyExportService } from './services/policy-export.service';
 import { PrismaModule } from '@libs/database';
+import { QpgModule } from '../qpg/qpg.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, forwardRef(() => QpgModule)],
   controllers: [PolicyPackController],
   providers: [
     PolicyPackService,
