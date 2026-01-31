@@ -13,7 +13,7 @@ import { StandardsModule } from './modules/standards/standards.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { DocumentGeneratorModule } from './modules/document-generator/document-generator.module';
 import { ScoringEngineModule } from './modules/scoring-engine/scoring-engine.module';
-import { EvidenceRegistryModule } from './modules/evidence-registry/evidence-registry.module';
+// import { EvidenceRegistryModule } from './modules/evidence-registry/evidence-registry.module';
 import { DecisionLogModule } from './modules/decision-log/decision-log.module';
 import { HeatmapModule } from './modules/heatmap/heatmap.module';
 import { NotificationModule } from './modules/notifications/notification.module';
@@ -68,7 +68,7 @@ import configuration from './config/configuration';
     AdminModule,
     DocumentGeneratorModule,
     ScoringEngineModule,
-    EvidenceRegistryModule,
+    // EvidenceRegistryModule,
     DecisionLogModule,
     HeatmapModule,
     NotificationModule,
