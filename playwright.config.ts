@@ -101,13 +101,13 @@ export default defineConfig({
   // Web server configuration (starts the app before tests)
   webServer: [
     {
-      command: 'npm run dev:web',
+      command: 'cd apps/web && npm run dev',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
     },
     {
-      command: 'npm run dev:api',
+      command: 'cd apps/api && npm run start:dev',
       url: 'http://localhost:3000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
