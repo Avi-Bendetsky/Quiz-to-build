@@ -14,6 +14,12 @@ interface HealthResponse {
   environment: string;
   version: string;
   checks: DependencyCheck[];
+  memory?: {
+    heapUsed: number;
+    heapTotal: number;
+    external: number;
+    rss: number;
+  };
 }
 
 interface DependencyCheck {
@@ -97,6 +103,7 @@ export class HealthController {
     const diskCheck = this.checkDisk();
     checks.push(diskCheck);
 
+    const memUsage = process.memoryUsage();
     const response: HealthResponse = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
@@ -104,6 +111,12 @@ export class HealthController {
       environment: process.env.NODE_ENV || 'development',
       version: process.env.APP_VERSION || '1.0.0',
       checks,
+      memory: {
+        heapUsed: memUsage.heapUsed,
+        heapTotal: memUsage.heapTotal,
+        external: memUsage.external,
+        rss: memUsage.rss,
+      },
     };
 
     // Return 503 if unhealthy

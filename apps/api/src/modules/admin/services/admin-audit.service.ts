@@ -7,7 +7,7 @@ export interface AuditLogParams {
   action: string;
   resourceType: 'Questionnaire' | 'Section' | 'Question' | 'VisibilityRule';
   resourceId: string;
-  changes?: { before: unknown; after: unknown };
+  changes?: { before?: unknown; after?: unknown };
   request?: Request;
 }
 
