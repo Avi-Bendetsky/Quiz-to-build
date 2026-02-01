@@ -5,7 +5,7 @@
 
 param(
     [string]$ResourceGroup = "rg-questionnaire-dev",
-    [string]$Location = "eastus",
+    [string]$Location = "eastus2",
     [string]$Environment = "dev"
 )
 
@@ -165,21 +165,64 @@ if (-not $envExists) {
     Write-Success "Container Apps Environment already exists"
 }
 
-# Step 8: Generate secrets
-Write-Info "`nStep 8: Generating application secrets..."
+# Step 8: Deploy Azure Redis Cache
+Write-Info "`nStep 8: Deploying Azure Redis Cache..."
+$REDIS_NAME = "redis-$PROJECT_NAME-$Environment"
+$redisExists = az redis show --name $REDIS_NAME --resource-group $ResourceGroup 2>$null
+if (-not $redisExists) {
+    Write-Info "Creating Azure Redis Cache (this takes 15-20 minutes)..."
+    
+    az redis create `
+        --name $REDIS_NAME `
+        --resource-group $ResourceGroup `
+        --location $Location `
+        --sku Basic `
+        --vm-size c0 `
+        --enable-non-ssl-port false `
+        --minimum-tls-version 1.2 `
+        --output none
+    
+    # Wait for Redis to be ready
+    Write-Info "Waiting for Redis Cache to be provisioned..."
+    $maxAttempts = 60
+    $attempt = 0
+    do {
+        Start-Sleep -Seconds 30
+        $attempt++
+        $redisState = az redis show --name $REDIS_NAME --resource-group $ResourceGroup --query provisioningState -o tsv 2>$null
+        Write-Info "  Attempt $attempt/$maxAttempts - State: $redisState"
+    } while ($redisState -ne "Succeeded" -and $attempt -lt $maxAttempts)
+    
+    if ($redisState -eq "Succeeded") {
+        Write-Success "Azure Redis Cache created"
+    } else {
+        Write-Error "Redis Cache provisioning timed out. Please check Azure portal."
+        exit 1
+    }
+} else {
+    Write-Success "Azure Redis Cache already exists"
+}
+
+# Step 9: Generate secrets
+Write-Info "`nStep 9: Generating application secrets..."
 $JWT_SECRET = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 64 | ForEach-Object {[char]$_})
 $JWT_REFRESH_SECRET = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 64 | ForEach-Object {[char]$_})
 
-# Step 9: Get Redis connection info
-Write-Info "`nStep 9: Getting Redis connection information..."
-$REDIS_HOST = az redis show --name "redis-$PROJECT_NAME-$Environment" --resource-group $ResourceGroup --query hostName -o tsv
-$REDIS_PASSWORD = az redis list-keys --name "redis-$PROJECT_NAME-$Environment" --resource-group $ResourceGroup --query primaryKey -o tsv
+# Step 10: Get Redis connection info
+Write-Info "`nStep 10: Getting Redis connection information..."
+$REDIS_HOST = az redis show --name $REDIS_NAME --resource-group $ResourceGroup --query hostName -o tsv
+$REDIS_PASSWORD = az redis list-keys --name $REDIS_NAME --resource-group $ResourceGroup --query primaryKey -o tsv
 
-# Step 10: Build DATABASE_URL
+if (-not $REDIS_PASSWORD) {
+    Write-Error "Failed to retrieve Redis password. Check if Redis is fully provisioned."
+    exit 1
+}
+
+# Step 11: Build DATABASE_URL
 $DATABASE_URL = "postgresql://${DB_ADMIN_USER}:${DB_ADMIN_PASSWORD}@${DB_NAME}.postgres.database.azure.com:5432/${PROJECT_NAME}?sslmode=require"
 
-# Step 11: Deploy Container App
-Write-Info "`nStep 10: Deploying Container App..."
+# Step 12: Deploy Container App
+Write-Info "`nStep 12: Deploying Container App..."
 $appExists = az containerapp show --name $CONTAINER_APP_NAME --resource-group $ResourceGroup 2>$null
 if (-not $appExists) {
     Write-Info "Creating Container App..."
@@ -233,8 +276,8 @@ if (-not $appExists) {
     Write-Success "Container App updated"
 }
 
-# Step 11: Run database migrations
-Write-Info "`nStep 11: Running database migrations..."
+# Step 13: Run database migrations
+Write-Info "`nStep 13: Running database migrations..."
 Start-Sleep -Seconds 30
 
 az containerapp exec `
@@ -248,8 +291,8 @@ if ($LASTEXITCODE -eq 0) {
     Write-Warning "Could not run migrations automatically. Run manually after deployment."
 }
 
-# Step 12: Get application URL
-Write-Info "`nStep 12: Getting application URL..."
+# Step 14: Get application URL
+Write-Info "`nStep 14: Getting application URL..."
 $APP_URL = az containerapp show `
     --name $CONTAINER_APP_NAME `
     --resource-group $ResourceGroup `
