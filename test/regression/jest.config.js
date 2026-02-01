@@ -15,7 +15,7 @@ module.exports = {
   testMatch: ['<rootDir>/test/regression/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   transform: {
-    '^.+\\.(t|j)sx?$': ['@swc/jest'],
+    '^.+\\.(t|j)s$': 'ts-jest',
   },
   setupFilesAfterEnv: ['<rootDir>/test/regression/setup.ts'],
   
@@ -26,21 +26,7 @@ module.exports = {
   verbose: true,
   
   // Reporters for CI/CD integration
-  reporters: [
-    'default',
-    [
-      'jest-junit',
-      {
-        outputDirectory: '<rootDir>/test/regression',
-        outputName: 'regression-results.xml',
-        ancestorSeparator: ' › ',
-        uniqueOutputName: 'false',
-        suiteNameTemplate: '{title}',
-        classNameTemplate: '{classname}',
-        titleTemplate: '{title}',
-      },
-    ],
-  ],
+  reporters: ['default'],
   
   // Module resolution
   moduleNameMapper: {
