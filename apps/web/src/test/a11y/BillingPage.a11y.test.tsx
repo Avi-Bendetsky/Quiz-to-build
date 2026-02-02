@@ -38,15 +38,7 @@ interface UsageStats {
 }
 
 // Accessible mock UsageBar component
-function MockUsageBar({
-  used,
-  limit,
-  label,
-}: {
-  used: number;
-  limit: number;
-  label: string;
-}) {
+function MockUsageBar({ used, limit, label }: { used: number; limit: number; label: string }) {
   const percentage = limit === -1 ? 0 : Math.min((used / limit) * 100, 100);
   const isUnlimited = limit === -1;
   const isNearLimit = !isUnlimited && percentage >= 80;
@@ -103,10 +95,7 @@ function MockSubscriptionCard({
   };
 
   return (
-    <article
-      className="bg-white rounded-lg shadow-md p-6"
-      aria-labelledby="subscription-heading"
-    >
+    <article className="bg-white rounded-lg shadow-md p-6" aria-labelledby="subscription-heading">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 id="subscription-heading" className="text-xl font-semibold text-gray-900">
@@ -154,10 +143,7 @@ function MockSubscriptionCard({
       </dl>
 
       {subscription.cancelAtPeriodEnd && (
-        <div
-          role="alert"
-          className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6"
-        >
+        <div role="alert" className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <p className="text-yellow-800 text-sm">
             Your subscription will be canceled at the end of the billing period.
             <button
@@ -211,10 +197,7 @@ function MockSubscriptionCard({
 // Accessible mock UsageCard component
 function MockUsageCard({ usage }: { usage: UsageStats }) {
   return (
-    <article
-      className="bg-white rounded-lg shadow-md p-6"
-      aria-labelledby="usage-heading"
-    >
+    <article className="bg-white rounded-lg shadow-md p-6" aria-labelledby="usage-heading">
       <div className="mb-6">
         <h2 id="usage-heading" className="text-xl font-semibold text-gray-900">
           Usage
@@ -231,10 +214,18 @@ function MockUsageCard({ usage }: { usage: UsageStats }) {
           />
         </div>
         <div role="listitem">
-          <MockUsageBar used={usage.responses.used} limit={usage.responses.limit} label="Responses" />
+          <MockUsageBar
+            used={usage.responses.used}
+            limit={usage.responses.limit}
+            label="Responses"
+          />
         </div>
         <div role="listitem">
-          <MockUsageBar used={usage.documents.used} limit={usage.documents.limit} label="Documents" />
+          <MockUsageBar
+            used={usage.documents.used}
+            limit={usage.documents.limit}
+            label="Documents"
+          />
         </div>
         <div role="listitem">
           <MockUsageBar used={usage.apiCalls.used} limit={usage.apiCalls.limit} label="API Calls" />
@@ -264,7 +255,10 @@ function MockBillingPage({
         aria-label="Loading billing information"
         aria-busy="true"
       >
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" aria-hidden="true" />
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+          aria-hidden="true"
+        />
         <span className="sr-only">Loading billing information...</span>
       </div>
     );
@@ -328,7 +322,7 @@ describe('BillingPage Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -338,7 +332,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const h1 = screen.getByRole('heading', { level: 1 });
@@ -353,7 +347,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const main = screen.getByRole('main');
@@ -364,7 +358,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const articles = screen.getAllByRole('article');
@@ -377,7 +371,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const subscriptionCard = screen.getByRole('article', { name: /current plan/i });
@@ -388,7 +382,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const tierBadge = screen.getByLabelText(/current tier.*professional/i);
@@ -399,7 +393,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const terms = screen.getAllByRole('term');
@@ -413,7 +407,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const timeElement = screen.getByRole('time');
@@ -424,7 +418,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const actionGroup = screen.getByRole('group', { name: /subscription actions/i });
@@ -435,7 +429,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const cancelWarning = document.getElementById('cancel-warning');
@@ -453,7 +447,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={canceledSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const alert = screen.getByRole('alert');
@@ -465,7 +459,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={canceledSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const resumeButton = screen.getByRole('button', { name: /resume subscription/i });
@@ -478,7 +472,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const usageCard = screen.getByRole('article', { name: /usage/i });
@@ -489,7 +483,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const progressBars = screen.getAllByRole('progressbar');
@@ -507,7 +501,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const usageList = screen.getByRole('list', { name: /usage metrics/i });
@@ -528,7 +522,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={highUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       expect(screen.getByText(/approaching limit/i)).toBeInTheDocument();
@@ -547,7 +541,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={unlimitedUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const unlimitedTexts = screen.getAllByText(/unlimited/i);
@@ -560,7 +554,7 @@ describe('BillingPage Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockBillingPage isLoading={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -570,7 +564,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage isLoading={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const loadingStatus = screen.getByRole('status');
@@ -582,7 +576,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage isLoading={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       expect(screen.getByText(/loading billing information/i)).toBeInTheDocument();
@@ -594,7 +588,7 @@ describe('BillingPage Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockBillingPage error="Please try again later" />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -604,7 +598,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage error="Please try again later" />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const alert = screen.getByRole('alert');
@@ -615,7 +609,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage error="Please try again later" />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const errorHeading = screen.getByRole('heading', { name: /failed to load billing/i });
@@ -628,7 +622,7 @@ describe('BillingPage Accessibility', () => {
       render(
         <BrowserRouter>
           <MockBillingPage subscription={mockSubscription} usage={mockUsage} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const nav = screen.getByRole('navigation', { name: /billing navigation/i });

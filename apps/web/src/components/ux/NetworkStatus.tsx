@@ -1,11 +1,11 @@
 /**
  * Network Status Indicator Component
- * 
+ *
  * Shows global network status:
  * - Offline/Slow/Online indicators
  * - Pending API calls count
  * - Connection quality visualization
- * 
+ *
  * Nielsen Heuristic #1: Visibility of System Status
  */
 
@@ -65,11 +65,14 @@ export const useNetworkStatus = () => {
 // ============================================================================
 
 function getNetworkInfo(): Partial<NetworkInfo> {
-  if (typeof navigator === 'undefined') return {};
-  
-  const connection = (navigator as any).connection || 
-                     (navigator as any).mozConnection || 
-                     (navigator as any).webkitConnection;
+  if (typeof navigator === 'undefined') {
+    return {};
+  }
+
+  const connection =
+    (navigator as any).connection ||
+    (navigator as any).mozConnection ||
+    (navigator as any).webkitConnection;
 
   if (connection) {
     return {
@@ -84,8 +87,10 @@ function getNetworkInfo(): Partial<NetworkInfo> {
 }
 
 function determineStatus(online: boolean, networkInfo: Partial<NetworkInfo>): NetworkStatus {
-  if (!online) return 'offline';
-  
+  if (!online) {
+    return 'offline';
+  }
+
   // Check for slow connection
   if (networkInfo.effectiveType === '2g' || networkInfo.effectiveType === 'slow-2g') {
     return 'slow';
@@ -96,7 +101,7 @@ function determineStatus(online: boolean, networkInfo: Partial<NetworkInfo>): Ne
   if (networkInfo.downlink && networkInfo.downlink < 0.5) {
     return 'slow';
   }
-  
+
   return 'online';
 }
 
@@ -121,7 +126,7 @@ export const NetworkStatusProvider: React.FC<NetworkStatusProviderProps> = ({
     status: typeof navigator !== 'undefined' ? (navigator.onLine ? 'online' : 'offline') : 'online',
     ...getNetworkInfo(),
   }));
-  
+
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const reconnectAttemptsRef = useRef(0);
   const lastOnlineRef = useRef<Date>(new Date());
@@ -180,7 +185,9 @@ export const NetworkStatusProvider: React.FC<NetworkStatusProviderProps> = ({
   // Periodic ping to verify actual connectivity
   useEffect(() => {
     const pingServer = async () => {
-      if (!navigator.onLine) return;
+      if (!navigator.onLine) {
+        return;
+      }
 
       const startTime = Date.now();
       try {
@@ -229,15 +236,16 @@ export const NetworkStatusProvider: React.FC<NetworkStatusProviderProps> = ({
     ]);
   }, []);
 
-  const removePendingRequest = useCallback((id: string, status: 'success' | 'error' | 'timeout') => {
-    setPendingRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status } : req))
-    );
-    // Remove after animation
-    setTimeout(() => {
-      setPendingRequests((prev) => prev.filter((req) => req.id !== id));
-    }, 2000);
-  }, []);
+  const removePendingRequest = useCallback(
+    (id: string, status: 'success' | 'error' | 'timeout') => {
+      setPendingRequests((prev) => prev.map((req) => (req.id === id ? { ...req, status } : req)));
+      // Remove after animation
+      setTimeout(() => {
+        setPendingRequests((prev) => prev.filter((req) => req.id !== id));
+      }, 2000);
+    },
+    [],
+  );
 
   const retryFailedRequests = useCallback(() => {
     // This would be implemented based on your API client's retry mechanism
@@ -285,11 +293,11 @@ export const NetworkBanner: React.FC<NetworkBannerProps> = ({
 
   // Show banner when offline or slow
   useEffect(() => {
-    const shouldShow = 
-      networkInfo.status === 'offline' || 
+    const shouldShow =
+      networkInfo.status === 'offline' ||
       networkInfo.status === 'slow' ||
       networkInfo.status === 'reconnecting';
-    
+
     if (shouldShow) {
       setDismissed(false);
       setVisible(true);
@@ -299,8 +307,12 @@ export const NetworkBanner: React.FC<NetworkBannerProps> = ({
     }
   }, [networkInfo.status]);
 
-  if (!visible && networkInfo.status === 'online') return null;
-  if (dismissed) return null;
+  if (!visible && networkInfo.status === 'online') {
+    return null;
+  }
+  if (dismissed) {
+    return null;
+  }
 
   const statusConfig = {
     offline: {
@@ -363,15 +375,11 @@ export const NetworkBanner: React.FC<NetworkBannerProps> = ({
       }}
     >
       <span style={{ fontSize: 20 }}>{config.icon}</span>
-      
+
       <div>
-        <strong style={{ color: config.color, fontSize: 14 }}>
-          {config.message}
-        </strong>
+        <strong style={{ color: config.color, fontSize: 14 }}>{config.message}</strong>
         {config.description && (
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#4a5568' }}>
-            {config.description}
-          </p>
+          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#4a5568' }}>{config.description}</p>
         )}
       </div>
 
@@ -491,7 +499,7 @@ export const NetworkIndicator: React.FC<NetworkIndicatorProps> = ({
           animation: config.pulse ? 'pulse 1.5s infinite' : 'none',
         }}
       />
-      
+
       {showLabel && (
         <span style={{ fontSize: sizeConfig.font, color: config.color, fontWeight: 500 }}>
           {config.label}
@@ -545,7 +553,9 @@ export const PendingRequestsDropdown: React.FC<PendingRequestsDropdownProps> = (
 
   const pendingItems = pendingRequests.filter((r) => r.status === 'pending');
 
-  if (pendingItems.length === 0) return null;
+  if (pendingItems.length === 0) {
+    return null;
+  }
 
   return (
     <div className={`pending-requests ${className}`} style={{ position: 'relative' }}>
@@ -583,9 +593,7 @@ export const PendingRequestsDropdown: React.FC<PendingRequestsDropdownProps> = (
           }}
         >
           <div style={{ padding: 12, borderBottom: '1px solid #e2e8f0' }}>
-            <h4 style={{ margin: 0, fontSize: 13, color: '#2d3748' }}>
-              Active Requests
-            </h4>
+            <h4 style={{ margin: 0, fontSize: 13, color: '#2d3748' }}>Active Requests</h4>
           </div>
           <div style={{ maxHeight: 200, overflowY: 'auto', padding: 8 }}>
             {pendingItems.slice(0, maxVisible).map((req) => (
@@ -611,9 +619,7 @@ export const PendingRequestsDropdown: React.FC<PendingRequestsDropdownProps> = (
                   }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 500 }}>
-                    {req.method}
-                  </p>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 500 }}>{req.method}</p>
                   <p
                     style={{
                       margin: 0,
@@ -670,7 +676,7 @@ export function useTrackedFetch() {
         throw error;
       }
     },
-    [addPendingRequest, removePendingRequest, isOffline]
+    [addPendingRequest, removePendingRequest, isOffline],
   );
 
   return trackedFetch;

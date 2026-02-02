@@ -38,12 +38,10 @@ export function QuestionnairePage() {
       <div className="bg-white rounded-lg shadow p-8">
         <div className="text-center py-12">
           <ClipboardList className="h-16 w-16 mx-auto text-blue-500 mb-4" aria-hidden="true" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Questionnaire Module
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Questionnaire Module</h2>
           <p className="text-gray-500 max-w-md mx-auto">
-            The questionnaire system allows you to complete comprehensive assessments
-            to evaluate your organization's readiness across multiple dimensions.
+            The questionnaire system allows you to complete comprehensive assessments to evaluate
+            your organization's readiness across multiple dimensions.
           </p>
 
           {/* Coming soon notice */}

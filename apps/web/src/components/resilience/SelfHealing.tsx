@@ -1,7 +1,7 @@
 /**
  * SelfHealing.tsx - Self-Healing Error Recovery System
  * Sprint 36 Task 1: Circuit breaker pattern, auto-retry with exponential backoff, fallback to cached data
- * 
+ *
  * Nielsen Heuristics Addressed:
  * - #1 Visibility: Show recovery status, retry progress
  * - #5 Error prevention: Automatic error recovery
@@ -132,23 +132,23 @@ export interface RecoveryAction {
 export interface SelfHealingContextValue {
   // Circuit breaker state per service
   circuits: Map<string, CircuitBreakerState>;
-  
+
   // Recovery actions log
   recoveryLog: RecoveryAction[];
-  
+
   // Health check results
   healthStatus: Map<string, HealthCheckResult>;
-  
+
   // Global config
   isEnabled: boolean;
-  
+
   // Actions
   executeWithResilience: <T>(
     service: string,
     operation: () => Promise<T>,
-    options?: Partial<ResilienceOptions<T>>
+    options?: Partial<ResilienceOptions<T>>,
   ) => Promise<T>;
-  
+
   getCircuitState: (service: string) => CircuitBreakerState;
   resetCircuit: (service: string) => void;
   checkHealth: (service: string, healthCheck: () => Promise<boolean>) => Promise<HealthCheckResult>;
@@ -245,17 +245,17 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
   // Merged default configs
   const retryConfig = useMemo(
     () => ({ ...DEFAULT_RETRY_CONFIG, ...defaultRetryConfig }),
-    [defaultRetryConfig]
+    [defaultRetryConfig],
   );
-  
+
   const circuitBreakerConfig = useMemo(
     () => ({ ...DEFAULT_CIRCUIT_BREAKER_CONFIG, ...defaultCircuitBreakerConfig }),
-    [defaultCircuitBreakerConfig]
+    [defaultCircuitBreakerConfig],
   );
-  
+
   const fallbackConfig = useMemo(
     () => ({ ...DEFAULT_FALLBACK_CONFIG, ...defaultFallbackConfig }),
-    [defaultFallbackConfig]
+    [defaultFallbackConfig],
   );
 
   // Load cache from localStorage
@@ -301,57 +301,65 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
       id: `recovery_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
     };
-    setRecoveryLog(prev => [newAction, ...prev.slice(0, 99)]); // Keep last 100
+    setRecoveryLog((prev) => [newAction, ...prev.slice(0, 99)]); // Keep last 100
   }, []);
 
   // Get or create circuit breaker state
-  const getCircuitState = useCallback((service: string): CircuitBreakerState => {
-    const existing = circuits.get(service);
-    if (existing) return existing;
+  const getCircuitState = useCallback(
+    (service: string): CircuitBreakerState => {
+      const existing = circuits.get(service);
+      if (existing) {
+        return existing;
+      }
 
-    const newState: CircuitBreakerState = {
-      state: 'CLOSED',
-      failures: 0,
-      successes: 0,
-      lastFailure: null,
-      lastSuccess: null,
-      lastStateChange: new Date(),
-    };
-    setCircuits(prev => new Map(prev).set(service, newState));
-    return newState;
-  }, [circuits]);
+      const newState: CircuitBreakerState = {
+        state: 'CLOSED',
+        failures: 0,
+        successes: 0,
+        lastFailure: null,
+        lastSuccess: null,
+        lastStateChange: new Date(),
+      };
+      setCircuits((prev) => new Map(prev).set(service, newState));
+      return newState;
+    },
+    [circuits],
+  );
 
   // Update circuit breaker state
-  const updateCircuit = useCallback((
-    service: string,
-    update: Partial<CircuitBreakerState>
-  ) => {
-    setCircuits(prev => {
-      const newCircuits = new Map(prev);
-      const current = newCircuits.get(service) || getCircuitState(service);
-      newCircuits.set(service, { ...current, ...update });
-      return newCircuits;
-    });
-  }, [getCircuitState]);
+  const updateCircuit = useCallback(
+    (service: string, update: Partial<CircuitBreakerState>) => {
+      setCircuits((prev) => {
+        const newCircuits = new Map(prev);
+        const current = newCircuits.get(service) || getCircuitState(service);
+        newCircuits.set(service, { ...current, ...update });
+        return newCircuits;
+      });
+    },
+    [getCircuitState],
+  );
 
   // Reset circuit breaker
-  const resetCircuit = useCallback((service: string) => {
-    const newState: CircuitBreakerState = {
-      state: 'CLOSED',
-      failures: 0,
-      successes: 0,
-      lastFailure: null,
-      lastSuccess: null,
-      lastStateChange: new Date(),
-    };
-    setCircuits(prev => new Map(prev).set(service, newState));
-    logRecovery({
-      type: 'circuit_close',
-      service,
-      success: true,
-      details: 'Circuit manually reset',
-    });
-  }, [logRecovery]);
+  const resetCircuit = useCallback(
+    (service: string) => {
+      const newState: CircuitBreakerState = {
+        state: 'CLOSED',
+        failures: 0,
+        successes: 0,
+        lastFailure: null,
+        lastSuccess: null,
+        lastStateChange: new Date(),
+      };
+      setCircuits((prev) => new Map(prev).set(service, newState));
+      logRecovery({
+        type: 'circuit_close',
+        service,
+        success: true,
+        details: 'Circuit manually reset',
+      });
+    },
+    [logRecovery],
+  );
 
   // Cache data
   const cacheData = useCallback(<T,>(key: string, data: T, ttl: number = 60000) => {
@@ -374,15 +382,19 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
   // Get cached data
   const getCachedData = useCallback(<T,>(key: string): T | null => {
     const entry = cacheRef.current.get(key) as CacheEntry<T> | undefined;
-    if (!entry) return null;
+    if (!entry) {
+      return null;
+    }
     return entry.data;
   }, []);
 
   // Check if cached data is fresh
   const isCacheFresh = useCallback((key: string): boolean => {
     const entry = cacheRef.current.get(key);
-    if (!entry) return false;
-    
+    if (!entry) {
+      return false;
+    }
+
     const age = Date.now() - new Date(entry.timestamp).getTime();
     return age < entry.ttl;
   }, []);
@@ -390,8 +402,10 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
   // Check if cached data is within stale limit
   const isCacheWithinStaleLimit = useCallback((key: string, maxStaleAge: number): boolean => {
     const entry = cacheRef.current.get(key);
-    if (!entry) return false;
-    
+    if (!entry) {
+      return false;
+    }
+
     const age = Date.now() - new Date(entry.timestamp).getTime();
     return age < maxStaleAge;
   }, []);
@@ -403,7 +417,7 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
     } else {
       cacheRef.current.clear();
     }
-    
+
     // Update localStorage
     const obj: Record<string, CacheEntry<unknown>> = {};
     cacheRef.current.forEach((value, k) => {
@@ -413,289 +427,303 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
   }, []);
 
   // Health check
-  const checkHealth = useCallback(async (
-    service: string,
-    healthCheck: () => Promise<boolean>
-  ): Promise<HealthCheckResult> => {
-    const startTime = Date.now();
-    let healthy = false;
-    let error: string | undefined;
+  const checkHealth = useCallback(
+    async (service: string, healthCheck: () => Promise<boolean>): Promise<HealthCheckResult> => {
+      const startTime = Date.now();
+      let healthy = false;
+      let error: string | undefined;
 
-    try {
-      healthy = await healthCheck();
-    } catch (e) {
-      error = e instanceof Error ? e.message : 'Unknown error';
-    }
+      try {
+        healthy = await healthCheck();
+      } catch (e) {
+        error = e instanceof Error ? e.message : 'Unknown error';
+      }
 
-    const result: HealthCheckResult = {
-      service,
-      healthy,
-      latency: Date.now() - startTime,
-      lastChecked: new Date(),
-      error,
-    };
+      const result: HealthCheckResult = {
+        service,
+        healthy,
+        latency: Date.now() - startTime,
+        lastChecked: new Date(),
+        error,
+      };
 
-    setHealthStatus(prev => new Map(prev).set(service, result));
-    return result;
-  }, []);
+      setHealthStatus((prev) => new Map(prev).set(service, result));
+      return result;
+    },
+    [],
+  );
 
   // Calculate delay with exponential backoff and jitter
-  const calculateDelay = useCallback((
-    attempt: number,
-    config: RetryConfig
-  ): number => {
+  const calculateDelay = useCallback((attempt: number, config: RetryConfig): number => {
     const exponentialDelay = config.initialDelay * Math.pow(config.backoffMultiplier, attempt);
     const cappedDelay = Math.min(exponentialDelay, config.maxDelay);
-    
+
     if (config.jitter) {
       // Add random jitter between 0% and 25%
       const jitterFactor = 1 + Math.random() * 0.25;
       return Math.floor(cappedDelay * jitterFactor);
     }
-    
+
     return cappedDelay;
   }, []);
 
   // Execute with circuit breaker
-  const executeWithCircuitBreaker = useCallback(async <T,>(
-    service: string,
-    operation: () => Promise<T>,
-    config: CircuitBreakerConfig,
-    onStateChange?: (state: CircuitState) => void
-  ): Promise<T> => {
-    const circuit = getCircuitState(service);
+  const executeWithCircuitBreaker = useCallback(
+    async <T,>(
+      service: string,
+      operation: () => Promise<T>,
+      config: CircuitBreakerConfig,
+      onStateChange?: (state: CircuitState) => void,
+    ): Promise<T> => {
+      const circuit = getCircuitState(service);
 
-    // Check if circuit is open
-    if (circuit.state === 'OPEN') {
-      const timeSinceOpen = Date.now() - new Date(circuit.lastStateChange).getTime();
-      
-      if (timeSinceOpen < config.recoveryTimeout) {
-        throw new Error(`Circuit breaker open for ${service}. Recovery in ${Math.ceil((config.recoveryTimeout - timeSinceOpen) / 1000)}s`);
+      // Check if circuit is open
+      if (circuit.state === 'OPEN') {
+        const timeSinceOpen = Date.now() - new Date(circuit.lastStateChange).getTime();
+
+        if (timeSinceOpen < config.recoveryTimeout) {
+          throw new Error(
+            `Circuit breaker open for ${service}. Recovery in ${Math.ceil((config.recoveryTimeout - timeSinceOpen) / 1000)}s`,
+          );
+        }
+
+        // Transition to half-open
+        updateCircuit(service, { state: 'HALF_OPEN', lastStateChange: new Date() });
+        onStateChange?.('HALF_OPEN');
       }
-      
-      // Transition to half-open
-      updateCircuit(service, { state: 'HALF_OPEN', lastStateChange: new Date() });
-      onStateChange?.('HALF_OPEN');
-    }
 
-    try {
-      const result = await operation();
-      
-      // Success handling
-      if (circuit.state === 'HALF_OPEN') {
-        const newSuccesses = circuit.successes + 1;
-        
-        if (newSuccesses >= config.successThreshold) {
-          // Close circuit
+      try {
+        const result = await operation();
+
+        // Success handling
+        if (circuit.state === 'HALF_OPEN') {
+          const newSuccesses = circuit.successes + 1;
+
+          if (newSuccesses >= config.successThreshold) {
+            // Close circuit
+            updateCircuit(service, {
+              state: 'CLOSED',
+              successes: 0,
+              failures: 0,
+              lastSuccess: new Date(),
+              lastStateChange: new Date(),
+            });
+            onStateChange?.('CLOSED');
+            logRecovery({
+              type: 'circuit_close',
+              service,
+              success: true,
+              details: `Circuit closed after ${newSuccesses} successes`,
+            });
+          } else {
+            updateCircuit(service, {
+              successes: newSuccesses,
+              lastSuccess: new Date(),
+            });
+          }
+        } else {
+          updateCircuit(service, { lastSuccess: new Date() });
+        }
+
+        return result;
+      } catch (error) {
+        // Failure handling
+        const newFailures = circuit.failures + 1;
+
+        // Check if failures are within window
+        const failuresInWindow = circuit.lastFailure
+          ? Date.now() - new Date(circuit.lastFailure).getTime() < config.failureWindow
+          : true;
+
+        if (
+          circuit.state === 'HALF_OPEN' ||
+          (failuresInWindow && newFailures >= config.failureThreshold)
+        ) {
+          // Open circuit
           updateCircuit(service, {
-            state: 'CLOSED',
-            successes: 0,
-            failures: 0,
-            lastSuccess: new Date(),
+            state: 'OPEN',
+            failures: newFailures,
+            lastFailure: new Date(),
             lastStateChange: new Date(),
           });
-          onStateChange?.('CLOSED');
+          onStateChange?.('OPEN');
           logRecovery({
-            type: 'circuit_close',
+            type: 'circuit_open',
             service,
-            success: true,
-            details: `Circuit closed after ${newSuccesses} successes`,
+            success: false,
+            details: `Circuit opened after ${newFailures} failures`,
           });
         } else {
           updateCircuit(service, {
-            successes: newSuccesses,
-            lastSuccess: new Date(),
+            failures: failuresInWindow ? newFailures : 1,
+            lastFailure: new Date(),
           });
         }
-      } else {
-        updateCircuit(service, { lastSuccess: new Date() });
-      }
-      
-      return result;
-    } catch (error) {
-      // Failure handling
-      const newFailures = circuit.failures + 1;
-      
-      // Check if failures are within window
-      const failuresInWindow = circuit.lastFailure
-        ? Date.now() - new Date(circuit.lastFailure).getTime() < config.failureWindow
-        : true;
 
-      if (circuit.state === 'HALF_OPEN' || (failuresInWindow && newFailures >= config.failureThreshold)) {
-        // Open circuit
-        updateCircuit(service, {
-          state: 'OPEN',
-          failures: newFailures,
-          lastFailure: new Date(),
-          lastStateChange: new Date(),
-        });
-        onStateChange?.('OPEN');
-        logRecovery({
-          type: 'circuit_open',
-          service,
-          success: false,
-          details: `Circuit opened after ${newFailures} failures`,
-        });
-      } else {
-        updateCircuit(service, {
-          failures: failuresInWindow ? newFailures : 1,
-          lastFailure: new Date(),
-        });
+        throw error;
       }
-      
-      throw error;
-    }
-  }, [getCircuitState, updateCircuit, logRecovery]);
+    },
+    [getCircuitState, updateCircuit, logRecovery],
+  );
 
   // Execute with retry
-  const executeWithRetry = useCallback(async <T,>(
-    service: string,
-    operation: () => Promise<T>,
-    config: RetryConfig,
-    onRetry?: (attempt: number, error: Error) => void
-  ): Promise<T> => {
-    let lastError: Error = new Error('Unknown error');
-    
-    for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
-      try {
-        const result = await operation();
-        
-        if (attempt > 0) {
-          logRecovery({
-            type: 'retry',
-            service,
-            success: true,
-            details: `Succeeded after ${attempt} retries`,
-          });
-        }
-        
-        return result;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        
-        if (attempt < config.maxRetries) {
-          const delay = calculateDelay(attempt, config);
-          onRetry?.(attempt + 1, lastError);
-          
-          logRecovery({
-            type: 'retry',
-            service,
-            success: false,
-            details: `Retry ${attempt + 1}/${config.maxRetries} after ${delay}ms`,
-          });
-          
-          await new Promise(resolve => setTimeout(resolve, delay));
+  const executeWithRetry = useCallback(
+    async <T,>(
+      service: string,
+      operation: () => Promise<T>,
+      config: RetryConfig,
+      onRetry?: (attempt: number, error: Error) => void,
+    ): Promise<T> => {
+      let lastError: Error = new Error('Unknown error');
+
+      for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+        try {
+          const result = await operation();
+
+          if (attempt > 0) {
+            logRecovery({
+              type: 'retry',
+              service,
+              success: true,
+              details: `Succeeded after ${attempt} retries`,
+            });
+          }
+
+          return result;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+
+          if (attempt < config.maxRetries) {
+            const delay = calculateDelay(attempt, config);
+            onRetry?.(attempt + 1, lastError);
+
+            logRecovery({
+              type: 'retry',
+              service,
+              success: false,
+              details: `Retry ${attempt + 1}/${config.maxRetries} after ${delay}ms`,
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
         }
       }
-    }
-    
-    throw lastError;
-  }, [calculateDelay, logRecovery]);
+
+      throw lastError;
+    },
+    [calculateDelay, logRecovery],
+  );
 
   // Main resilient execution method
-  const executeWithResilience = useCallback(async <T,>(
-    service: string,
-    operation: () => Promise<T>,
-    options?: Partial<ResilienceOptions<T>>
-  ): Promise<T> => {
-    if (!isEnabled) {
-      return operation();
-    }
-
-    const opts: ResilienceOptions<T> = {
-      retry: { ...retryConfig, ...options?.retry },
-      circuitBreaker: { ...circuitBreakerConfig, ...options?.circuitBreaker },
-      fallback: { ...fallbackConfig, ...options?.fallback },
-      cacheKey: options?.cacheKey,
-      defaultValue: options?.defaultValue,
-      onRetry: options?.onRetry,
-      onFallback: options?.onFallback,
-      onCircuitStateChange: options?.onCircuitStateChange,
-    };
-
-    try {
-      // Execute with circuit breaker and retry
-      const result = await executeWithCircuitBreaker(
-        service,
-        () => executeWithRetry(service, operation, opts.retry, opts.onRetry),
-        opts.circuitBreaker,
-        opts.onCircuitStateChange
-      );
-
-      // Cache successful result
-      if (opts.cacheKey) {
-        cacheData(opts.cacheKey, result);
+  const executeWithResilience = useCallback(
+    async <T,>(
+      service: string,
+      operation: () => Promise<T>,
+      options?: Partial<ResilienceOptions<T>>,
+    ): Promise<T> => {
+      if (!isEnabled) {
+        return operation();
       }
 
-      return result;
-    } catch (error) {
-      // Fallback logic
-      if (opts.fallback.useCachedData && opts.cacheKey) {
-        // Try fresh cache
-        if (isCacheFresh(opts.cacheKey)) {
-          const cached = getCachedData<T>(opts.cacheKey);
-          if (cached !== null) {
-            opts.onFallback?.('Using cached data');
-            logRecovery({
-              type: 'cache_hit',
-              service,
-              success: true,
-              details: 'Fallback to cached data',
-            });
-            return cached;
-          }
+      const opts: ResilienceOptions<T> = {
+        retry: { ...retryConfig, ...options?.retry },
+        circuitBreaker: { ...circuitBreakerConfig, ...options?.circuitBreaker },
+        fallback: { ...fallbackConfig, ...options?.fallback },
+        cacheKey: options?.cacheKey,
+        defaultValue: options?.defaultValue,
+        onRetry: options?.onRetry,
+        onFallback: options?.onFallback,
+        onCircuitStateChange: options?.onCircuitStateChange,
+      };
+
+      try {
+        // Execute with circuit breaker and retry
+        const result = await executeWithCircuitBreaker(
+          service,
+          () => executeWithRetry(service, operation, opts.retry, opts.onRetry),
+          opts.circuitBreaker,
+          opts.onCircuitStateChange,
+        );
+
+        // Cache successful result
+        if (opts.cacheKey) {
+          cacheData(opts.cacheKey, result);
         }
 
-        // Try stale cache
-        if (opts.fallback.allowStaleData && isCacheWithinStaleLimit(opts.cacheKey, opts.fallback.maxStaleAge)) {
-          const stale = getCachedData<T>(opts.cacheKey);
-          if (stale !== null) {
-            opts.onFallback?.('Using stale cached data');
-            logRecovery({
-              type: 'cache_hit',
-              service,
-              success: true,
-              details: 'Fallback to stale cached data',
-            });
-            return stale;
+        return result;
+      } catch (error) {
+        // Fallback logic
+        if (opts.fallback.useCachedData && opts.cacheKey) {
+          // Try fresh cache
+          if (isCacheFresh(opts.cacheKey)) {
+            const cached = getCachedData<T>(opts.cacheKey);
+            if (cached !== null) {
+              opts.onFallback?.('Using cached data');
+              logRecovery({
+                type: 'cache_hit',
+                service,
+                success: true,
+                details: 'Fallback to cached data',
+              });
+              return cached;
+            }
           }
+
+          // Try stale cache
+          if (
+            opts.fallback.allowStaleData &&
+            isCacheWithinStaleLimit(opts.cacheKey, opts.fallback.maxStaleAge)
+          ) {
+            const stale = getCachedData<T>(opts.cacheKey);
+            if (stale !== null) {
+              opts.onFallback?.('Using stale cached data');
+              logRecovery({
+                type: 'cache_hit',
+                service,
+                success: true,
+                details: 'Fallback to stale cached data',
+              });
+              return stale;
+            }
+          }
+
+          logRecovery({
+            type: 'cache_miss',
+            service,
+            success: false,
+            details: 'No cached data available',
+          });
         }
 
-        logRecovery({
-          type: 'cache_miss',
-          service,
-          success: false,
-          details: 'No cached data available',
-        });
-      }
+        // Default value fallback
+        if (opts.fallback.useDefaultValue && opts.defaultValue !== undefined) {
+          opts.onFallback?.('Using default value');
+          logRecovery({
+            type: 'fallback',
+            service,
+            success: true,
+            details: 'Fallback to default value',
+          });
+          return opts.defaultValue;
+        }
 
-      // Default value fallback
-      if (opts.fallback.useDefaultValue && opts.defaultValue !== undefined) {
-        opts.onFallback?.('Using default value');
-        logRecovery({
-          type: 'fallback',
-          service,
-          success: true,
-          details: 'Fallback to default value',
-        });
-        return opts.defaultValue;
+        throw error;
       }
-
-      throw error;
-    }
-  }, [
-    isEnabled,
-    retryConfig,
-    circuitBreakerConfig,
-    fallbackConfig,
-    executeWithCircuitBreaker,
-    executeWithRetry,
-    cacheData,
-    getCachedData,
-    isCacheFresh,
-    isCacheWithinStaleLimit,
-    logRecovery,
-  ]);
+    },
+    [
+      isEnabled,
+      retryConfig,
+      circuitBreakerConfig,
+      fallbackConfig,
+      executeWithCircuitBreaker,
+      executeWithRetry,
+      cacheData,
+      getCachedData,
+      isCacheFresh,
+      isCacheWithinStaleLimit,
+      logRecovery,
+    ],
+  );
 
   const value: SelfHealingContextValue = {
     circuits,
@@ -712,11 +740,7 @@ export const SelfHealingProvider: React.FC<SelfHealingProviderProps> = ({
     setEnabled,
   };
 
-  return (
-    <SelfHealingContext.Provider value={value}>
-      {children}
-    </SelfHealingContext.Provider>
-  );
+  return <SelfHealingContext.Provider value={value}>{children}</SelfHealingContext.Provider>;
 };
 
 // ============================================================================
@@ -935,18 +959,27 @@ export const CircuitBreakerPanel: React.FC = () => {
   const getLogIcon = (type: RecoveryAction['type'], success: boolean) => {
     if (success) {
       switch (type) {
-        case 'retry': return '🔄';
-        case 'fallback': return '📦';
-        case 'circuit_close': return '✅';
-        case 'cache_hit': return '💾';
-        default: return '✓';
+        case 'retry':
+          return '🔄';
+        case 'fallback':
+          return '📦';
+        case 'circuit_close':
+          return '✅';
+        case 'cache_hit':
+          return '💾';
+        default:
+          return '✓';
       }
     }
     switch (type) {
-      case 'retry': return '⏳';
-      case 'circuit_open': return '🔴';
-      case 'cache_miss': return '❌';
-      default: return '⚠️';
+      case 'retry':
+        return '⏳';
+      case 'circuit_open':
+        return '🔴';
+      case 'cache_miss':
+        return '❌';
+      default:
+        return '⚠️';
     }
   };
 
@@ -975,14 +1008,9 @@ export const CircuitBreakerPanel: React.FC = () => {
             <div key={service} style={getCircuitStyle(circuit.state)}>
               <span style={styles.circuitName}>{service}</span>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={getStateStyle(circuit.state)}>
-                  {circuit.state}
-                </span>
+                <span style={getStateStyle(circuit.state)}>{circuit.state}</span>
                 {circuit.state !== 'CLOSED' && (
-                  <button
-                    style={styles.resetButton}
-                    onClick={() => resetCircuit(service)}
-                  >
+                  <button style={styles.resetButton} onClick={() => resetCircuit(service)}>
                     Reset
                   </button>
                 )}
@@ -996,17 +1024,13 @@ export const CircuitBreakerPanel: React.FC = () => {
         <div style={styles.recoveryLog}>
           <div style={styles.logTitle}>Recent Recovery Actions</div>
           <div style={styles.logList}>
-            {recoveryLog.slice(0, 10).map(action => (
+            {recoveryLog.slice(0, 10).map((action) => (
               <div key={action.id} style={styles.logItem}>
-                <span style={styles.logIcon}>
-                  {getLogIcon(action.type, action.success)}
-                </span>
+                <span style={styles.logIcon}>{getLogIcon(action.type, action.success)}</span>
                 <span style={styles.logMessage}>
                   {action.service}: {action.details}
                 </span>
-                <span style={styles.logTime}>
-                  {formatTime(action.timestamp)}
-                </span>
+                <span style={styles.logTime}>{formatTime(action.timestamp)}</span>
               </div>
             ))}
           </div>
@@ -1062,7 +1086,9 @@ export const RetryIndicator: React.FC<RetryIndicatorProps> = ({
   maxRetries,
   nextRetryIn,
 }) => {
-  if (!isRetrying) return null;
+  if (!isRetrying) {
+    return null;
+  }
 
   return (
     <div style={styles.retryIndicator} role="status" aria-live="polite">
@@ -1086,10 +1112,7 @@ interface ResilientFetchOptions<T> extends Partial<ResilienceOptions<T>> {
 /**
  * Hook for making resilient API calls
  */
-export function useResilientFetch<T>(
-  url: string,
-  options?: ResilientFetchOptions<T>
-) {
+export function useResilientFetch<T>(url: string, options?: ResilientFetchOptions<T>) {
   const { executeWithResilience } = useSelfHealing();
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -1104,7 +1127,7 @@ export function useResilientFetch<T>(
   const fetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    setRetryState(prev => ({ ...prev, isRetrying: false, attempts: 0 }));
+    setRetryState((prev) => ({ ...prev, isRetrying: false, attempts: 0 }));
 
     try {
       const result = await executeWithResilience<T>(
@@ -1120,7 +1143,7 @@ export function useResilientFetch<T>(
           ...options,
           cacheKey: options?.cacheKey || url,
           onRetry: (attempt, err) => {
-            setRetryState(prev => ({
+            setRetryState((prev) => ({
               ...prev,
               attempts: attempt,
               isRetrying: true,
@@ -1128,15 +1151,15 @@ export function useResilientFetch<T>(
             }));
             options?.onRetry?.(attempt, err);
           },
-        }
+        },
       );
 
       setData(result);
-      setRetryState(prev => ({ ...prev, isRetrying: false }));
+      setRetryState((prev) => ({ ...prev, isRetrying: false }));
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       setError(err);
-      setRetryState(prev => ({
+      setRetryState((prev) => ({
         ...prev,
         isRetrying: false,
         lastError: err,
@@ -1166,33 +1189,36 @@ export function useResilientFetch<T>(
 export function useResilientMutation<TInput, TOutput>(
   service: string,
   mutationFn: (input: TInput) => Promise<TOutput>,
-  options?: Partial<ResilienceOptions<TOutput>>
+  options?: Partial<ResilienceOptions<TOutput>>,
 ) {
   const { executeWithResilience } = useSelfHealing();
   const [data, setData] = useState<TOutput | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const mutate = useCallback(async (input: TInput) => {
-    setIsLoading(true);
-    setError(null);
+  const mutate = useCallback(
+    async (input: TInput) => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const result = await executeWithResilience<TOutput>(
-        service,
-        () => mutationFn(input),
-        options
-      );
-      setData(result);
-      return result;
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error(String(e));
-      setError(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [service, mutationFn, executeWithResilience, options]);
+      try {
+        const result = await executeWithResilience<TOutput>(
+          service,
+          () => mutationFn(input),
+          options,
+        );
+        setData(result);
+        return result;
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        setError(err);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [service, mutationFn, executeWithResilience, options],
+  );
 
   return {
     data,

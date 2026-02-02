@@ -1,11 +1,11 @@
 /**
  * Upload Progress Components
- * 
+ *
  * Progress bars for file uploads with:
  * - Percentage complete (0-100%)
  * - Upload speed (MB/s)
  * - ETA for large files
- * 
+ *
  * Nielsen Heuristic #1: Visibility of System Status
  */
 
@@ -29,7 +29,7 @@ export interface UploadFile {
   file?: File;
 }
 
-export type UploadStatus = 
+export type UploadStatus =
   | 'pending'
   | 'uploading'
   | 'processing'
@@ -52,7 +52,9 @@ export interface UploadProgressOptions {
 // ============================================================================
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -60,7 +62,9 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatSpeed(bytesPerSecond: number): string {
-  if (bytesPerSecond === 0) return '0 B/s';
+  if (bytesPerSecond === 0) {
+    return '0 B/s';
+  }
   const k = 1024;
   const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
   const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
@@ -68,22 +72,46 @@ export function formatSpeed(bytesPerSecond: number): string {
 }
 
 export function formatETA(seconds: number): string {
-  if (!isFinite(seconds) || seconds <= 0) return '--';
-  if (seconds < 60) return `${Math.ceil(seconds)}s`;
-  if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
+  if (!isFinite(seconds) || seconds <= 0) {
+    return '--';
+  }
+  if (seconds < 60) {
+    return `${Math.ceil(seconds)}s`;
+  }
+  if (seconds < 3600) {
+    return `${Math.ceil(seconds / 60)}m`;
+  }
   return `${Math.floor(seconds / 3600)}h ${Math.ceil((seconds % 3600) / 60)}m`;
 }
 
 export function getFileTypeIcon(type: string): string {
-  if (type.startsWith('image/')) return '🖼️';
-  if (type.startsWith('video/')) return '🎬';
-  if (type.startsWith('audio/')) return '🎵';
-  if (type.includes('pdf')) return '📄';
-  if (type.includes('word') || type.includes('document')) return '📝';
-  if (type.includes('excel') || type.includes('spreadsheet')) return '📊';
-  if (type.includes('powerpoint') || type.includes('presentation')) return '📽️';
-  if (type.includes('zip') || type.includes('archive')) return '📦';
-  if (type.includes('json') || type.includes('xml') || type.includes('yaml')) return '⚙️';
+  if (type.startsWith('image/')) {
+    return '🖼️';
+  }
+  if (type.startsWith('video/')) {
+    return '🎬';
+  }
+  if (type.startsWith('audio/')) {
+    return '🎵';
+  }
+  if (type.includes('pdf')) {
+    return '📄';
+  }
+  if (type.includes('word') || type.includes('document')) {
+    return '📝';
+  }
+  if (type.includes('excel') || type.includes('spreadsheet')) {
+    return '📊';
+  }
+  if (type.includes('powerpoint') || type.includes('presentation')) {
+    return '📽️';
+  }
+  if (type.includes('zip') || type.includes('archive')) {
+    return '📦';
+  }
+  if (type.includes('json') || type.includes('xml') || type.includes('yaml')) {
+    return '⚙️';
+  }
   return '📎';
 }
 
@@ -105,15 +133,9 @@ interface UseUploadProgressReturn {
 
 export function useUploadProgress(
   uploadFn: (file: File, onProgress: (progress: number) => void) => Promise<void>,
-  options: UploadProgressOptions = {}
+  options: UploadProgressOptions = {},
 ): UseUploadProgressReturn {
-  const {
-    maxConcurrent = 3,
-    retryAttempts = 3,
-    onProgress,
-    onComplete,
-    onError,
-  } = options;
+  const { maxConcurrent = 3, retryAttempts = 3, onProgress, onComplete, onError } = options;
 
   const [files, setFiles] = useState<UploadFile[]>([]);
   const activeUploadsRef = useRef(0);
@@ -124,77 +146,79 @@ export function useUploadProgress(
     const speed = elapsedMs > 0 ? (bytesUploaded / elapsedMs) * 1000 : 0;
     const history = speedHistoryRef.current.get(fileId) || [];
     history.push(speed);
-    if (history.length > 5) history.shift(); // Keep last 5 measurements
+    if (history.length > 5) {
+      history.shift();
+    } // Keep last 5 measurements
     speedHistoryRef.current.set(fileId, history);
     return history.reduce((a, b) => a + b, 0) / history.length;
   }, []);
 
   // Upload single file
-  const uploadFile = useCallback(async (uploadFile: UploadFile) => {
-    if (!uploadFile.file) return;
+  const uploadFile = useCallback(
+    async (uploadFile: UploadFile) => {
+      if (!uploadFile.file) {
+        return;
+      }
 
-    const startTime = Date.now();
-    let lastUpdateTime = startTime;
-    let lastBytesUploaded = 0;
-
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === uploadFile.id
-          ? { ...f, status: 'uploading', startTime, progress: 0 }
-          : f
-      )
-    );
-
-    try {
-      await uploadFn(uploadFile.file, (progress) => {
-        const now = Date.now();
-        const bytesUploaded = Math.floor((progress / 100) * uploadFile.size);
-        const elapsed = now - lastUpdateTime;
-        
-        if (elapsed > 100) { // Update at most every 100ms
-          const speed = updateSpeed(uploadFile.id, bytesUploaded - lastBytesUploaded, elapsed);
-          lastUpdateTime = now;
-          lastBytesUploaded = bytesUploaded;
-
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, progress, bytesUploaded, speed }
-                : f
-            )
-          );
-
-          const updatedFile = { ...uploadFile, progress, bytesUploaded, speed };
-          onProgress?.(updatedFile);
-        }
-      });
+      const startTime = Date.now();
+      let lastUpdateTime = startTime;
+      let lastBytesUploaded = 0;
 
       setFiles((prev) =>
         prev.map((f) =>
-          f.id === uploadFile.id
-            ? { ...f, status: 'complete', progress: 100, bytesUploaded: f.size }
-            : f
-        )
+          f.id === uploadFile.id ? { ...f, status: 'uploading', startTime, progress: 0 } : f,
+        ),
       );
 
-      onComplete?.({ ...uploadFile, status: 'complete', progress: 100 });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === uploadFile.id
-            ? { ...f, status: 'error', error: errorMessage }
-            : f
-        )
-      );
+      try {
+        await uploadFn(uploadFile.file, (progress) => {
+          const now = Date.now();
+          const bytesUploaded = Math.floor((progress / 100) * uploadFile.size);
+          const elapsed = now - lastUpdateTime;
 
-      onError?.({ ...uploadFile, status: 'error', error: errorMessage }, error as Error);
-    } finally {
-      activeUploadsRef.current--;
-      speedHistoryRef.current.delete(uploadFile.id);
-    }
-  }, [uploadFn, updateSpeed, onProgress, onComplete, onError]);
+          if (elapsed > 100) {
+            // Update at most every 100ms
+            const speed = updateSpeed(uploadFile.id, bytesUploaded - lastBytesUploaded, elapsed);
+            lastUpdateTime = now;
+            lastBytesUploaded = bytesUploaded;
+
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === uploadFile.id ? { ...f, progress, bytesUploaded, speed } : f,
+              ),
+            );
+
+            const updatedFile = { ...uploadFile, progress, bytesUploaded, speed };
+            onProgress?.(updatedFile);
+          }
+        });
+
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? { ...f, status: 'complete', progress: 100, bytesUploaded: f.size }
+              : f,
+          ),
+        );
+
+        onComplete?.({ ...uploadFile, status: 'complete', progress: 100 });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id ? { ...f, status: 'error', error: errorMessage } : f,
+          ),
+        );
+
+        onError?.({ ...uploadFile, status: 'error', error: errorMessage }, error as Error);
+      } finally {
+        activeUploadsRef.current--;
+        speedHistoryRef.current.delete(uploadFile.id);
+      }
+    },
+    [uploadFn, updateSpeed, onProgress, onComplete, onError],
+  );
 
   // Process upload queue
   const processQueue = useCallback(() => {
@@ -238,8 +262,8 @@ export function useUploadProgress(
       prev.map((f) =>
         f.id === fileId && (f.status === 'pending' || f.status === 'uploading')
           ? { ...f, status: 'cancelled' }
-          : f
-      )
+          : f,
+      ),
     );
   }, []);
 
@@ -249,8 +273,8 @@ export function useUploadProgress(
       prev.map((f) =>
         f.id === fileId && f.status === 'error'
           ? { ...f, status: 'pending', error: undefined, progress: 0, bytesUploaded: 0 }
-          : f
-      )
+          : f,
+      ),
     );
   }, []);
 
@@ -265,12 +289,14 @@ export function useUploadProgress(
 
   // Calculate totals
   const isUploading = files.some((f) => f.status === 'uploading');
-  
+
   const totalProgress = useMemo(() => {
-    const activeFiles = files.filter((f) => 
-      f.status === 'uploading' || f.status === 'complete' || f.status === 'pending'
+    const activeFiles = files.filter(
+      (f) => f.status === 'uploading' || f.status === 'complete' || f.status === 'pending',
     );
-    if (activeFiles.length === 0) return 0;
+    if (activeFiles.length === 0) {
+      return 0;
+    }
     const totalBytes = activeFiles.reduce((sum, f) => sum + f.size, 0);
     const uploadedBytes = activeFiles.reduce((sum, f) => sum + f.bytesUploaded, 0);
     return totalBytes > 0 ? (uploadedBytes / totalBytes) * 100 : 0;
@@ -282,7 +308,9 @@ export function useUploadProgress(
   }, [files]);
 
   const totalETA = useMemo(() => {
-    if (totalSpeed === 0) return Infinity;
+    if (totalSpeed === 0) {
+      return Infinity;
+    }
     const remainingBytes = files
       .filter((f) => f.status === 'uploading' || f.status === 'pending')
       .reduce((sum, f) => sum + (f.size - f.bytesUploaded), 0);
@@ -394,9 +422,7 @@ export const UploadItem: React.FC<UploadItemProps> = ({
   onRemove,
   compact = false,
 }) => {
-  const eta = file.speed && file.speed > 0
-    ? (file.size - file.bytesUploaded) / file.speed
-    : 0;
+  const eta = file.speed && file.speed > 0 ? (file.size - file.bytesUploaded) / file.speed : 0;
 
   const statusColors: Record<UploadStatus, string> = {
     pending: '#718096',
@@ -431,9 +457,7 @@ export const UploadItem: React.FC<UploadItemProps> = ({
     >
       {/* File info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-        <span style={{ fontSize: compact ? 20 : 24 }}>
-          {getFileTypeIcon(file.type)}
-        </span>
+        <span style={{ fontSize: compact ? 20 : 24 }}>{getFileTypeIcon(file.type)}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p
             style={{
@@ -451,12 +475,8 @@ export const UploadItem: React.FC<UploadItemProps> = ({
           </p>
           <p style={{ margin: '2px 0 0', fontSize: 12, color: '#718096' }}>
             {formatFileSize(file.size)}
-            {file.status === 'uploading' && file.speed && (
-              <> • {formatSpeed(file.speed)}</>
-            )}
-            {file.status === 'uploading' && eta > 0 && (
-              <> • ETA: {formatETA(eta)}</>
-            )}
+            {file.status === 'uploading' && file.speed && <> • {formatSpeed(file.speed)}</>}
+            {file.status === 'uploading' && eta > 0 && <> • ETA: {formatETA(eta)}</>}
           </p>
         </div>
       </div>
@@ -467,8 +487,7 @@ export const UploadItem: React.FC<UploadItemProps> = ({
           <ProgressBar
             progress={file.progress}
             variant={
-              file.status === 'complete' ? 'success' :
-              file.status === 'error' ? 'error' : 'default'
+              file.status === 'complete' ? 'success' : file.status === 'error' ? 'error' : 'default'
             }
           />
         </div>
@@ -524,29 +543,28 @@ export const UploadItem: React.FC<UploadItemProps> = ({
           </button>
         )}
 
-        {(file.status === 'complete' || file.status === 'error' || file.status === 'cancelled') && onRemove && (
-          <button
-            onClick={onRemove}
-            style={{
-              padding: 4,
-              background: 'transparent',
-              border: 'none',
-              fontSize: 16,
-              cursor: 'pointer',
-              color: '#718096',
-            }}
-            aria-label={`Remove ${file.name}`}
-          >
-            ✕
-          </button>
-        )}
+        {(file.status === 'complete' || file.status === 'error' || file.status === 'cancelled') &&
+          onRemove && (
+            <button
+              onClick={onRemove}
+              style={{
+                padding: 4,
+                background: 'transparent',
+                border: 'none',
+                fontSize: 16,
+                cursor: 'pointer',
+                color: '#718096',
+              }}
+              aria-label={`Remove ${file.name}`}
+            >
+              ✕
+            </button>
+          )}
       </div>
 
       {/* Error message */}
       {file.error && (
-        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#e53e3e' }}>
-          ⚠️ {file.error}
-        </p>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#e53e3e' }}>⚠️ {file.error}</p>
       )}
     </div>
   );
@@ -576,7 +594,9 @@ export const UploadSummary: React.FC<UploadSummaryProps> = ({
   const completed = files.filter((f) => f.status === 'complete').length;
   const failed = files.filter((f) => f.status === 'error').length;
 
-  if (files.length === 0) return null;
+  if (files.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -588,10 +608,15 @@ export const UploadSummary: React.FC<UploadSummaryProps> = ({
         border: '1px solid #90cdf4',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <h4 style={{ margin: 0, fontSize: 14, color: '#2b6cb0' }}>
-          📤 Upload Progress
-        </h4>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 8,
+        }}
+      >
+        <h4 style={{ margin: 0, fontSize: 14, color: '#2b6cb0' }}>📤 Upload Progress</h4>
         {completed > 0 && onClearCompleted && (
           <button
             onClick={onClearCompleted}
@@ -613,26 +638,10 @@ export const UploadSummary: React.FC<UploadSummaryProps> = ({
       <ProgressBar progress={totalProgress} size="lg" />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 12, fontSize: 13 }}>
-        {uploading > 0 && (
-          <span style={{ color: '#3182ce' }}>
-            🔄 {uploading} uploading
-          </span>
-        )}
-        {pending > 0 && (
-          <span style={{ color: '#718096' }}>
-            ⏳ {pending} pending
-          </span>
-        )}
-        {completed > 0 && (
-          <span style={{ color: '#38a169' }}>
-            ✅ {completed} complete
-          </span>
-        )}
-        {failed > 0 && (
-          <span style={{ color: '#e53e3e' }}>
-            ❌ {failed} failed
-          </span>
-        )}
+        {uploading > 0 && <span style={{ color: '#3182ce' }}>🔄 {uploading} uploading</span>}
+        {pending > 0 && <span style={{ color: '#718096' }}>⏳ {pending} pending</span>}
+        {completed > 0 && <span style={{ color: '#38a169' }}>✅ {completed} complete</span>}
+        {failed > 0 && <span style={{ color: '#e53e3e' }}>❌ {failed} failed</span>}
       </div>
 
       {uploading > 0 && (
@@ -668,7 +677,9 @@ export const UploadList: React.FC<UploadListProps> = ({
   if (files.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: 40, color: '#718096' }}>
-        <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }} aria-hidden="true">📁</span>
+        <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }} aria-hidden="true">
+          📁
+        </span>
         <p>No files to upload</p>
         <p style={{ fontSize: 13 }}>Drag and drop files or click to select</p>
       </div>

@@ -9,4 +9,3 @@ export class UpdateQuestionnaireDto extends PartialType(CreateQuestionnaireDto) 
   @IsBoolean()
   isActive?: boolean;
 }
-

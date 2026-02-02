@@ -13,7 +13,7 @@ async function globalSetup(config: FullConfig) {
 
   // Wait for services to be ready
   console.log('⏳ Waiting for services...');
-  
+
   const browser = await chromium.launch();
   const page = await browser.newPage();
 

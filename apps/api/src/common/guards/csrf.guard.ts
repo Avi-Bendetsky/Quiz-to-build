@@ -31,17 +31,17 @@ export const SkipCsrf = () => {
 
 /**
  * CSRF Guard implementing Double Submit Cookie pattern
- * 
+ *
  * Protection mechanism:
  * 1. Server sets a CSRF token in a cookie (HttpOnly: false so JS can read it)
  * 2. Client must send the same token in the X-CSRF-Token header
  * 3. Guard validates that cookie value matches header value
- * 
+ *
  * This works because:
  * - Attackers can trigger requests that include cookies automatically
  * - But they cannot read cookie values due to Same-Origin Policy
  * - So they cannot set the matching header value
- * 
+ *
  * @see https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
  */
 @Injectable()
@@ -94,10 +94,7 @@ export class CsrfGuard implements CanActivate {
     }
 
     // Validate tokens match (constant-time comparison to prevent timing attacks)
-    const tokensMatch = crypto.timingSafeEqual(
-      Buffer.from(headerToken),
-      Buffer.from(cookieToken),
-    );
+    const tokensMatch = crypto.timingSafeEqual(Buffer.from(headerToken), Buffer.from(cookieToken));
 
     if (!tokensMatch) {
       this.logger.warn(`CSRF validation failed: Token mismatch for ${request.path}`);
@@ -142,29 +139,23 @@ export class CsrfGuard implements CanActivate {
     try {
       const decoded = Buffer.from(token, 'base64').toString('utf-8');
       const parts = decoded.split('.');
-      
+
       if (parts.length !== 3) {
         return false;
       }
 
       const [timestamp, randomBytes, providedHmac] = parts;
-      
+
       // Verify HMAC
       const data = `${timestamp}.${randomBytes}`;
-      const expectedHmac = crypto
-        .createHmac('sha256', this.csrfSecret)
-        .update(data)
-        .digest('hex');
+      const expectedHmac = crypto.createHmac('sha256', this.csrfSecret).update(data).digest('hex');
 
       // Constant-time comparison
       if (providedHmac.length !== expectedHmac.length) {
         return false;
       }
 
-      return crypto.timingSafeEqual(
-        Buffer.from(providedHmac),
-        Buffer.from(expectedHmac),
-      );
+      return crypto.timingSafeEqual(Buffer.from(providedHmac), Buffer.from(expectedHmac));
     } catch (error) {
       return false;
     }
@@ -207,7 +198,7 @@ export class CsrfService {
     path: string;
   } {
     const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
-    
+
     return {
       httpOnly: false, // Must be false so JS can read the cookie
       secure: nodeEnv === 'production',

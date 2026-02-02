@@ -1,16 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import {
-  Document,
-  DocumentType,
-  DocumentStatus,
-  SessionStatus,
-} from '@prisma/client';
+import { Document, DocumentType, DocumentStatus, SessionStatus } from '@prisma/client';
 import { TemplateEngineService } from './template-engine.service';
 import { DocumentBuilderService } from './document-builder.service';
 import { StorageService } from './storage.service';
@@ -91,9 +81,7 @@ export class DocumentGeneratorService {
       });
 
       const answeredIds = new Set(answeredQuestions.map((r) => r.questionId));
-      const missingQuestions = documentType.requiredQuestions.filter(
-        (id) => !answeredIds.has(id),
-      );
+      const missingQuestions = documentType.requiredQuestions.filter((id) => !answeredIds.has(id));
 
       if (missingQuestions.length > 0) {
         throw new BadRequestException(
@@ -220,10 +208,7 @@ export class DocumentGeneratorService {
   /**
    * Get all documents for a session
    */
-  async getSessionDocuments(
-    sessionId: string,
-    userId: string,
-  ): Promise<DocumentWithType[]> {
+  async getSessionDocuments(sessionId: string, userId: string): Promise<DocumentWithType[]> {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       select: { userId: true },
@@ -247,15 +232,13 @@ export class DocumentGeneratorService {
   /**
    * Get download URL for a document
    */
-  async getDownloadUrl(
-    id: string,
-    userId: string,
-    expiresInMinutes: number = 60,
-  ): Promise<string> {
+  async getDownloadUrl(id: string, userId: string, expiresInMinutes: number = 60): Promise<string> {
     const document = await this.getDocument(id, userId);
 
-    if (document.status !== DocumentStatus.GENERATED && 
-        document.status !== DocumentStatus.APPROVED) {
+    if (
+      document.status !== DocumentStatus.GENERATED &&
+      document.status !== DocumentStatus.APPROVED
+    ) {
       throw new BadRequestException(
         `Document is not available for download. Status: ${document.status}`,
       );
@@ -324,11 +307,7 @@ export class DocumentGeneratorService {
   /**
    * Reject a document (admin)
    */
-  async rejectDocument(
-    id: string,
-    adminUserId: string,
-    reason: string,
-  ): Promise<Document> {
+  async rejectDocument(id: string, adminUserId: string, reason: string): Promise<Document> {
     const document = await this.prisma.document.findUnique({
       where: { id },
     });
@@ -357,4 +336,3 @@ export class DocumentGeneratorService {
     });
   }
 }
-

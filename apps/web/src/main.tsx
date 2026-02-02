@@ -12,7 +12,7 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-createRoot(rootElement!).render(
+createRoot(rootElement).render(
   <StrictMode>
     <SentryErrorBoundary fallback={<div>An error occurred. Please refresh the page.</div>}>
       <App />

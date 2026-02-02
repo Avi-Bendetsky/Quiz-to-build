@@ -1,7 +1,7 @@
 /**
  * Comments.tsx - Comment & Discussion System
  * Sprint 35 Task 5: Comment threads on questions with @mentions
- * 
+ *
  * Nielsen Heuristics Addressed:
  * - #1 Visibility: Show comment counts, unread indicators
  * - #4 Consistency: Standard comment UI patterns
@@ -95,11 +95,16 @@ export interface CommentsContextValue {
   drafts: Map<string, CommentDraft>;
   currentUser: User | null;
   teamMembers: User[];
-  
+
   // Actions
   setCurrentUser: (user: User) => void;
   setTeamMembers: (members: User[]) => void;
-  addComment: (questionId: string, content: string, mentions: Mention[], parentId?: string) => Comment;
+  addComment: (
+    questionId: string,
+    content: string,
+    mentions: Mention[],
+    parentId?: string,
+  ) => Comment;
   editComment: (commentId: string, content: string, mentions: Mention[]) => void;
   deleteComment: (commentId: string) => void;
   resolveThread: (threadId: string) => void;
@@ -216,120 +221,119 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
   }, [drafts]);
 
   const unreadCount = useMemo(() => {
-    return notifications.filter(n => !n.isRead).length;
+    return notifications.filter((n) => !n.isRead).length;
   }, [notifications]);
 
   const generateId = (): string => {
     return `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const createNotification = useCallback((
-    type: CommentNotification['type'],
-    commentId: string,
-    questionId: string,
-    fromUser: User,
-    message: string
-  ) => {
-    const notification: CommentNotification = {
-      id: generateId(),
-      type,
-      commentId,
-      questionId,
-      fromUser,
-      message,
-      createdAt: new Date(),
-      isRead: false,
-    };
-    setNotifications(prev => [notification, ...prev]);
-  }, []);
+  const createNotification = useCallback(
+    (
+      type: CommentNotification['type'],
+      commentId: string,
+      questionId: string,
+      fromUser: User,
+      message: string,
+    ) => {
+      const notification: CommentNotification = {
+        id: generateId(),
+        type,
+        commentId,
+        questionId,
+        fromUser,
+        message,
+        createdAt: new Date(),
+        isRead: false,
+      };
+      setNotifications((prev) => [notification, ...prev]);
+    },
+    [],
+  );
 
-  const addComment = useCallback((
-    questionId: string,
-    content: string,
-    mentions: Mention[],
-    parentId?: string
-  ): Comment => {
-    if (!currentUser) {
-      throw new Error('Must be logged in to add comments');
-    }
-
-    const comment: Comment = {
-      id: generateId(),
-      questionId,
-      parentId,
-      content,
-      mentions,
-      reactions: [],
-      author: currentUser,
-      createdAt: new Date(),
-      isEdited: false,
-      isResolved: false,
-      isPinned: false,
-    };
-
-    setThreads(prev => {
-      const newThreads = new Map(prev);
-      const questionThreads = newThreads.get(questionId) || [];
-
-      if (parentId) {
-        // Add as reply to existing thread
-        const updatedThreads = questionThreads.map(thread => {
-          if (thread.rootComment.id === parentId || 
-              thread.replies.some(r => r.id === parentId)) {
-            return {
-              ...thread,
-              replies: [...thread.replies, comment],
-            };
-          }
-          return thread;
-        });
-        newThreads.set(questionId, updatedThreads);
-      } else {
-        // Create new thread
-        const newThread: CommentThread = {
-          id: generateId(),
-          questionId,
-          rootComment: comment,
-          replies: [],
-          isExpanded: true,
-          unreadCount: 0,
-        };
-        newThreads.set(questionId, [...questionThreads, newThread]);
+  const addComment = useCallback(
+    (questionId: string, content: string, mentions: Mention[], parentId?: string): Comment => {
+      if (!currentUser) {
+        throw new Error('Must be logged in to add comments');
       }
 
-      return newThreads;
-    });
+      const comment: Comment = {
+        id: generateId(),
+        questionId,
+        parentId,
+        content,
+        mentions,
+        reactions: [],
+        author: currentUser,
+        createdAt: new Date(),
+        isEdited: false,
+        isResolved: false,
+        isPinned: false,
+      };
 
-    // Create notifications for mentions
-    mentions.forEach(mention => {
-      const mentionedUser = teamMembers.find(m => m.id === mention.userId);
-      if (mentionedUser && mentionedUser.id !== currentUser.id) {
-        createNotification(
-          'mention',
-          comment.id,
-          questionId,
-          currentUser,
-          `${currentUser.name} mentioned you in a comment`
-        );
-      }
-    });
+      setThreads((prev) => {
+        const newThreads = new Map(prev);
+        const questionThreads = newThreads.get(questionId) || [];
 
-    // Clear draft after successful post
-    clearDraft(questionId, parentId);
+        if (parentId) {
+          // Add as reply to existing thread
+          const updatedThreads = questionThreads.map((thread) => {
+            if (
+              thread.rootComment.id === parentId ||
+              thread.replies.some((r) => r.id === parentId)
+            ) {
+              return {
+                ...thread,
+                replies: [...thread.replies, comment],
+              };
+            }
+            return thread;
+          });
+          newThreads.set(questionId, updatedThreads);
+        } else {
+          // Create new thread
+          const newThread: CommentThread = {
+            id: generateId(),
+            questionId,
+            rootComment: comment,
+            replies: [],
+            isExpanded: true,
+            unreadCount: 0,
+          };
+          newThreads.set(questionId, [...questionThreads, newThread]);
+        }
 
-    return comment;
-  }, [currentUser, teamMembers, createNotification]);
+        return newThreads;
+      });
 
-  const editComment = useCallback((
-    commentId: string,
-    content: string,
-    mentions: Mention[]
-  ) => {
-    setThreads(prev => {
+      // Create notifications for mentions
+      mentions.forEach((mention) => {
+        const mentionedUser = teamMembers.find((m) => m.id === mention.userId);
+        if (mentionedUser && mentionedUser.id !== currentUser.id) {
+          createNotification(
+            'mention',
+            comment.id,
+            questionId,
+            currentUser,
+            `${currentUser.name} mentioned you in a comment`,
+          );
+        }
+      });
+
+      // Clear draft after successful post
+      clearDraft(questionId, parentId);
+
+      return comment;
+    },
+    [currentUser, teamMembers, createNotification],
+  );
+
+  const editComment = useCallback((commentId: string, content: string, mentions: Mention[]) => {
+    setThreads((prev) => {
       const newThreads = new Map(prev);
-      
+
       newThreads.forEach((questionThreads, questionId) => {
-        const updatedThreads = questionThreads.map(thread => {
+        const updatedThreads = questionThreads.map((thread) => {
           if (thread.rootComment.id === commentId) {
             return {
               ...thread,
@@ -343,7 +347,7 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
             };
           }
 
-          const updatedReplies = thread.replies.map(reply => {
+          const updatedReplies = thread.replies.map((reply) => {
             if (reply.id === commentId) {
               return {
                 ...reply,
@@ -367,19 +371,19 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
   }, []);
 
   const deleteComment = useCallback((commentId: string) => {
-    setThreads(prev => {
+    setThreads((prev) => {
       const newThreads = new Map(prev);
 
       newThreads.forEach((questionThreads, questionId) => {
         // Filter out threads where root comment matches
         let updatedThreads = questionThreads.filter(
-          thread => thread.rootComment.id !== commentId
+          (thread) => thread.rootComment.id !== commentId,
         );
 
         // Remove from replies
-        updatedThreads = updatedThreads.map(thread => ({
+        updatedThreads = updatedThreads.map((thread) => ({
           ...thread,
-          replies: thread.replies.filter(reply => reply.id !== commentId),
+          replies: thread.replies.filter((reply) => reply.id !== commentId),
         }));
 
         newThreads.set(questionId, updatedThreads);
@@ -390,11 +394,11 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
   }, []);
 
   const resolveThread = useCallback((threadId: string) => {
-    setThreads(prev => {
+    setThreads((prev) => {
       const newThreads = new Map(prev);
 
       newThreads.forEach((questionThreads, questionId) => {
-        const updatedThreads = questionThreads.map(thread => {
+        const updatedThreads = questionThreads.map((thread) => {
           if (thread.id === threadId) {
             return {
               ...thread,
@@ -415,11 +419,11 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
   }, []);
 
   const pinComment = useCallback((commentId: string) => {
-    setThreads(prev => {
+    setThreads((prev) => {
       const newThreads = new Map(prev);
 
       newThreads.forEach((questionThreads, questionId) => {
-        const updatedThreads = questionThreads.map(thread => {
+        const updatedThreads = questionThreads.map((thread) => {
           if (thread.rootComment.id === commentId) {
             return {
               ...thread,
@@ -439,151 +443,164 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
     });
   }, []);
 
-  const addReaction = useCallback((commentId: string, emoji: string) => {
-    if (!currentUser) return;
+  const addReaction = useCallback(
+    (commentId: string, emoji: string) => {
+      if (!currentUser) {
+        return;
+      }
 
-    setThreads(prev => {
-      const newThreads = new Map(prev);
+      setThreads((prev) => {
+        const newThreads = new Map(prev);
 
-      newThreads.forEach((questionThreads, questionId) => {
-        const updatedThreads = questionThreads.map(thread => {
-          const updateReactions = (comment: Comment): Comment => {
-            if (comment.id !== commentId) return comment;
+        newThreads.forEach((questionThreads, questionId) => {
+          const updatedThreads = questionThreads.map((thread) => {
+            const updateReactions = (comment: Comment): Comment => {
+              if (comment.id !== commentId) {
+                return comment;
+              }
 
-            // Check if user already reacted with this emoji
-            const existingReaction = comment.reactions.find(
-              r => r.emoji === emoji && r.userId === currentUser.id
-            );
+              // Check if user already reacted with this emoji
+              const existingReaction = comment.reactions.find(
+                (r) => r.emoji === emoji && r.userId === currentUser.id,
+              );
 
-            if (existingReaction) {
-              return comment; // Already reacted
-            }
+              if (existingReaction) {
+                return comment; // Already reacted
+              }
+
+              return {
+                ...comment,
+                reactions: [
+                  ...comment.reactions,
+                  {
+                    emoji,
+                    userId: currentUser.id,
+                    userName: currentUser.name,
+                    createdAt: new Date(),
+                  },
+                ],
+              };
+            };
 
             return {
-              ...comment,
-              reactions: [
-                ...comment.reactions,
-                {
-                  emoji,
-                  userId: currentUser.id,
-                  userName: currentUser.name,
-                  createdAt: new Date(),
-                },
-              ],
+              ...thread,
+              rootComment: updateReactions(thread.rootComment),
+              replies: thread.replies.map(updateReactions),
             };
-          };
+          });
 
-          return {
-            ...thread,
-            rootComment: updateReactions(thread.rootComment),
-            replies: thread.replies.map(updateReactions),
-          };
+          newThreads.set(questionId, updatedThreads);
         });
 
-        newThreads.set(questionId, updatedThreads);
+        return newThreads;
       });
+    },
+    [currentUser],
+  );
 
-      return newThreads;
-    });
-  }, [currentUser]);
+  const removeReaction = useCallback(
+    (commentId: string, emoji: string) => {
+      if (!currentUser) {
+        return;
+      }
 
-  const removeReaction = useCallback((commentId: string, emoji: string) => {
-    if (!currentUser) return;
+      setThreads((prev) => {
+        const newThreads = new Map(prev);
 
-    setThreads(prev => {
-      const newThreads = new Map(prev);
+        newThreads.forEach((questionThreads, questionId) => {
+          const updatedThreads = questionThreads.map((thread) => {
+            const updateReactions = (comment: Comment): Comment => {
+              if (comment.id !== commentId) {
+                return comment;
+              }
 
-      newThreads.forEach((questionThreads, questionId) => {
-        const updatedThreads = questionThreads.map(thread => {
-          const updateReactions = (comment: Comment): Comment => {
-            if (comment.id !== commentId) return comment;
+              return {
+                ...comment,
+                reactions: comment.reactions.filter(
+                  (r) => !(r.emoji === emoji && r.userId === currentUser.id),
+                ),
+              };
+            };
 
             return {
-              ...comment,
-              reactions: comment.reactions.filter(
-                r => !(r.emoji === emoji && r.userId === currentUser.id)
-              ),
+              ...thread,
+              rootComment: updateReactions(thread.rootComment),
+              replies: thread.replies.map(updateReactions),
             };
-          };
+          });
 
-          return {
-            ...thread,
-            rootComment: updateReactions(thread.rootComment),
-            replies: thread.replies.map(updateReactions),
-          };
+          newThreads.set(questionId, updatedThreads);
         });
 
-        newThreads.set(questionId, updatedThreads);
+        return newThreads;
       });
-
-      return newThreads;
-    });
-  }, [currentUser]);
+    },
+    [currentUser],
+  );
 
   const markNotificationRead = useCallback((notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notificationId ? { ...n, isRead: true } : n
-      )
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
     );
   }, []);
 
   const markAllNotificationsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   }, []);
 
   const getDraftKey = (questionId: string, parentId?: string): string => {
     return parentId ? `${questionId}_${parentId}` : questionId;
   };
 
-  const saveDraft = useCallback((
-    questionId: string,
-    content: string,
-    mentions: Mention[],
-    parentId?: string
-  ) => {
-    const key = getDraftKey(questionId, parentId);
-    setDrafts(prev => {
-      const newDrafts = new Map(prev);
-      newDrafts.set(key, {
-        questionId,
-        parentId,
-        content,
-        mentions,
-        savedAt: new Date(),
+  const saveDraft = useCallback(
+    (questionId: string, content: string, mentions: Mention[], parentId?: string) => {
+      const key = getDraftKey(questionId, parentId);
+      setDrafts((prev) => {
+        const newDrafts = new Map(prev);
+        newDrafts.set(key, {
+          questionId,
+          parentId,
+          content,
+          mentions,
+          savedAt: new Date(),
+        });
+        return newDrafts;
       });
-      return newDrafts;
-    });
-  }, []);
+    },
+    [],
+  );
 
-  const getDraft = useCallback((
-    questionId: string,
-    parentId?: string
-  ): CommentDraft | undefined => {
-    const key = getDraftKey(questionId, parentId);
-    return drafts.get(key);
-  }, [drafts]);
+  const getDraft = useCallback(
+    (questionId: string, parentId?: string): CommentDraft | undefined => {
+      const key = getDraftKey(questionId, parentId);
+      return drafts.get(key);
+    },
+    [drafts],
+  );
 
   const clearDraft = useCallback((questionId: string, parentId?: string) => {
     const key = getDraftKey(questionId, parentId);
-    setDrafts(prev => {
+    setDrafts((prev) => {
       const newDrafts = new Map(prev);
       newDrafts.delete(key);
       return newDrafts;
     });
   }, []);
 
-  const getThreadsForQuestion = useCallback((questionId: string): CommentThread[] => {
-    return threads.get(questionId) || [];
-  }, [threads]);
+  const getThreadsForQuestion = useCallback(
+    (questionId: string): CommentThread[] => {
+      return threads.get(questionId) || [];
+    },
+    [threads],
+  );
 
-  const getCommentCount = useCallback((questionId: string): number => {
-    const questionThreads = threads.get(questionId) || [];
-    return questionThreads.reduce(
-      (count, thread) => count + 1 + thread.replies.length,
-      0
-    );
-  }, [threads]);
+  const getCommentCount = useCallback(
+    (questionId: string): number => {
+      const questionThreads = threads.get(questionId) || [];
+      return questionThreads.reduce((count, thread) => count + 1 + thread.replies.length, 0);
+    },
+    [threads],
+  );
 
   const value: CommentsContextValue = {
     threads,
@@ -610,11 +627,7 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
     getCommentCount,
   };
 
-  return (
-    <CommentsContext.Provider value={value}>
-      {children}
-    </CommentsContext.Provider>
-  );
+  return <CommentsContext.Provider value={value}>{children}</CommentsContext.Provider>;
 };
 
 // ============================================================================
@@ -942,17 +955,25 @@ const formatTimestamp = (date: Date): string => {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) {
+    return 'Just now';
+  }
+  if (diffMins < 60) {
+    return `${diffMins}m ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
   return new Date(date).toLocaleDateString();
 };
 
 const getInitials = (name: string): string => {
   return name
     .split(' ')
-    .map(n => n[0])
+    .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
@@ -1019,10 +1040,12 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   }, [content, mentions, questionId, parentId, saveDraft]);
 
   const filteredMembers = useMemo(() => {
-    if (!mentionSearch) return teamMembers;
+    if (!mentionSearch) {
+      return teamMembers;
+    }
     const search = mentionSearch.toLowerCase();
     return teamMembers.filter(
-      m => m.name.toLowerCase().includes(search) || m.email.toLowerCase().includes(search)
+      (m) => m.name.toLowerCase().includes(search) || m.email.toLowerCase().includes(search),
     );
   }, [teamMembers, mentionSearch]);
 
@@ -1035,7 +1058,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     // Check for @ mention trigger
     const textBeforeCursor = value.slice(0, position);
     const atMatch = textBeforeCursor.match(/@(\w*)$/);
-    
+
     if (atMatch) {
       setShowMentions(true);
       setMentionSearch(atMatch[1]);
@@ -1050,10 +1073,10 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     if (showMentions) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setMentionIndex(prev => Math.min(prev + 1, filteredMembers.length - 1));
+        setMentionIndex((prev) => Math.min(prev + 1, filteredMembers.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setMentionIndex(prev => Math.max(prev - 1, 0));
+        setMentionIndex((prev) => Math.max(prev - 1, 0));
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
         if (filteredMembers[mentionIndex]) {
@@ -1072,10 +1095,10 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     const textBeforeCursor = content.slice(0, cursorPosition);
     const atIndex = textBeforeCursor.lastIndexOf('@');
     const textAfterCursor = content.slice(cursorPosition);
-    
+
     const mentionText = `@${user.name}`;
     const newContent = content.slice(0, atIndex) + mentionText + ' ' + textAfterCursor;
-    
+
     const newMention: Mention = {
       userId: user.id,
       userName: user.name,
@@ -1084,7 +1107,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     };
 
     setContent(newContent);
-    setMentions(prev => [...prev, newMention]);
+    setMentions((prev) => [...prev, newMention]);
     setShowMentions(false);
     setMentionSearch('');
 
@@ -1097,7 +1120,9 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!content.trim() || !currentUser) return;
+    if (!content.trim() || !currentUser) {
+      return;
+    }
 
     addComment(questionId, content.trim(), mentions, parentId);
     setContent('');
@@ -1157,9 +1182,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       </div>
 
       <div style={styles.inputActions}>
-        <span style={styles.mentionHint}>
-          Press Ctrl+Enter to post • @ to mention
-        </span>
+        <span style={styles.mentionHint}>Press Ctrl+Enter to post • @ to mention</span>
         <button
           onClick={handleSubmit}
           disabled={!content.trim()}
@@ -1192,7 +1215,8 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
   isLast = false,
   onReply,
 }) => {
-  const { currentUser, editComment, deleteComment, addReaction, removeReaction, pinComment } = useComments();
+  const { currentUser, editComment, deleteComment, addReaction, removeReaction, pinComment } =
+    useComments();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -1208,7 +1232,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
 
   const handleReaction = (emoji: string) => {
     const hasReacted = comment.reactions.some(
-      r => r.emoji === emoji && r.userId === currentUser?.id
+      (r) => r.emoji === emoji && r.userId === currentUser?.id,
     );
 
     if (hasReacted) {
@@ -1222,7 +1246,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
   // Group reactions by emoji
   const groupedReactions = useMemo(() => {
     const groups = new Map<string, Reaction[]>();
-    comment.reactions.forEach(reaction => {
+    comment.reactions.forEach((reaction) => {
       const existing = groups.get(reaction.emoji) || [];
       groups.set(reaction.emoji, [...existing, reaction]);
     });
@@ -1268,8 +1292,16 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
         <span style={styles.authorName}>{comment.author.name}</span>
         <span style={styles.timestamp}>{formatTimestamp(comment.createdAt)}</span>
         {comment.isEdited && <span style={styles.editedBadge}>(edited)</span>}
-        {comment.isPinned && <span style={styles.pinnedBadge}><span aria-hidden="true">📌</span> Pinned</span>}
-        {comment.isResolved && <span style={styles.resolvedBadge}><span aria-hidden="true">✓</span> Resolved</span>}
+        {comment.isPinned && (
+          <span style={styles.pinnedBadge}>
+            <span aria-hidden="true">📌</span> Pinned
+          </span>
+        )}
+        {comment.isResolved && (
+          <span style={styles.resolvedBadge}>
+            <span aria-hidden="true">✓</span> Resolved
+          </span>
+        )}
       </div>
 
       {isEditing ? (
@@ -1281,10 +1313,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
             autoFocus
           />
           <div style={styles.inputActions}>
-            <button
-              style={styles.actionButton}
-              onClick={() => setIsEditing(false)}
-            >
+            <button style={styles.actionButton} onClick={() => setIsEditing(false)}>
               Cancel
             </button>
             <button
@@ -1303,7 +1332,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
       {groupedReactions.size > 0 && (
         <div style={styles.reactions}>
           {Array.from(groupedReactions.entries()).map(([emoji, reactions]) => {
-            const hasReacted = reactions.some(r => r.userId === currentUser?.id);
+            const hasReacted = reactions.some((r) => r.userId === currentUser?.id);
             return (
               <button
                 key={emoji}
@@ -1312,7 +1341,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
                   ...(hasReacted ? styles.reactionActive : {}),
                 }}
                 onClick={() => handleReaction(emoji)}
-                title={reactions.map(r => r.userName).join(', ')}
+                title={reactions.map((r) => r.userName).join(', ')}
               >
                 <span>{emoji}</span>
                 <span style={styles.reactionCount}>{reactions.length}</span>
@@ -1324,15 +1353,12 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
 
       <div style={styles.commentActions}>
         <div style={{ position: 'relative' }}>
-          <button
-            style={styles.actionButton}
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          >
+          <button style={styles.actionButton} onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
             <span aria-hidden="true">😊</span> React
           </button>
           {showEmojiPicker && (
             <div style={{ ...styles.emojiPicker, position: 'absolute', top: '100%', left: 0 }}>
-              {COMMON_REACTIONS.map(emoji => (
+              {COMMON_REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
                   style={styles.emojiButton}
@@ -1400,28 +1426,24 @@ export const CommentThreadDisplay: React.FC<CommentThreadProps> = ({ thread }) =
         ...(thread.rootComment.isPinned ? styles.threadPinned : {}),
       }}
     >
-      <CommentDisplay
-        comment={thread.rootComment}
-        onReply={() => setShowReplyInput(true)}
-      />
+      <CommentDisplay comment={thread.rootComment} onReply={() => setShowReplyInput(true)} />
 
       {thread.replies.length > 0 && (
         <div style={styles.replies}>
-          <button
-            style={styles.actionButton}
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? '▼' : '▶'} {thread.replies.length} repl{thread.replies.length === 1 ? 'y' : 'ies'}
+          <button style={styles.actionButton} onClick={() => setIsExpanded(!isExpanded)}>
+            {isExpanded ? '▼' : '▶'} {thread.replies.length} repl
+            {thread.replies.length === 1 ? 'y' : 'ies'}
           </button>
 
-          {isExpanded && thread.replies.map((reply, index) => (
-            <CommentDisplay
-              key={reply.id}
-              comment={reply}
-              isReply
-              isLast={index === thread.replies.length - 1}
-            />
-          ))}
+          {isExpanded &&
+            thread.replies.map((reply, index) => (
+              <CommentDisplay
+                key={reply.id}
+                comment={reply}
+                isReply
+                isLast={index === thread.replies.length - 1}
+              />
+            ))}
         </div>
       )}
 
@@ -1438,11 +1460,16 @@ export const CommentThreadDisplay: React.FC<CommentThreadProps> = ({ thread }) =
       )}
 
       <div style={{ padding: '8px 16px', borderTop: '1px solid #f0f0f0' }}>
-        <button
-          style={styles.actionButton}
-          onClick={() => resolveThread(thread.id)}
-        >
-          {thread.rootComment.isResolved ? <><span aria-hidden="true">↩️</span> Reopen</> : <><span aria-hidden="true">✓</span> Resolve</>}
+        <button style={styles.actionButton} onClick={() => resolveThread(thread.id)}>
+          {thread.rootComment.isResolved ? (
+            <>
+              <span aria-hidden="true">↩️</span> Reopen
+            </>
+          ) : (
+            <>
+              <span aria-hidden="true">✓</span> Resolve
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -1469,11 +1496,21 @@ export const QuestionComments: React.FC<QuestionCommentsProps> = ({
   // Sort: pinned first, then resolved last, then by date
   const sortedThreads = useMemo(() => {
     return [...threads].sort((a, b) => {
-      if (a.rootComment.isPinned && !b.rootComment.isPinned) return -1;
-      if (!a.rootComment.isPinned && b.rootComment.isPinned) return 1;
-      if (a.rootComment.isResolved && !b.rootComment.isResolved) return 1;
-      if (!a.rootComment.isResolved && b.rootComment.isResolved) return -1;
-      return new Date(b.rootComment.createdAt).getTime() - new Date(a.rootComment.createdAt).getTime();
+      if (a.rootComment.isPinned && !b.rootComment.isPinned) {
+        return -1;
+      }
+      if (!a.rootComment.isPinned && b.rootComment.isPinned) {
+        return 1;
+      }
+      if (a.rootComment.isResolved && !b.rootComment.isResolved) {
+        return 1;
+      }
+      if (!a.rootComment.isResolved && b.rootComment.isResolved) {
+        return -1;
+      }
+      return (
+        new Date(b.rootComment.createdAt).getTime() - new Date(a.rootComment.createdAt).getTime()
+      );
     });
   }, [threads]);
 
@@ -1490,13 +1527,15 @@ export const QuestionComments: React.FC<QuestionCommentsProps> = ({
 
       {sortedThreads.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {sortedThreads.map(thread => (
+          {sortedThreads.map((thread) => (
             <CommentThreadDisplay key={thread.id} thread={thread} />
           ))}
         </div>
       ) : (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon} aria-hidden="true">💬</div>
+          <div style={styles.emptyIcon} aria-hidden="true">
+            💬
+          </div>
           <p>No comments yet. Be the first to start a discussion!</p>
         </div>
       )}
@@ -1509,7 +1548,8 @@ export const QuestionComments: React.FC<QuestionCommentsProps> = ({
 // ============================================================================
 
 export const NotificationBell: React.FC = () => {
-  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead } = useComments();
+  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead } =
+    useComments();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -1538,9 +1578,7 @@ export const NotificationBell: React.FC = () => {
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
         <span aria-hidden="true">🔔</span>
-        {unreadCount > 0 && (
-          <span style={styles.notificationBadge}>{unreadCount}</span>
-        )}
+        {unreadCount > 0 && <span style={styles.notificationBadge}>{unreadCount}</span>}
       </button>
 
       {isOpen && (
@@ -1548,17 +1586,14 @@ export const NotificationBell: React.FC = () => {
           <div style={styles.notificationHeader}>
             <span style={{ fontWeight: 600 }}>Notifications</span>
             {unreadCount > 0 && (
-              <button
-                style={styles.actionButton}
-                onClick={markAllNotificationsRead}
-              >
+              <button style={styles.actionButton} onClick={markAllNotificationsRead}>
                 Mark all read
               </button>
             )}
           </div>
 
           {notifications.length > 0 ? (
-            notifications.slice(0, 20).map(notification => (
+            notifications.slice(0, 20).map((notification) => (
               <div
                 key={notification.id}
                 style={{
@@ -1567,13 +1602,9 @@ export const NotificationBell: React.FC = () => {
                 }}
                 onClick={() => markNotificationRead(notification.id)}
               >
-                <div style={styles.avatar}>
-                  {getInitials(notification.fromUser.name)}
-                </div>
+                <div style={styles.avatar}>{getInitials(notification.fromUser.name)}</div>
                 <div>
-                  <div style={styles.notificationMessage}>
-                    {notification.message}
-                  </div>
+                  <div style={styles.notificationMessage}>{notification.message}</div>
                   <div style={styles.notificationTime}>
                     {formatTimestamp(notification.createdAt)}
                   </div>
@@ -1600,14 +1631,13 @@ interface CommentCountBadgeProps {
   onClick?: () => void;
 }
 
-export const CommentCountBadge: React.FC<CommentCountBadgeProps> = ({
-  questionId,
-  onClick,
-}) => {
+export const CommentCountBadge: React.FC<CommentCountBadgeProps> = ({ questionId, onClick }) => {
   const { getCommentCount } = useComments();
   const count = getCommentCount(questionId);
 
-  if (count === 0) return null;
+  if (count === 0) {
+    return null;
+  }
 
   return (
     <button
@@ -1637,18 +1667,19 @@ export const CommentCountBadge: React.FC<CommentCountBadgeProps> = ({
 // ============================================================================
 
 export const useCommentNotifications = () => {
-  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead } = useComments();
+  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead } =
+    useComments();
 
   const unreadNotifications = useMemo(() => {
-    return notifications.filter(n => !n.isRead);
+    return notifications.filter((n) => !n.isRead);
   }, [notifications]);
 
   const mentionNotifications = useMemo(() => {
-    return notifications.filter(n => n.type === 'mention');
+    return notifications.filter((n) => n.type === 'mention');
   }, [notifications]);
 
   const replyNotifications = useMemo(() => {
-    return notifications.filter(n => n.type === 'reply');
+    return notifications.filter((n) => n.type === 'reply');
   }, [notifications]);
 
   return {

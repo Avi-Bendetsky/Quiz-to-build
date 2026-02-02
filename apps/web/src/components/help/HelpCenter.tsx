@@ -1,12 +1,12 @@
 /**
  * Help Center Component
- * 
+ *
  * Provides searchable FAQ with categories:
  * - Getting Started
  * - Questionnaires
  * - Billing
  * - Troubleshooting
- * 
+ *
  * Nielsen Heuristic #10: Help and Documentation
  */
 
@@ -26,7 +26,7 @@ export interface FAQItem {
   notHelpful?: number;
 }
 
-export type FAQCategory = 
+export type FAQCategory =
   | 'getting-started'
   | 'questionnaires'
   | 'billing'
@@ -495,22 +495,24 @@ Reports are formatted as Confluence pages with proper headings, tables, and link
 // ============================================================================
 
 export function searchFAQ(items: FAQItem[], query: string): FAQItem[] {
-  if (!query.trim()) return items;
-  
+  if (!query.trim()) {
+    return items;
+  }
+
   const searchTerms = query.toLowerCase().split(/\s+/);
-  
+
   return items
     .map((item) => {
       const questionMatch = searchTerms.filter((term) =>
-        item.question.toLowerCase().includes(term)
+        item.question.toLowerCase().includes(term),
       ).length;
       const answerMatch = searchTerms.filter((term) =>
-        item.answer.toLowerCase().includes(term)
+        item.answer.toLowerCase().includes(term),
       ).length;
       const tagMatch = searchTerms.filter((term) =>
-        item.tags.some((tag) => tag.toLowerCase().includes(term))
+        item.tags.some((tag) => tag.toLowerCase().includes(term)),
       ).length;
-      
+
       const score = questionMatch * 3 + answerMatch * 1 + tagMatch * 2;
       return { item, score };
     })
@@ -530,12 +532,7 @@ interface SearchBarProps {
   resultCount: number;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  value, 
-  onChange, 
-  onClear, 
-  resultCount 
-}) => {
+const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, onClear, resultCount }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -546,7 +543,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <div className="help-search">
       <div className="help-search__input-wrapper">
-        <span className="help-search__icon" aria-hidden="true">🔍</span>
+        <span className="help-search__icon" aria-hidden="true">
+          🔍
+        </span>
         <input
           ref={inputRef}
           type="search"
@@ -558,11 +557,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           aria-describedby="search-results-count"
         />
         {value && (
-          <button
-            className="help-search__clear"
-            onClick={onClear}
-            aria-label="Clear search"
-          >
+          <button className="help-search__clear" onClick={onClear} aria-label="Clear search">
             ✕
           </button>
         )}
@@ -582,11 +577,7 @@ interface CategoryFilterProps {
   onSelect: (category: FAQCategory | null) => void;
 }
 
-const CategoryFilter: React.FC<CategoryFilterProps> = ({ 
-  categories, 
-  selected, 
-  onSelect 
-}) => {
+const CategoryFilter: React.FC<CategoryFilterProps> = ({ categories, selected, onSelect }) => {
   return (
     <div className="help-categories" role="tablist" aria-label="FAQ Categories">
       <button
@@ -646,7 +637,7 @@ const FAQAccordionItem: React.FC<FAQAccordionItemProps> = ({
           {isOpen ? '−' : '+'}
         </span>
       </button>
-      
+
       <div
         id={`faq-answer-${item.id}`}
         ref={contentRef}
@@ -660,7 +651,7 @@ const FAQAccordionItem: React.FC<FAQAccordionItemProps> = ({
             <p key={idx}>{paragraph}</p>
           ))}
         </div>
-        
+
         <div className="faq-item__feedback">
           <span className="faq-item__feedback-label">Was this helpful?</span>
           <button
@@ -678,7 +669,7 @@ const FAQAccordionItem: React.FC<FAQAccordionItemProps> = ({
             👎 No ({item.notHelpful || 0})
           </button>
         </div>
-        
+
         <div className="faq-item__tags">
           {item.tags.map((tag) => (
             <span key={tag} className="faq-item__tag">
@@ -702,7 +693,7 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ searchQuery }) => {
       <p className="help-contact__description">
         Our support team is available Monday-Friday, 9am-6pm EST
       </p>
-      
+
       <div className="help-contact__options">
         <a
           href={`mailto:support@quiz2biz.com?subject=Help Request${
@@ -710,27 +701,31 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ searchQuery }) => {
           }`}
           className="help-contact__option"
         >
-          <span className="help-contact__option-icon" aria-hidden="true">📧</span>
+          <span className="help-contact__option-icon" aria-hidden="true">
+            📧
+          </span>
           <span className="help-contact__option-label">Email Support</span>
           <span className="help-contact__option-detail">support@quiz2biz.com</span>
         </a>
-        
-        <button className="help-contact__option" onClick={() => {
-          // Open chat widget
-          (window as any).Intercom?.('show');
-        }}>
-          <span className="help-contact__option-icon" aria-hidden="true">💬</span>
+
+        <button
+          className="help-contact__option"
+          onClick={() => {
+            // Open chat widget
+            (window as any).Intercom?.('show');
+          }}
+        >
+          <span className="help-contact__option-icon" aria-hidden="true">
+            💬
+          </span>
           <span className="help-contact__option-label">Live Chat</span>
           <span className="help-contact__option-detail">Avg response: 5 min</span>
         </button>
-        
-        <a
-          href="/docs"
-          className="help-contact__option"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span className="help-contact__option-icon" aria-hidden="true">📖</span>
+
+        <a href="/docs" className="help-contact__option" target="_blank" rel="noopener noreferrer">
+          <span className="help-contact__option-icon" aria-hidden="true">
+            📖
+          </span>
           <span className="help-contact__option-label">Documentation</span>
           <span className="help-contact__option-detail">Full technical docs</span>
         </a>
@@ -755,25 +750,23 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
   initialSearch = '',
 }) => {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
-  const [selectedCategory, setSelectedCategory] = useState<FAQCategory | null>(
-    initialCategory
-  );
+  const [selectedCategory, setSelectedCategory] = useState<FAQCategory | null>(initialCategory);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
 
   // Filter and search FAQ items
   const filteredItems = useMemo(() => {
     let items = FAQ_ITEMS;
-    
+
     // Filter by category
     if (selectedCategory) {
       items = items.filter((item) => item.category === selectedCategory);
     }
-    
+
     // Search
     if (searchQuery.trim()) {
       items = searchFAQ(items, searchQuery);
     }
-    
+
     return items;
   }, [searchQuery, selectedCategory]);
 
@@ -808,7 +801,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
         document.querySelector<HTMLInputElement>('.help-search__input')?.focus();
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -817,9 +810,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
     <div className={`help-center ${className}`}>
       <header className="help-center__header">
         <h1 className="help-center__title">Help Center</h1>
-        <p className="help-center__subtitle">
-          Find answers, browse tutorials, and get support
-        </p>
+        <p className="help-center__subtitle">Find answers, browse tutorials, and get support</p>
         <p className="help-center__shortcut">
           <kbd>Ctrl</kbd> + <kbd>K</kbd> to search
         </p>
@@ -841,7 +832,9 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
       <main className="help-center__content" role="tabpanel">
         {filteredItems.length === 0 ? (
           <div className="help-center__no-results">
-            <span className="help-center__no-results-icon" aria-hidden="true">🔍</span>
+            <span className="help-center__no-results-icon" aria-hidden="true">
+              🔍
+            </span>
             <h2>No results found</h2>
             <p>Try different keywords or browse categories above</p>
             <button
@@ -881,7 +874,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
 export function useHelpSearch(initialItems: FAQItem[] = FAQ_ITEMS) {
   const [query, setQuery] = useState('');
   const results = useMemo(() => searchFAQ(initialItems, query), [initialItems, query]);
-  
+
   return {
     query,
     setQuery,

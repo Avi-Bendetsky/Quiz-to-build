@@ -1,12 +1,12 @@
 /**
  * Internationalization System
- * 
+ *
  * Sprint 38: Internationalization & Accessibility++
  * Task ux38t1: i18n Setup - react-i18next, translation files, language switcher
  * Task ux38t2: Multi-Language Support - 5 languages (ES, FR, DE, JA, ZH)
  * Task ux38t3: Cultural Localization - Date/number/currency formats per locale
  * Task ux38t4: RTL Support - Arabic/Hebrew layout mirroring
- * 
+ *
  * Features:
  * - React-i18next integration
  * - Dynamic language switching
@@ -69,7 +69,12 @@ export interface I18nState {
 type I18nAction =
   | { type: 'SET_LOCALE'; locale: SupportedLocale }
   | { type: 'SET_DIRECTION'; direction: TextDirection }
-  | { type: 'LOAD_TRANSLATIONS'; locale: SupportedLocale; namespace: string; translations: Record<string, string> }
+  | {
+      type: 'LOAD_TRANSLATIONS';
+      locale: SupportedLocale;
+      namespace: string;
+      translations: Record<string, string>;
+    }
   | { type: 'SET_LOADING'; isLoading: boolean }
   | { type: 'LOAD_STATE'; state: Partial<I18nState> };
 
@@ -77,7 +82,7 @@ export interface I18nContextType extends I18nState {
   // Translation
   t: (key: string, params?: Record<string, string | number>) => string;
   changeLocale: (locale: SupportedLocale) => Promise<void>;
-  
+
   // Formatting
   formatDate: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
   formatTime: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
@@ -85,7 +90,7 @@ export interface I18nContextType extends I18nState {
   formatNumber: (num: number, options?: Intl.NumberFormatOptions) => string;
   formatCurrency: (amount: number, currency?: string) => string;
   formatRelativeTime: (date: Date) => string;
-  
+
   // Locale info
   getLocaleConfig: (locale?: SupportedLocale) => LocaleConfig;
   getSupportedLocales: () => LocaleConfig[];
@@ -471,7 +476,9 @@ const defaultTranslations: Record<SupportedLocale, Partial<TranslationNamespace>
 const initialState: I18nState = {
   locale: 'en',
   direction: 'ltr',
-  translations: new Map(Object.entries(defaultTranslations) as [SupportedLocale, Partial<TranslationNamespace>][]),
+  translations: new Map(
+    Object.entries(defaultTranslations) as [SupportedLocale, Partial<TranslationNamespace>][],
+  ),
   loadedNamespaces: new Set(['common', 'auth']),
   isLoading: false,
   fallbackLocale: 'en',
@@ -570,7 +577,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
   useEffect(() => {
     document.documentElement.dir = state.direction;
     document.documentElement.lang = state.locale;
-    
+
     // Add RTL class for CSS styling
     if (state.direction === 'rtl') {
       document.body.classList.add('rtl');
@@ -585,37 +592,48 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
   }, [state.locale]);
 
   // Translation function
-  const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-    const [namespace, ...keyParts] = key.split('.');
-    const actualKey = keyParts.length > 0 ? keyParts.join('.') : namespace;
-    const actualNamespace = keyParts.length > 0 ? namespace : 'common';
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      const [namespace, ...keyParts] = key.split('.');
+      const actualKey = keyParts.length > 0 ? keyParts.join('.') : namespace;
+      const actualNamespace = keyParts.length > 0 ? namespace : 'common';
 
-    // Try current locale
-    const localeTranslations = state.translations.get(state.locale);
-    let translation = (localeTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[key] ||
-                      (localeTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[actualKey];
+      // Try current locale
+      const localeTranslations = state.translations.get(state.locale);
+      let translation =
+        (localeTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[key] ||
+        (localeTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[
+          actualKey
+        ];
 
-    // Fallback to default locale
-    if (!translation && state.locale !== state.fallbackLocale) {
-      const fallbackTranslations = state.translations.get(state.fallbackLocale);
-      translation = (fallbackTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[key] ||
-                    (fallbackTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[actualKey];
-    }
+      // Fallback to default locale
+      if (!translation && state.locale !== state.fallbackLocale) {
+        const fallbackTranslations = state.translations.get(state.fallbackLocale);
+        translation =
+          (fallbackTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[
+            key
+          ] ||
+          (fallbackTranslations as Record<string, Record<string, string>>)?.[actualNamespace]?.[
+            actualKey
+          ];
+      }
 
-    // Return key if no translation found
-    if (!translation) {
-      return key;
-    }
+      // Return key if no translation found
+      if (!translation) {
+        return key;
+      }
 
-    // Replace parameters
-    if (params) {
-      Object.entries(params).forEach(([param, value]) => {
-        translation = translation!.replace(new RegExp(`{{${param}}}`, 'g'), String(value));
-      });
-    }
+      // Replace parameters
+      if (params) {
+        Object.entries(params).forEach(([param, value]) => {
+          translation = translation.replace(new RegExp(`{{${param}}}`, 'g'), String(value));
+        });
+      }
 
-    return translation;
-  }, [state.locale, state.translations, state.fallbackLocale]);
+      return translation;
+    },
+    [state.locale, state.translations, state.fallbackLocale],
+  );
 
   // Change locale
   const changeLocale = useCallback(async (locale: SupportedLocale): Promise<void> => {
@@ -625,7 +643,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
     }
 
     dispatch({ type: 'SET_LOADING', isLoading: true });
-    
+
     try {
       // In production, this would load translations from server/CDN
       // For now, we use the default translations
@@ -638,75 +656,98 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
   }, []);
 
   // Formatting functions
-  const formatDate = useCallback((date: Date, options?: Intl.DateTimeFormatOptions): string => {
-    const defaultOptions: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      ...options,
-    };
-    return new Intl.DateTimeFormat(state.locale, defaultOptions).format(date);
-  }, [state.locale]);
+  const formatDate = useCallback(
+    (date: Date, options?: Intl.DateTimeFormatOptions): string => {
+      const defaultOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        ...options,
+      };
+      return new Intl.DateTimeFormat(state.locale, defaultOptions).format(date);
+    },
+    [state.locale],
+  );
 
-  const formatTime = useCallback((date: Date, options?: Intl.DateTimeFormatOptions): string => {
-    const defaultOptions: Intl.DateTimeFormatOptions = {
-      hour: 'numeric',
-      minute: 'numeric',
-      ...options,
-    };
-    return new Intl.DateTimeFormat(state.locale, defaultOptions).format(date);
-  }, [state.locale]);
+  const formatTime = useCallback(
+    (date: Date, options?: Intl.DateTimeFormatOptions): string => {
+      const defaultOptions: Intl.DateTimeFormatOptions = {
+        hour: 'numeric',
+        minute: 'numeric',
+        ...options,
+      };
+      return new Intl.DateTimeFormat(state.locale, defaultOptions).format(date);
+    },
+    [state.locale],
+  );
 
-  const formatDateTime = useCallback((date: Date, options?: Intl.DateTimeFormatOptions): string => {
-    const defaultOptions: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      ...options,
-    };
-    return new Intl.DateTimeFormat(state.locale, defaultOptions).format(date);
-  }, [state.locale]);
+  const formatDateTime = useCallback(
+    (date: Date, options?: Intl.DateTimeFormatOptions): string => {
+      const defaultOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        ...options,
+      };
+      return new Intl.DateTimeFormat(state.locale, defaultOptions).format(date);
+    },
+    [state.locale],
+  );
 
-  const formatNumber = useCallback((num: number, options?: Intl.NumberFormatOptions): string => {
-    const config = LOCALE_CONFIGS[state.locale];
-    return new Intl.NumberFormat(state.locale, { ...config.numberFormat, ...options }).format(num);
-  }, [state.locale]);
+  const formatNumber = useCallback(
+    (num: number, options?: Intl.NumberFormatOptions): string => {
+      const config = LOCALE_CONFIGS[state.locale];
+      return new Intl.NumberFormat(state.locale, { ...config.numberFormat, ...options }).format(
+        num,
+      );
+    },
+    [state.locale],
+  );
 
-  const formatCurrency = useCallback((amount: number, currency?: string): string => {
-    const config = LOCALE_CONFIGS[state.locale];
-    return new Intl.NumberFormat(state.locale, {
-      style: 'currency',
-      currency: currency || config.currencyCode,
-    }).format(amount);
-  }, [state.locale]);
+  const formatCurrency = useCallback(
+    (amount: number, currency?: string): string => {
+      const config = LOCALE_CONFIGS[state.locale];
+      return new Intl.NumberFormat(state.locale, {
+        style: 'currency',
+        currency: currency || config.currencyCode,
+      }).format(amount);
+    },
+    [state.locale],
+  );
 
-  const formatRelativeTime = useCallback((date: Date): string => {
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffSecs = Math.round(diffMs / 1000);
-    const diffMins = Math.round(diffSecs / 60);
-    const diffHours = Math.round(diffMins / 60);
-    const diffDays = Math.round(diffHours / 24);
+  const formatRelativeTime = useCallback(
+    (date: Date): string => {
+      const now = new Date();
+      const diffMs = date.getTime() - now.getTime();
+      const diffSecs = Math.round(diffMs / 1000);
+      const diffMins = Math.round(diffSecs / 60);
+      const diffHours = Math.round(diffMins / 60);
+      const diffDays = Math.round(diffHours / 24);
 
-    const rtf = new Intl.RelativeTimeFormat(state.locale, { numeric: 'auto' });
+      const rtf = new Intl.RelativeTimeFormat(state.locale, { numeric: 'auto' });
 
-    if (Math.abs(diffDays) >= 1) {
-      return rtf.format(diffDays, 'day');
-    } else if (Math.abs(diffHours) >= 1) {
-      return rtf.format(diffHours, 'hour');
-    } else if (Math.abs(diffMins) >= 1) {
-      return rtf.format(diffMins, 'minute');
-    } else {
-      return rtf.format(diffSecs, 'second');
-    }
-  }, [state.locale]);
+      if (Math.abs(diffDays) >= 1) {
+        return rtf.format(diffDays, 'day');
+      } else if (Math.abs(diffHours) >= 1) {
+        return rtf.format(diffHours, 'hour');
+      } else if (Math.abs(diffMins) >= 1) {
+        return rtf.format(diffMins, 'minute');
+      } else {
+        return rtf.format(diffSecs, 'second');
+      }
+    },
+    [state.locale],
+  );
 
   // Locale info functions
-  const getLocaleConfig = useCallback((locale?: SupportedLocale): LocaleConfig => {
-    return LOCALE_CONFIGS[locale || state.locale];
-  }, [state.locale]);
+  const getLocaleConfig = useCallback(
+    (locale?: SupportedLocale): LocaleConfig => {
+      return LOCALE_CONFIGS[locale || state.locale];
+    },
+    [state.locale],
+  );
 
   const getSupportedLocales = useCallback((): LocaleConfig[] => {
     return Object.values(LOCALE_CONFIGS);
@@ -731,11 +772,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
     isRTL,
   };
 
-  return (
-    <I18nContext.Provider value={contextValue}>
-      {children}
-    </I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>;
 };
 
 // =============================================================================
@@ -899,10 +936,7 @@ export interface RTLWrapperProps {
   forceDirection?: TextDirection;
 }
 
-export const RTLWrapper: React.FC<RTLWrapperProps> = ({
-  children,
-  forceDirection,
-}) => {
+export const RTLWrapper: React.FC<RTLWrapperProps> = ({ children, forceDirection }) => {
   const { direction } = useI18n();
   const effectiveDirection = forceDirection || direction;
 
@@ -925,11 +959,7 @@ export interface FormattedDateProps {
   options?: Intl.DateTimeFormatOptions;
 }
 
-export const FormattedDate: React.FC<FormattedDateProps> = ({
-  date,
-  format = 'date',
-  options,
-}) => {
+export const FormattedDate: React.FC<FormattedDateProps> = ({ date, format = 'date', options }) => {
   const { formatDate, formatTime, formatDateTime, formatRelativeTime } = useI18n();
   const dateObj = date instanceof Date ? date : new Date(date);
 
@@ -989,11 +1019,7 @@ export interface TransProps {
   defaultValue?: string;
 }
 
-export const Trans: React.FC<TransProps> = ({
-  i18nKey,
-  params,
-  defaultValue,
-}) => {
+export const Trans: React.FC<TransProps> = ({ i18nKey, params, defaultValue }) => {
   const { t } = useI18n();
   const translated = t(i18nKey, params);
   return <>{translated === i18nKey && defaultValue ? defaultValue : translated}</>;

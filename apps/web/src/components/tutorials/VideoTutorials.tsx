@@ -1,7 +1,7 @@
 /**
  * Video Tutorials Component
  * Sprint 39: Interactive Video Tutorials, In-App Player, Guided Walkthroughs
- * 
+ *
  * Features:
  * - Interactive video tutorials with progress tracking
  * - In-app video player with hotspots
@@ -9,7 +9,16 @@
  * - Video analytics tracking
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  ReactNode,
+} from 'react';
 
 // =============================================================================
 // TYPES & INTERFACES
@@ -31,7 +40,7 @@ export interface VideoTutorial {
   updatedAt: Date;
 }
 
-export type TutorialCategory = 
+export type TutorialCategory =
   | 'getting-started'
   | 'questionnaires'
   | 'scoring'
@@ -97,8 +106,22 @@ export const TUTORIAL_CATALOG: VideoTutorial[] = [
     difficulty: 'beginner',
     tags: ['introduction', 'basics', 'navigation'],
     hotspots: [
-      { id: 'hs1', timestamp: 30, type: 'link', label: 'Go to Dashboard', targetUrl: '/dashboard', position: { x: 80, y: 20 } },
-      { id: 'hs2', timestamp: 120, type: 'popup', label: 'Learn More', description: 'Click here to learn about questionnaires', position: { x: 50, y: 60 } },
+      {
+        id: 'hs1',
+        timestamp: 30,
+        type: 'link',
+        label: 'Go to Dashboard',
+        targetUrl: '/dashboard',
+        position: { x: 80, y: 20 },
+      },
+      {
+        id: 'hs2',
+        timestamp: 120,
+        type: 'popup',
+        label: 'Learn More',
+        description: 'Click here to learn about questionnaires',
+        position: { x: 50, y: 60 },
+      },
     ],
     chapters: [
       { id: 'ch1', title: 'Introduction', startTime: 0, endTime: 60 },
@@ -112,7 +135,8 @@ export const TUTORIAL_CATALOG: VideoTutorial[] = [
   {
     id: 'creating-questionnaire',
     title: 'Creating Your First Questionnaire',
-    description: 'Step-by-step guide to creating and configuring a business readiness questionnaire.',
+    description:
+      'Step-by-step guide to creating and configuring a business readiness questionnaire.',
     duration: 600, // 10 minutes
     thumbnailUrl: '/tutorials/thumbnails/questionnaire.png',
     videoUrl: '/tutorials/videos/questionnaire.mp4',
@@ -132,7 +156,8 @@ export const TUTORIAL_CATALOG: VideoTutorial[] = [
   {
     id: 'interpreting-scores',
     title: 'Understanding Your Readiness Score',
-    description: 'Learn how to interpret your business readiness scores and identify areas for improvement.',
+    description:
+      'Learn how to interpret your business readiness scores and identify areas for improvement.',
     duration: 540, // 9 minutes
     thumbnailUrl: '/tutorials/thumbnails/scores.png',
     videoUrl: '/tutorials/videos/scores.mp4',
@@ -152,7 +177,8 @@ export const TUTORIAL_CATALOG: VideoTutorial[] = [
   {
     id: 'document-generation',
     title: 'Generating Business Documents',
-    description: 'How to generate professional business documents from your questionnaire responses.',
+    description:
+      'How to generate professional business documents from your questionnaire responses.',
     duration: 480, // 8 minutes
     thumbnailUrl: '/tutorials/thumbnails/documents.png',
     videoUrl: '/tutorials/videos/documents.mp4',
@@ -172,7 +198,8 @@ export const TUTORIAL_CATALOG: VideoTutorial[] = [
   {
     id: 'admin-dashboard',
     title: 'Admin Dashboard Walkthrough',
-    description: 'Complete guide to the admin dashboard for managing users, sessions, and approvals.',
+    description:
+      'Complete guide to the admin dashboard for managing users, sessions, and approvals.',
     duration: 720, // 12 minutes
     thumbnailUrl: '/tutorials/thumbnails/admin.png',
     videoUrl: '/tutorials/videos/admin.mp4',
@@ -212,7 +239,8 @@ export const TUTORIAL_CATALOG: VideoTutorial[] = [
   {
     id: 'github-integration',
     title: 'GitHub Integration Setup',
-    description: 'Connect your GitHub repository to automatically import evidence and track compliance.',
+    description:
+      'Connect your GitHub repository to automatically import evidence and track compliance.',
     duration: 480, // 8 minutes
     thumbnailUrl: '/tutorials/thumbnails/github.png',
     videoUrl: '/tutorials/videos/github.mp4',
@@ -351,7 +379,7 @@ export const VideoTutorialsProvider: React.FC<VideoTutorialsProviderProps> = ({ 
     if (savedProgress) {
       try {
         const parsed = JSON.parse(savedProgress);
-        setState(prev => ({ ...prev, progress: new Map(Object.entries(parsed)) }));
+        setState((prev) => ({ ...prev, progress: new Map(Object.entries(parsed)) }));
       } catch (e) {
         console.error('Failed to load video progress:', e);
       }
@@ -364,9 +392,9 @@ export const VideoTutorialsProvider: React.FC<VideoTutorialsProviderProps> = ({ 
   }, []);
 
   const playTutorial = useCallback((tutorialId: string) => {
-    const tutorial = TUTORIAL_CATALOG.find(t => t.id === tutorialId);
+    const tutorial = TUTORIAL_CATALOG.find((t) => t.id === tutorialId);
     if (tutorial) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         currentTutorial: tutorial,
         isPlaying: true,
@@ -375,60 +403,67 @@ export const VideoTutorialsProvider: React.FC<VideoTutorialsProviderProps> = ({ 
   }, []);
 
   const pauseTutorial = useCallback(() => {
-    setState(prev => ({ ...prev, isPlaying: false }));
+    setState((prev) => ({ ...prev, isPlaying: false }));
   }, []);
 
   const seekTo = useCallback((time: number) => {
-    setState(prev => ({ ...prev, currentTime: time }));
+    setState((prev) => ({ ...prev, currentTime: time }));
   }, []);
 
   const setPlaybackRate = useCallback((rate: number) => {
     // Playback rate would be handled by video element
   }, []);
 
-  const markChapterComplete = useCallback((tutorialId: string, chapterId: string) => {
-    setState(prev => {
-      const newProgress = new Map(prev.progress);
-      const existing = newProgress.get(tutorialId) || {
-        tutorialId,
-        userId: 'current-user',
-        watchedSeconds: 0,
-        completedChapters: [],
-        completionPercentage: 0,
-        lastWatchedAt: new Date(),
-        rewatchedSegments: [],
-      };
-      
-      if (!existing.completedChapters.includes(chapterId)) {
-        existing.completedChapters.push(chapterId);
-        const tutorial = TUTORIAL_CATALOG.find(t => t.id === tutorialId);
-        if (tutorial) {
-          existing.completionPercentage = (existing.completedChapters.length / tutorial.chapters.length) * 100;
-        }
-      }
-      
-      existing.lastWatchedAt = new Date();
-      newProgress.set(tutorialId, existing);
-      saveProgress(newProgress);
-      
-      return { ...prev, progress: newProgress };
-    });
-  }, [saveProgress]);
+  const markChapterComplete = useCallback(
+    (tutorialId: string, chapterId: string) => {
+      setState((prev) => {
+        const newProgress = new Map(prev.progress);
+        const existing = newProgress.get(tutorialId) || {
+          tutorialId,
+          userId: 'current-user',
+          watchedSeconds: 0,
+          completedChapters: [],
+          completionPercentage: 0,
+          lastWatchedAt: new Date(),
+          rewatchedSegments: [],
+        };
 
-  const getProgress = useCallback((tutorialId: string): VideoProgress | null => {
-    return state.progress.get(tutorialId) || null;
-  }, [state.progress]);
+        if (!existing.completedChapters.includes(chapterId)) {
+          existing.completedChapters.push(chapterId);
+          const tutorial = TUTORIAL_CATALOG.find((t) => t.id === tutorialId);
+          if (tutorial) {
+            existing.completionPercentage =
+              (existing.completedChapters.length / tutorial.chapters.length) * 100;
+          }
+        }
+
+        existing.lastWatchedAt = new Date();
+        newProgress.set(tutorialId, existing);
+        saveProgress(newProgress);
+
+        return { ...prev, progress: newProgress };
+      });
+    },
+    [saveProgress],
+  );
+
+  const getProgress = useCallback(
+    (tutorialId: string): VideoProgress | null => {
+      return state.progress.get(tutorialId) || null;
+    },
+    [state.progress],
+  );
 
   const searchTutorials = useCallback((query: string) => {
-    setState(prev => ({ ...prev, searchQuery: query }));
+    setState((prev) => ({ ...prev, searchQuery: query }));
   }, []);
 
   const filterByCategory = useCallback((category: TutorialCategory | 'all') => {
-    setState(prev => ({ ...prev, selectedCategory: category }));
+    setState((prev) => ({ ...prev, selectedCategory: category }));
   }, []);
 
   const filterByDifficulty = useCallback((difficulty: VideoTutorial['difficulty'] | 'all') => {
-    setState(prev => ({ ...prev, selectedDifficulty: difficulty }));
+    setState((prev) => ({ ...prev, selectedDifficulty: difficulty }));
   }, []);
 
   const trackHotspotClick = useCallback((tutorialId: string, hotspotId: string) => {
@@ -437,52 +472,53 @@ export const VideoTutorialsProvider: React.FC<VideoTutorialsProviderProps> = ({ 
   }, []);
 
   const getTutorialsByCategory = useCallback((category: TutorialCategory): VideoTutorial[] => {
-    return TUTORIAL_CATALOG.filter(t => t.category === category);
+    return TUTORIAL_CATALOG.filter((t) => t.category === category);
   }, []);
 
   const getRecommendedTutorials = useCallback((): VideoTutorial[] => {
     // Get tutorials with low completion or not started
-    const incomplete = TUTORIAL_CATALOG.filter(t => {
+    const incomplete = TUTORIAL_CATALOG.filter((t) => {
       const progress = state.progress.get(t.id);
       return !progress || progress.completionPercentage < 100;
     });
     return incomplete.slice(0, 5);
   }, [state.progress]);
 
-  const contextValue = useMemo(() => ({
-    ...state,
-    playTutorial,
-    pauseTutorial,
-    seekTo,
-    setPlaybackRate,
-    markChapterComplete,
-    getProgress,
-    searchTutorials,
-    filterByCategory,
-    filterByDifficulty,
-    trackHotspotClick,
-    getTutorialsByCategory,
-    getRecommendedTutorials,
-  }), [
-    state,
-    playTutorial,
-    pauseTutorial,
-    seekTo,
-    setPlaybackRate,
-    markChapterComplete,
-    getProgress,
-    searchTutorials,
-    filterByCategory,
-    filterByDifficulty,
-    trackHotspotClick,
-    getTutorialsByCategory,
-    getRecommendedTutorials,
-  ]);
+  const contextValue = useMemo(
+    () => ({
+      ...state,
+      playTutorial,
+      pauseTutorial,
+      seekTo,
+      setPlaybackRate,
+      markChapterComplete,
+      getProgress,
+      searchTutorials,
+      filterByCategory,
+      filterByDifficulty,
+      trackHotspotClick,
+      getTutorialsByCategory,
+      getRecommendedTutorials,
+    }),
+    [
+      state,
+      playTutorial,
+      pauseTutorial,
+      seekTo,
+      setPlaybackRate,
+      markChapterComplete,
+      getProgress,
+      searchTutorials,
+      filterByCategory,
+      filterByDifficulty,
+      trackHotspotClick,
+      getTutorialsByCategory,
+      getRecommendedTutorials,
+    ],
+  );
 
   return (
-    <VideoTutorialsContext.Provider value={contextValue}>
-      {children}
-    </VideoTutorialsContext.Provider>
+    <VideoTutorialsContext.Provider value={contextValue}>{children}</VideoTutorialsContext.Provider>
   );
 };
 
@@ -526,7 +562,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Update current chapter based on time
   useEffect(() => {
     const chapter = tutorial.chapters.find(
-      ch => currentTime >= ch.startTime && currentTime < ch.endTime
+      (ch) => currentTime >= ch.startTime && currentTime < ch.endTime,
     );
     if (chapter && chapter.id !== currentChapter?.id) {
       setCurrentChapter(chapter);
@@ -537,7 +573,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Update active hotspots based on time
   useEffect(() => {
     const active = tutorial.hotspots.filter(
-      hs => Math.abs(currentTime - hs.timestamp) < 5 // Show within 5 seconds
+      (hs) => Math.abs(currentTime - hs.timestamp) < 5, // Show within 5 seconds
     );
     setActiveHotspots(active);
   }, [currentTime, tutorial.hotspots]);
@@ -597,21 +633,27 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleHotspotClick = useCallback((hotspot: VideoHotspot) => {
-    trackHotspotClick(tutorial.id, hotspot.id);
-    if (hotspot.type === 'link' && hotspot.targetUrl) {
-      window.location.href = hotspot.targetUrl;
-    } else if (hotspot.type === 'action' && hotspot.action) {
-      hotspot.action();
-    }
-  }, [tutorial.id, trackHotspotClick]);
+  const handleHotspotClick = useCallback(
+    (hotspot: VideoHotspot) => {
+      trackHotspotClick(tutorial.id, hotspot.id);
+      if (hotspot.type === 'link' && hotspot.targetUrl) {
+        window.location.href = hotspot.targetUrl;
+      } else if (hotspot.type === 'action' && hotspot.action) {
+        hotspot.action();
+      }
+    },
+    [tutorial.id, trackHotspotClick],
+  );
 
-  const handleChapterClick = useCallback((chapter: VideoChapter) => {
-    handleSeek(chapter.startTime);
-  }, [handleSeek]);
+  const handleChapterClick = useCallback(
+    (chapter: VideoChapter) => {
+      handleSeek(chapter.startTime);
+    },
+    [handleSeek],
+  );
 
   return (
-    <div 
+    <div
       className="video-player relative bg-black rounded-lg overflow-hidden"
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
@@ -627,7 +669,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       />
 
       {/* Hotspots Overlay */}
-      {activeHotspots.map(hotspot => (
+      {activeHotspots.map((hotspot) => (
         <div
           key={hotspot.id}
           className="absolute cursor-pointer animate-pulse"
@@ -654,7 +696,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               style={{ width: `${(currentTime / duration) * 100}%` }}
             />
             {/* Chapter Markers */}
-            {tutorial.chapters.map(chapter => (
+            {tutorial.chapters.map((chapter) => (
               <div
                 key={chapter.id}
                 className="absolute w-1 h-3 -top-1 bg-white/50 cursor-pointer"
@@ -687,7 +729,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
               {/* Volume */}
               <div className="flex items-center gap-1">
-                <button 
+                <button
                   onClick={() => handleVolumeChange(volume === 0 ? 1 : 0)}
                   className="p-2 hover:bg-white/20 rounded"
                 >
@@ -708,9 +750,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             <div className="flex items-center gap-3">
               {/* Current Chapter */}
               {currentChapter && (
-                <span className="text-sm text-gray-300">
-                  {currentChapter.title}
-                </span>
+                <span className="text-sm text-gray-300">{currentChapter.title}</span>
               )}
 
               {/* Playback Speed */}
@@ -728,7 +768,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </select>
 
               {/* Fullscreen */}
-              <button 
+              <button
                 onClick={() => videoRef.current?.requestFullscreen()}
                 className="p-2 hover:bg-white/20 rounded"
               >
@@ -752,11 +792,7 @@ interface TutorialCardProps {
   progress?: VideoProgress | null;
 }
 
-export const TutorialCard: React.FC<TutorialCardProps> = ({
-  tutorial,
-  onClick,
-  progress,
-}) => {
+export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial, onClick, progress }) => {
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     return `${mins} min`;
@@ -764,14 +800,17 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({
 
   const getDifficultyColor = (difficulty: VideoTutorial['difficulty']): string => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
+      case 'beginner':
+        return 'bg-green-100 text-green-800';
+      case 'intermediate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'advanced':
+        return 'bg-red-100 text-red-800';
     }
   };
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
     >
@@ -786,7 +825,7 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({
         </div>
         {progress && progress.completionPercentage > 0 && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-300">
-            <div 
+            <div
               className="h-full bg-blue-500"
               style={{ width: `${progress.completionPercentage}%` }}
             />
@@ -800,9 +839,7 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({
           <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(tutorial.difficulty)}`}>
             {tutorial.difficulty}
           </span>
-          <span className="text-xs text-gray-500">
-            {tutorial.chapters.length} chapters
-          </span>
+          <span className="text-xs text-gray-500">{tutorial.chapters.length} chapters</span>
         </div>
       </div>
     </div>
@@ -830,15 +867,16 @@ export const TutorialLibrary: React.FC = () => {
   const [selectedTutorial, setSelectedTutorial] = useState<VideoTutorial | null>(null);
 
   const filteredTutorials = useMemo(() => {
-    return tutorials.filter(t => {
-      const matchesSearch = !searchQuery || 
+    return tutorials.filter((t) => {
+      const matchesSearch =
+        !searchQuery ||
         t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+        t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
       const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
       const matchesDifficulty = selectedDifficulty === 'all' || t.difficulty === selectedDifficulty;
-      
+
       return matchesSearch && matchesCategory && matchesDifficulty;
     });
   }, [tutorials, searchQuery, selectedCategory, selectedDifficulty]);
@@ -874,15 +912,17 @@ export const TutorialLibrary: React.FC = () => {
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-3">Chapters</h3>
           <div className="space-y-2">
-            {selectedTutorial.chapters.map(chapter => (
+            {selectedTutorial.chapters.map((chapter) => (
               <div
                 key={chapter.id}
                 className="p-3 bg-gray-50 rounded flex justify-between items-center"
               >
                 <span>{chapter.title}</span>
                 <span className="text-sm text-gray-500">
-                  {Math.floor(chapter.startTime / 60)}:{(chapter.startTime % 60).toString().padStart(2, '0')} - 
-                  {Math.floor(chapter.endTime / 60)}:{(chapter.endTime % 60).toString().padStart(2, '0')}
+                  {Math.floor(chapter.startTime / 60)}:
+                  {(chapter.startTime % 60).toString().padStart(2, '0')} -
+                  {Math.floor(chapter.endTime / 60)}:
+                  {(chapter.endTime % 60).toString().padStart(2, '0')}
                 </span>
               </div>
             ))}
@@ -910,13 +950,17 @@ export const TutorialLibrary: React.FC = () => {
           onChange={(e) => filterByCategory(e.target.value as TutorialCategory | 'all')}
           className="px-4 py-2 border rounded"
         >
-          {categories.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
+          {categories.map((cat) => (
+            <option key={cat.value} value={cat.value}>
+              {cat.label}
+            </option>
           ))}
         </select>
         <select
           value={selectedDifficulty}
-          onChange={(e) => filterByDifficulty(e.target.value as VideoTutorial['difficulty'] | 'all')}
+          onChange={(e) =>
+            filterByDifficulty(e.target.value as VideoTutorial['difficulty'] | 'all')
+          }
           className="px-4 py-2 border rounded"
         >
           <option value="all">All Levels</option>
@@ -931,7 +975,7 @@ export const TutorialLibrary: React.FC = () => {
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4">Recommended for You</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recommendedTutorials.slice(0, 3).map(tutorial => (
+            {recommendedTutorials.slice(0, 3).map((tutorial) => (
               <TutorialCard
                 key={tutorial.id}
                 tutorial={tutorial}
@@ -945,11 +989,9 @@ export const TutorialLibrary: React.FC = () => {
 
       {/* All Tutorials */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">
-          All Tutorials ({filteredTutorials.length})
-        </h2>
+        <h2 className="text-lg font-semibold mb-4">All Tutorials ({filteredTutorials.length})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredTutorials.map(tutorial => (
+          {filteredTutorials.map((tutorial) => (
             <TutorialCard
               key={tutorial.id}
               tutorial={tutorial}

@@ -1,19 +1,19 @@
 /**
  * Web Vitals Performance Configuration
- * 
+ *
  * Defines performance budgets and targets for Core Web Vitals
  * Based on Google's recommended thresholds for good user experience.
  */
 
 export interface WebVitalsThresholds {
   // Core Web Vitals
-  FCP: number;  // First Contentful Paint (ms)
-  LCP: number;  // Largest Contentful Paint (ms)
-  TTI: number;  // Time to Interactive (ms)
-  CLS: number;  // Cumulative Layout Shift (score)
-  FID: number;  // First Input Delay (ms)
-  TBT: number;  // Total Blocking Time (ms)
-  
+  FCP: number; // First Contentful Paint (ms)
+  LCP: number; // Largest Contentful Paint (ms)
+  TTI: number; // Time to Interactive (ms)
+  CLS: number; // Cumulative Layout Shift (score)
+  FID: number; // First Input Delay (ms)
+  TBT: number; // Total Blocking Time (ms)
+
   // Resource budgets (bytes)
   JS: number;
   CSS: number;
@@ -36,19 +36,19 @@ export interface WebVitalsThresholds {
  */
 export const WEB_VITALS_TARGETS: WebVitalsThresholds = {
   // Core Web Vitals (milliseconds except CLS)
-  FCP: 1800,    // First Contentful Paint: < 1.8 seconds
-  LCP: 2500,    // Largest Contentful Paint: < 2.5 seconds
-  TTI: 3800,    // Time to Interactive: < 3.8 seconds
-  CLS: 0.1,     // Cumulative Layout Shift: < 0.1
-  FID: 100,     // First Input Delay: < 100ms
-  TBT: 200,     // Total Blocking Time: < 200ms
-  
+  FCP: 1800, // First Contentful Paint: < 1.8 seconds
+  LCP: 2500, // Largest Contentful Paint: < 2.5 seconds
+  TTI: 3800, // Time to Interactive: < 3.8 seconds
+  CLS: 0.1, // Cumulative Layout Shift: < 0.1
+  FID: 100, // First Input Delay: < 100ms
+  TBT: 200, // Total Blocking Time: < 200ms
+
   // Resource budgets (bytes)
-  JS: 300 * 1024,       // JavaScript: < 300KB
-  CSS: 50 * 1024,       // CSS: < 50KB
-  Images: 1024 * 1024,  // Images: < 1MB
-  Fonts: 100 * 1024,    // Fonts: < 100KB
-  Total: 2048 * 1024,   // Total page weight: < 2MB
+  JS: 300 * 1024, // JavaScript: < 300KB
+  CSS: 50 * 1024, // CSS: < 50KB
+  Images: 1024 * 1024, // Images: < 1MB
+  Fonts: 100 * 1024, // Fonts: < 100KB
+  Total: 2048 * 1024, // Total page weight: < 2MB
 };
 
 /**
@@ -83,13 +83,14 @@ export const PAGE_SPECIFIC_BUDGETS: Record<string, Partial<WebVitalsThresholds>>
  */
 export function validatePerformanceBudget(
   metrics: Partial<WebVitalsThresholds>,
-  page?: string
+  page?: string,
 ): { passed: boolean; violations: string[] } {
   const violations: string[] = [];
-  const targets = page && PAGE_SPECIFIC_BUDGETS[page]
-    ? { ...WEB_VITALS_TARGETS, ...PAGE_SPECIFIC_BUDGETS[page] }
-    : WEB_VITALS_TARGETS;
-  
+  const targets =
+    page && PAGE_SPECIFIC_BUDGETS[page]
+      ? { ...WEB_VITALS_TARGETS, ...PAGE_SPECIFIC_BUDGETS[page] }
+      : WEB_VITALS_TARGETS;
+
   if (metrics.FCP !== undefined && metrics.FCP > targets.FCP) {
     violations.push(`FCP ${metrics.FCP}ms exceeds target ${targets.FCP}ms`);
   }
@@ -109,15 +110,21 @@ export function validatePerformanceBudget(
     violations.push(`CSS ${formatBytes(metrics.CSS)} exceeds budget ${formatBytes(targets.CSS)}`);
   }
   if (metrics.Total !== undefined && metrics.Total > targets.Total) {
-    violations.push(`Total ${formatBytes(metrics.Total)} exceeds budget ${formatBytes(targets.Total)}`);
+    violations.push(
+      `Total ${formatBytes(metrics.Total)} exceeds budget ${formatBytes(targets.Total)}`,
+    );
   }
-  
+
   return { passed: violations.length === 0, violations };
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  if (bytes < 1024) {
+    return `${bytes}B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)}KB`;
+  }
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 

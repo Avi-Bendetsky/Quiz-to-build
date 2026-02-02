@@ -59,7 +59,7 @@ export async function initializeCsrfToken(): Promise<void> {
     csrfToken = cookieToken;
     return;
   }
-  
+
   // Otherwise fetch a new one
   await fetchCsrfToken();
 }
@@ -81,7 +81,7 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Add CSRF token for state-changing requests
     const methodsRequiringCsrf = ['POST', 'PUT', 'DELETE', 'PATCH'];
     if (config.method && methodsRequiringCsrf.includes(config.method.toUpperCase())) {
@@ -89,7 +89,7 @@ apiClient.interceptors.request.use(
       if (!csrfToken) {
         csrfToken = getCsrfTokenFromCookie();
       }
-      
+
       // If still no token, fetch one (but don't block the request if it fails)
       if (!csrfToken) {
         try {
@@ -98,12 +98,12 @@ apiClient.interceptors.request.use(
           console.warn('Could not fetch CSRF token, request may fail');
         }
       }
-      
+
       if (csrfToken) {
         config.headers[CSRF_TOKEN_HEADER] = csrfToken;
       }
     }
-    
+
     return config;
   },
   (error) => Promise.reject(error),
@@ -113,7 +113,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _csrfRetry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+      _csrfRetry?: boolean;
+    };
 
     // Handle CSRF token errors (403 with CSRF_TOKEN_* codes)
     const errorData = error.response?.data as { code?: string } | undefined;
@@ -123,7 +126,7 @@ apiClient.interceptors.response.use(
       !originalRequest._csrfRetry
     ) {
       originalRequest._csrfRetry = true;
-      
+
       // Fetch new CSRF token and retry
       try {
         await fetchCsrfToken();

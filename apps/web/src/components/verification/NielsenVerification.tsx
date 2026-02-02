@@ -1,12 +1,20 @@
 /**
  * Nielsen Verification & UX Compliance Component
  * Sprint 40: Final Nielsen 10/10 Verification, Expert Audit, UAT, Compliance Report
- * 
+ *
  * This is the FINAL sprint component ensuring Nielsen Heuristic compliance
  * for production readiness.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  ReactNode,
+} from 'react';
 
 // =============================================================================
 // NIELSEN 10 HEURISTICS DEFINITIONS
@@ -78,7 +86,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 1,
     name: 'Visibility of System Status',
-    description: 'The system should always keep users informed about what is going on, through appropriate feedback within reasonable time.',
+    description:
+      'The system should always keep users informed about what is going on, through appropriate feedback within reasonable time.',
     principles: [
       'Show current state clearly',
       'Provide immediate feedback for actions',
@@ -86,10 +95,30 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       'Confirm successful completion of tasks',
     ],
     checkpoints: [
-      { id: 'h1-1', description: 'Loading states are shown for async operations', weight: 10, status: 'pass' },
-      { id: 'h1-2', description: 'Progress indicators for multi-step processes', weight: 10, status: 'pass' },
-      { id: 'h1-3', description: 'Success/error messages are displayed', weight: 10, status: 'pass' },
-      { id: 'h1-4', description: 'Current location is clear (breadcrumbs, active nav)', weight: 10, status: 'pass' },
+      {
+        id: 'h1-1',
+        description: 'Loading states are shown for async operations',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h1-2',
+        description: 'Progress indicators for multi-step processes',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h1-3',
+        description: 'Success/error messages are displayed',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h1-4',
+        description: 'Current location is clear (breadcrumbs, active nav)',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h1-5', description: 'Network status is communicated', weight: 10, status: 'pass' },
     ],
     maxScore: 50,
@@ -97,7 +126,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 2,
     name: 'Match Between System and Real World',
-    description: 'The system should speak the users\' language, with words, phrases and concepts familiar to the user.',
+    description:
+      "The system should speak the users' language, with words, phrases and concepts familiar to the user.",
     principles: [
       'Use familiar terminology',
       'Follow real-world conventions',
@@ -105,18 +135,44 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       'Use appropriate metaphors',
     ],
     checkpoints: [
-      { id: 'h2-1', description: 'Business terminology is used appropriately', weight: 10, status: 'pass' },
-      { id: 'h2-2', description: 'Icons and imagery match real-world concepts', weight: 10, status: 'pass' },
-      { id: 'h2-3', description: 'Information hierarchy matches user expectations', weight: 10, status: 'pass' },
-      { id: 'h2-4', description: 'Date/number formats match user locale', weight: 10, status: 'pass' },
-      { id: 'h2-5', description: 'Error messages are in plain language', weight: 10, status: 'pass' },
+      {
+        id: 'h2-1',
+        description: 'Business terminology is used appropriately',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h2-2',
+        description: 'Icons and imagery match real-world concepts',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h2-3',
+        description: 'Information hierarchy matches user expectations',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h2-4',
+        description: 'Date/number formats match user locale',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h2-5',
+        description: 'Error messages are in plain language',
+        weight: 10,
+        status: 'pass',
+      },
     ],
     maxScore: 50,
   },
   {
     id: 3,
     name: 'User Control and Freedom',
-    description: 'Users often choose system functions by mistake and will need a clearly marked "emergency exit".',
+    description:
+      'Users often choose system functions by mistake and will need a clearly marked "emergency exit".',
     principles: [
       'Provide undo and redo',
       'Allow cancellation of operations',
@@ -124,18 +180,34 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       'Enable data recovery',
     ],
     checkpoints: [
-      { id: 'h3-1', description: 'Undo/redo functionality is available', weight: 10, status: 'pass' },
-      { id: 'h3-2', description: 'Cancel buttons on dialogs and forms', weight: 10, status: 'pass' },
+      {
+        id: 'h3-1',
+        description: 'Undo/redo functionality is available',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h3-2',
+        description: 'Cancel buttons on dialogs and forms',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h3-3', description: 'Back navigation works correctly', weight: 10, status: 'pass' },
       { id: 'h3-4', description: 'Draft autosave prevents data loss', weight: 10, status: 'pass' },
-      { id: 'h3-5', description: 'Confirmation dialogs for destructive actions', weight: 10, status: 'pass' },
+      {
+        id: 'h3-5',
+        description: 'Confirmation dialogs for destructive actions',
+        weight: 10,
+        status: 'pass',
+      },
     ],
     maxScore: 50,
   },
   {
     id: 4,
     name: 'Consistency and Standards',
-    description: 'Users should not have to wonder whether different words, situations, or actions mean the same thing.',
+    description:
+      'Users should not have to wonder whether different words, situations, or actions mean the same thing.',
     principles: [
       'Follow platform conventions',
       'Use consistent terminology',
@@ -143,9 +215,19 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       'Standardize interactions',
     ],
     checkpoints: [
-      { id: 'h4-1', description: 'Consistent visual design (design system)', weight: 10, status: 'pass' },
+      {
+        id: 'h4-1',
+        description: 'Consistent visual design (design system)',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h4-2', description: 'Consistent terminology throughout', weight: 10, status: 'pass' },
-      { id: 'h4-3', description: 'Consistent button placement and styles', weight: 10, status: 'pass' },
+      {
+        id: 'h4-3',
+        description: 'Consistent button placement and styles',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h4-4', description: 'Follows platform conventions', weight: 10, status: 'pass' },
       { id: 'h4-5', description: 'Consistent navigation patterns', weight: 10, status: 'pass' },
     ],
@@ -154,7 +236,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 5,
     name: 'Error Prevention',
-    description: 'Even better than good error messages is a careful design which prevents a problem from occurring in the first place.',
+    description:
+      'Even better than good error messages is a careful design which prevents a problem from occurring in the first place.',
     principles: [
       'Eliminate error-prone conditions',
       'Check for errors before commit',
@@ -163,17 +246,32 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
     ],
     checkpoints: [
       { id: 'h5-1', description: 'Form validation before submission', weight: 10, status: 'pass' },
-      { id: 'h5-2', description: 'Confirmation for irreversible actions', weight: 10, status: 'pass' },
-      { id: 'h5-3', description: 'Input constraints (min/max, formats)', weight: 10, status: 'pass' },
+      {
+        id: 'h5-2',
+        description: 'Confirmation for irreversible actions',
+        weight: 10,
+        status: 'pass',
+      },
+      {
+        id: 'h5-3',
+        description: 'Input constraints (min/max, formats)',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h5-4', description: 'Predictive error warnings', weight: 10, status: 'pass' },
-      { id: 'h5-5', description: 'Blur validation for immediate feedback', weight: 10, status: 'pass' },
+      {
+        id: 'h5-5',
+        description: 'Blur validation for immediate feedback',
+        weight: 10,
+        status: 'pass',
+      },
     ],
     maxScore: 50,
   },
   {
     id: 6,
     name: 'Recognition Rather Than Recall',
-    description: 'Minimize the user\'s memory load by making objects, actions, and options visible.',
+    description: "Minimize the user's memory load by making objects, actions, and options visible.",
     principles: [
       'Make options visible',
       'Provide contextual help',
@@ -181,11 +279,21 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       'Use recognition over recall',
     ],
     checkpoints: [
-      { id: 'h6-1', description: 'Recently accessed items are visible', weight: 10, status: 'pass' },
+      {
+        id: 'h6-1',
+        description: 'Recently accessed items are visible',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h6-2', description: 'Contextual tooltips and help', weight: 10, status: 'pass' },
       { id: 'h6-3', description: 'Form field hints and examples', weight: 10, status: 'pass' },
       { id: 'h6-4', description: 'Autocomplete and suggestions', weight: 10, status: 'pass' },
-      { id: 'h6-5', description: 'Visual cues for interactive elements', weight: 10, status: 'pass' },
+      {
+        id: 'h6-5',
+        description: 'Visual cues for interactive elements',
+        weight: 10,
+        status: 'pass',
+      },
     ],
     maxScore: 50,
   },
@@ -203,7 +311,12 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       { id: 'h7-1', description: 'Keyboard shortcuts available', weight: 10, status: 'pass' },
       { id: 'h7-2', description: 'Customizable dashboard/preferences', weight: 10, status: 'pass' },
       { id: 'h7-3', description: 'Bulk operations supported', weight: 10, status: 'pass' },
-      { id: 'h7-4', description: 'Adaptive navigation (frequent items)', weight: 10, status: 'pass' },
+      {
+        id: 'h7-4',
+        description: 'Adaptive navigation (frequent items)',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h7-5', description: 'Expert modes/advanced options', weight: 10, status: 'pass' },
     ],
     maxScore: 50,
@@ -220,7 +333,12 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
     ],
     checkpoints: [
       { id: 'h8-1', description: 'Clean, uncluttered interface', weight: 10, status: 'pass' },
-      { id: 'h8-2', description: 'Progressive disclosure of complexity', weight: 10, status: 'pass' },
+      {
+        id: 'h8-2',
+        description: 'Progressive disclosure of complexity',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h8-3', description: 'Appropriate use of whitespace', weight: 10, status: 'pass' },
       { id: 'h8-4', description: 'Essential information prioritized', weight: 10, status: 'pass' },
       { id: 'h8-5', description: 'Consistent visual hierarchy', weight: 10, status: 'pass' },
@@ -230,7 +348,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 9,
     name: 'Help Users Recognize, Diagnose, and Recover from Errors',
-    description: 'Error messages should be expressed in plain language, precisely indicate the problem, and constructively suggest a solution.',
+    description:
+      'Error messages should be expressed in plain language, precisely indicate the problem, and constructively suggest a solution.',
     principles: [
       'Clear error identification',
       'Plain language messages',
@@ -249,7 +368,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 10,
     name: 'Help and Documentation',
-    description: 'It may be necessary to provide help and documentation. Such information should be easy to search, focused on the user\'s task.',
+    description:
+      "It may be necessary to provide help and documentation. Such information should be easy to search, focused on the user's task.",
     principles: [
       'Provide searchable help',
       'Task-oriented documentation',
@@ -258,7 +378,12 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
     ],
     checkpoints: [
       { id: 'h10-1', description: 'Searchable help center', weight: 10, status: 'pass' },
-      { id: 'h10-2', description: 'Contextual help (tooltips, inline)', weight: 10, status: 'pass' },
+      {
+        id: 'h10-2',
+        description: 'Contextual help (tooltips, inline)',
+        weight: 10,
+        status: 'pass',
+      },
       { id: 'h10-3', description: 'Video tutorials available', weight: 10, status: 'pass' },
       { id: 'h10-4', description: 'Interactive walkthroughs', weight: 10, status: 'pass' },
       { id: 'h10-5', description: 'FAQ and troubleshooting guides', weight: 10, status: 'pass' },
@@ -374,8 +499,16 @@ interface NielsenVerificationState {
 }
 
 interface NielsenVerificationContextType extends NielsenVerificationState {
-  startEvaluation: (evaluatorName: string, evaluatorRole: NielsenEvaluation['evaluatorRole']) => void;
-  updateCheckpoint: (heuristicId: number, checkpointId: string, status: HeuristicCheckpoint['status'], notes?: string) => void;
+  startEvaluation: (
+    evaluatorName: string,
+    evaluatorRole: NielsenEvaluation['evaluatorRole'],
+  ) => void;
+  updateCheckpoint: (
+    heuristicId: number,
+    checkpointId: string,
+    status: HeuristicCheckpoint['status'],
+    notes?: string,
+  ) => void;
   addFinding: (heuristicId: number, finding: Omit<Finding, 'id'>) => void;
   completeEvaluation: () => void;
   generateComplianceReport: () => Promise<ComplianceReport>;
@@ -399,92 +532,113 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
     isEvaluating: false,
   });
 
-  const startEvaluation = useCallback((evaluatorName: string, evaluatorRole: NielsenEvaluation['evaluatorRole']) => {
-    const newEvaluation: NielsenEvaluation = {
-      id: `eval-${Date.now()}`,
-      evaluatorName,
-      evaluatorRole,
-      date: new Date(),
-      version: '1.0.0',
-      scores: NIELSEN_HEURISTICS.map(h => ({
-        heuristicId: h.id,
-        score: 0,
-        maxScore: h.maxScore,
-        percentage: 0,
-        findings: [],
-      })),
-      overallScore: 0,
-      recommendations: [],
-      status: 'in-progress',
-    };
+  const startEvaluation = useCallback(
+    (evaluatorName: string, evaluatorRole: NielsenEvaluation['evaluatorRole']) => {
+      const newEvaluation: NielsenEvaluation = {
+        id: `eval-${Date.now()}`,
+        evaluatorName,
+        evaluatorRole,
+        date: new Date(),
+        version: '1.0.0',
+        scores: NIELSEN_HEURISTICS.map((h) => ({
+          heuristicId: h.id,
+          score: 0,
+          maxScore: h.maxScore,
+          percentage: 0,
+          findings: [],
+        })),
+        overallScore: 0,
+        recommendations: [],
+        status: 'in-progress',
+      };
 
-    setState(prev => ({
-      ...prev,
-      currentEvaluation: newEvaluation,
-      isEvaluating: true,
-    }));
-  }, []);
+      setState((prev) => ({
+        ...prev,
+        currentEvaluation: newEvaluation,
+        isEvaluating: true,
+      }));
+    },
+    [],
+  );
 
-  const updateCheckpoint = useCallback((
-    heuristicId: number,
-    checkpointId: string,
-    status: HeuristicCheckpoint['status'],
-    notes?: string
-  ) => {
-    setState(prev => {
-      if (!prev.currentEvaluation) return prev;
+  const updateCheckpoint = useCallback(
+    (
+      heuristicId: number,
+      checkpointId: string,
+      status: HeuristicCheckpoint['status'],
+      notes?: string,
+    ) => {
+      setState((prev) => {
+        if (!prev.currentEvaluation) {
+          return prev;
+        }
 
-      const heuristic = NIELSEN_HEURISTICS.find(h => h.id === heuristicId);
-      if (!heuristic) return prev;
+        const heuristic = NIELSEN_HEURISTICS.find((h) => h.id === heuristicId);
+        if (!heuristic) {
+          return prev;
+        }
 
-      const checkpoint = heuristic.checkpoints.find(c => c.id === checkpointId);
-      if (checkpoint) {
-        checkpoint.status = status;
-        checkpoint.notes = notes;
-      }
+        const checkpoint = heuristic.checkpoints.find((c) => c.id === checkpointId);
+        if (checkpoint) {
+          checkpoint.status = status;
+          checkpoint.notes = notes;
+        }
 
-      // Recalculate score
-      const updatedScores = prev.currentEvaluation.scores.map(s => {
-        if (s.heuristicId !== heuristicId) return s;
+        // Recalculate score
+        const updatedScores = prev.currentEvaluation.scores.map((s) => {
+          if (s.heuristicId !== heuristicId) {
+            return s;
+          }
 
-        const h = NIELSEN_HEURISTICS.find(h => h.id === heuristicId)!;
-        const score = h.checkpoints.reduce((acc, cp) => {
-          if (cp.status === 'pass') return acc + cp.weight;
-          if (cp.status === 'partial') return acc + cp.weight * 0.5;
-          return acc;
-        }, 0);
+          const h = NIELSEN_HEURISTICS.find((h) => h.id === heuristicId)!;
+          const score = h.checkpoints.reduce((acc, cp) => {
+            if (cp.status === 'pass') {
+              return acc + cp.weight;
+            }
+            if (cp.status === 'partial') {
+              return acc + cp.weight * 0.5;
+            }
+            return acc;
+          }, 0);
+
+          return {
+            ...s,
+            score,
+            percentage: (score / s.maxScore) * 100,
+          };
+        });
+
+        const overallScore =
+          updatedScores.reduce((acc, s) => acc + s.percentage, 0) / updatedScores.length;
 
         return {
-          ...s,
-          score,
-          percentage: (score / s.maxScore) * 100,
+          ...prev,
+          currentEvaluation: {
+            ...prev.currentEvaluation,
+            scores: updatedScores,
+            overallScore,
+          },
         };
       });
-
-      const overallScore = updatedScores.reduce((acc, s) => acc + s.percentage, 0) / updatedScores.length;
-
-      return {
-        ...prev,
-        currentEvaluation: {
-          ...prev.currentEvaluation,
-          scores: updatedScores,
-          overallScore,
-        },
-      };
-    });
-  }, []);
+    },
+    [],
+  );
 
   const addFinding = useCallback((heuristicId: number, finding: Omit<Finding, 'id'>) => {
-    setState(prev => {
-      if (!prev.currentEvaluation) return prev;
+    setState((prev) => {
+      if (!prev.currentEvaluation) {
+        return prev;
+      }
 
       const newFinding: Finding = {
         ...finding,
         id: `finding-${Date.now()}`,
       };
 
-      const updatedScores = prev.currentEvaluation.scores.map(s => {
-        if (s.heuristicId !== heuristicId) return s;
+      const updatedScores = prev.currentEvaluation.scores.map((s) => {
+        if (s.heuristicId !== heuristicId) {
+          return s;
+        }
         return { ...s, findings: [...s.findings, newFinding] };
       });
 
@@ -499,8 +653,10 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const completeEvaluation = useCallback(() => {
-    setState(prev => {
-      if (!prev.currentEvaluation) return prev;
+    setState((prev) => {
+      if (!prev.currentEvaluation) {
+        return prev;
+      }
 
       const completedEvaluation: NielsenEvaluation = {
         ...prev.currentEvaluation,
@@ -526,8 +682,12 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
     // Calculate from heuristics directly
     return NIELSEN_HEURISTICS.reduce((acc, h) => {
       const passedScore = h.checkpoints.reduce((s, cp) => {
-        if (cp.status === 'pass') return s + cp.weight;
-        if (cp.status === 'partial') return s + cp.weight * 0.5;
+        if (cp.status === 'pass') {
+          return s + cp.weight;
+        }
+        if (cp.status === 'partial') {
+          return s + cp.weight * 0.5;
+        }
         return s;
       }, 0);
       return acc + (passedScore / h.maxScore) * 10;
@@ -536,7 +696,7 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
 
   const generateComplianceReport = useCallback(async (): Promise<ComplianceReport> => {
     const nielsenScore = calculateOverallScore();
-    
+
     const report: ComplianceReport = {
       id: `report-${Date.now()}`,
       generatedAt: new Date(),
@@ -567,7 +727,7 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
       signOff: [],
     };
 
-    setState(prev => ({ ...prev, complianceReport: report }));
+    setState((prev) => ({ ...prev, complianceReport: report }));
     return report;
   }, [calculateOverallScore]);
 
@@ -576,7 +736,7 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
       ...session,
       id: `uat-${Date.now()}`,
     };
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       uatSessions: [...prev.uatSessions, newSession],
     }));
@@ -584,7 +744,7 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
 
   const getProductionReadiness = useCallback((): ProductionReadiness => {
     const nielsenScore = calculateOverallScore();
-    
+
     const checks: ReadinessCheck[] = [
       {
         id: 'nielsen-score',
@@ -630,8 +790,8 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
       },
     ];
 
-    const hasBlockingFailures = checks.some(c => c.blocking && c.status === 'fail');
-    const hasWarnings = checks.some(c => c.status === 'warning');
+    const hasBlockingFailures = checks.some((c) => c.blocking && c.status === 'fail');
+    const hasWarnings = checks.some((c) => c.status === 'warning');
 
     return {
       overall: hasBlockingFailures ? 'not-ready' : hasWarnings ? 'ready-with-conditions' : 'ready',
@@ -639,27 +799,30 @@ export const NielsenVerificationProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, [calculateOverallScore, state.uatSessions]);
 
-  const contextValue = useMemo(() => ({
-    ...state,
-    startEvaluation,
-    updateCheckpoint,
-    addFinding,
-    completeEvaluation,
-    generateComplianceReport,
-    recordUATSession,
-    calculateOverallScore,
-    getProductionReadiness,
-  }), [
-    state,
-    startEvaluation,
-    updateCheckpoint,
-    addFinding,
-    completeEvaluation,
-    generateComplianceReport,
-    recordUATSession,
-    calculateOverallScore,
-    getProductionReadiness,
-  ]);
+  const contextValue = useMemo(
+    () => ({
+      ...state,
+      startEvaluation,
+      updateCheckpoint,
+      addFinding,
+      completeEvaluation,
+      generateComplianceReport,
+      recordUATSession,
+      calculateOverallScore,
+      getProductionReadiness,
+    }),
+    [
+      state,
+      startEvaluation,
+      updateCheckpoint,
+      addFinding,
+      completeEvaluation,
+      generateComplianceReport,
+      recordUATSession,
+      calculateOverallScore,
+      getProductionReadiness,
+    ],
+  );
 
   return (
     <NielsenVerificationContext.Provider value={contextValue}>
@@ -691,7 +854,9 @@ export const NielsenDashboard: React.FC = () => {
     generateComplianceReport,
   } = useNielsenVerification();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'heuristics' | 'uat' | 'report'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'heuristics' | 'uat' | 'report'>(
+    'overview',
+  );
   const [report, setReport] = useState<ComplianceReport | null>(null);
 
   const score = calculateOverallScore();
@@ -704,26 +869,38 @@ export const NielsenDashboard: React.FC = () => {
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 95) return 'text-green-600';
-    if (score >= 85) return 'text-yellow-600';
+    if (score >= 95) {
+      return 'text-green-600';
+    }
+    if (score >= 85) {
+      return 'text-yellow-600';
+    }
     return 'text-red-600';
   };
 
   const getStatusIcon = (status: string): string => {
     switch (status) {
-      case 'pass': return '✓';
-      case 'warning': return '⚠';
-      case 'fail': return '✕';
-      default: return '?';
+      case 'pass':
+        return '✓';
+      case 'warning':
+        return '⚠';
+      case 'fail':
+        return '✕';
+      default:
+        return '?';
     }
   };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'pass': return 'text-green-600 bg-green-100';
-      case 'warning': return 'text-yellow-600 bg-yellow-100';
-      case 'fail': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'pass':
+        return 'text-green-600 bg-green-100';
+      case 'warning':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'fail':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -751,7 +928,7 @@ export const NielsenDashboard: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex border-b mb-6">
-        {(['overview', 'heuristics', 'uat', 'report'] as const).map(tab => (
+        {(['overview', 'heuristics', 'uat', 'report'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -790,12 +967,20 @@ export const NielsenDashboard: React.FC = () => {
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="text-sm text-gray-500 mb-1">Production Ready</div>
-              <div className={`text-4xl font-bold ${
-                readiness.overall === 'ready' ? 'text-green-600' :
-                readiness.overall === 'ready-with-conditions' ? 'text-yellow-600' :
-                'text-red-600'
-              }`}>
-                {readiness.overall === 'ready' ? '✓' : readiness.overall === 'ready-with-conditions' ? '⚠' : '✕'}
+              <div
+                className={`text-4xl font-bold ${
+                  readiness.overall === 'ready'
+                    ? 'text-green-600'
+                    : readiness.overall === 'ready-with-conditions'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {readiness.overall === 'ready'
+                  ? '✓'
+                  : readiness.overall === 'ready-with-conditions'
+                    ? '⚠'
+                    : '✕'}
               </div>
               <div className="text-xs text-gray-400 mt-1 capitalize">
                 {readiness.overall.replace(/-/g, ' ')}
@@ -807,13 +992,15 @@ export const NielsenDashboard: React.FC = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Production Readiness Checks</h2>
             <div className="space-y-2">
-              {readiness.checks.map(check => (
-                <div 
+              {readiness.checks.map((check) => (
+                <div
                   key={check.id}
                   className="flex items-center justify-between p-3 border rounded"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center ${getStatusColor(check.status)}`}>
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${getStatusColor(check.status)}`}
+                    >
                       {getStatusIcon(check.status)}
                     </span>
                     <div>
@@ -836,10 +1023,14 @@ export const NielsenDashboard: React.FC = () => {
       {/* Heuristics Tab */}
       {activeTab === 'heuristics' && (
         <div className="space-y-4">
-          {NIELSEN_HEURISTICS.map(heuristic => {
+          {NIELSEN_HEURISTICS.map((heuristic) => {
             const score = heuristic.checkpoints.reduce((acc, cp) => {
-              if (cp.status === 'pass') return acc + cp.weight;
-              if (cp.status === 'partial') return acc + cp.weight * 0.5;
+              if (cp.status === 'pass') {
+                return acc + cp.weight;
+              }
+              if (cp.status === 'partial') {
+                return acc + cp.weight * 0.5;
+              }
               return acc;
             }, 0);
             const percentage = (score / heuristic.maxScore) * 100;
@@ -863,17 +1054,20 @@ export const NielsenDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="h-2 bg-gray-200 rounded mb-4">
-                  <div 
+                  <div
                     className={`h-full rounded ${
-                      percentage >= 95 ? 'bg-green-500' :
-                      percentage >= 85 ? 'bg-yellow-500' : 'bg-red-500'
+                      percentage >= 95
+                        ? 'bg-green-500'
+                        : percentage >= 85
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500'
                     }`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
                 <div className="grid grid-cols-5 gap-2">
-                  {heuristic.checkpoints.map(cp => (
-                    <div 
+                  {heuristic.checkpoints.map((cp) => (
+                    <div
                       key={cp.id}
                       className={`text-xs p-2 rounded ${getStatusColor(cp.status)}`}
                       title={cp.description}
@@ -963,20 +1157,30 @@ export const NielsenDashboard: React.FC = () => {
             </div>
 
             {/* Readiness */}
-            <div className={`p-6 rounded-lg ${
-              report.productionReadiness.overall === 'ready' ? 'bg-green-50 border-green-200' :
-              report.productionReadiness.overall === 'ready-with-conditions' ? 'bg-yellow-50 border-yellow-200' :
-              'bg-red-50 border-red-200'
-            } border`}>
+            <div
+              className={`p-6 rounded-lg ${
+                report.productionReadiness.overall === 'ready'
+                  ? 'bg-green-50 border-green-200'
+                  : report.productionReadiness.overall === 'ready-with-conditions'
+                    ? 'bg-yellow-50 border-yellow-200'
+                    : 'bg-red-50 border-red-200'
+              } border`}
+            >
               <h3 className="font-semibold mb-2">Production Readiness</h3>
-              <p className={`text-lg font-bold ${
-                report.productionReadiness.overall === 'ready' ? 'text-green-600' :
-                report.productionReadiness.overall === 'ready-with-conditions' ? 'text-yellow-600' :
-                'text-red-600'
-              }`}>
-                {report.productionReadiness.overall === 'ready' ? 'APPROVED FOR LAUNCH' :
-                 report.productionReadiness.overall === 'ready-with-conditions' ? 'APPROVED WITH CONDITIONS' :
-                 'NOT READY - BLOCKING ISSUES FOUND'}
+              <p
+                className={`text-lg font-bold ${
+                  report.productionReadiness.overall === 'ready'
+                    ? 'text-green-600'
+                    : report.productionReadiness.overall === 'ready-with-conditions'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {report.productionReadiness.overall === 'ready'
+                  ? 'APPROVED FOR LAUNCH'
+                  : report.productionReadiness.overall === 'ready-with-conditions'
+                    ? 'APPROVED WITH CONDITIONS'
+                    : 'NOT READY - BLOCKING ISSUES FOUND'}
               </p>
             </div>
 
@@ -984,7 +1188,7 @@ export const NielsenDashboard: React.FC = () => {
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-semibold mb-4">Required Sign-offs</h3>
               <div className="grid grid-cols-2 gap-4">
-                {['QA Lead', 'Tech Lead', 'Product Owner', 'UX Director'].map(role => (
+                {['QA Lead', 'Tech Lead', 'Product Owner', 'UX Director'].map((role) => (
                   <div key={role} className="p-4 border rounded flex justify-between items-center">
                     <div>
                       <div className="font-medium">{role}</div>

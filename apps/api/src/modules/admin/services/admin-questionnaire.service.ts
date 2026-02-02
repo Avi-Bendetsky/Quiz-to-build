@@ -1,16 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import {
-  Questionnaire,
-  Section,
-  Question,
-  VisibilityRule,
-  Prisma,
-} from '@prisma/client';
+import { Questionnaire, Section, Question, VisibilityRule, Prisma } from '@prisma/client';
 import { PaginationDto } from '@libs/shared';
 import { AdminAuditService } from './admin-audit.service';
 import {
@@ -53,9 +43,7 @@ export class AdminQuestionnaireService {
   // QUESTIONNAIRE CRUD
   // ============================================================================
 
-  async findAllQuestionnaires(
-    pagination: PaginationDto,
-  ): Promise<PaginatedResult<Questionnaire>> {
+  async findAllQuestionnaires(pagination: PaginationDto): Promise<PaginatedResult<Questionnaire>> {
     const [items, total] = await Promise.all([
       this.prisma.questionnaire.findMany({
         skip: pagination.skip,
@@ -103,10 +91,7 @@ export class AdminQuestionnaireService {
     return questionnaire;
   }
 
-  async createQuestionnaire(
-    dto: CreateQuestionnaireDto,
-    userId: string,
-  ): Promise<Questionnaire> {
+  async createQuestionnaire(dto: CreateQuestionnaireDto, userId: string): Promise<Questionnaire> {
     const questionnaire = await this.prisma.questionnaire.create({
       data: {
         name: dto.name,
@@ -207,16 +192,11 @@ export class AdminQuestionnaireService {
     });
 
     if (!questionnaire) {
-      throw new NotFoundException(
-        `Questionnaire with ID ${questionnaireId} not found`,
-      );
+      throw new NotFoundException(`Questionnaire with ID ${questionnaireId} not found`);
     }
 
     // Auto-calculate orderIndex if not provided
-    const maxOrder = questionnaire.sections.reduce(
-      (max, s) => Math.max(max, s.orderIndex),
-      -1,
-    );
+    const maxOrder = questionnaire.sections.reduce((max, s) => Math.max(max, s.orderIndex), -1);
     const orderIndex = dto.orderIndex ?? maxOrder + 1;
 
     const section = await this.prisma.section.create({
@@ -242,11 +222,7 @@ export class AdminQuestionnaireService {
     return section;
   }
 
-  async updateSection(
-    id: string,
-    dto: UpdateSectionDto,
-    userId: string,
-  ): Promise<Section> {
+  async updateSection(id: string, dto: UpdateSectionDto, userId: string): Promise<Section> {
     const existing = await this.prisma.section.findUnique({ where: { id } });
 
     if (!existing) {
@@ -313,9 +289,7 @@ export class AdminQuestionnaireService {
     });
 
     if (!questionnaire) {
-      throw new NotFoundException(
-        `Questionnaire with ID ${questionnaireId} not found`,
-      );
+      throw new NotFoundException(`Questionnaire with ID ${questionnaireId} not found`);
     }
 
     const sections = await this.prisma.$transaction(
@@ -357,10 +331,7 @@ export class AdminQuestionnaireService {
     }
 
     // Auto-calculate orderIndex if not provided
-    const maxOrder = section.questions.reduce(
-      (max, q) => Math.max(max, q.orderIndex),
-      -1,
-    );
+    const maxOrder = section.questions.reduce((max, q) => Math.max(max, q.orderIndex), -1);
     const orderIndex = dto.orderIndex ?? maxOrder + 1;
 
     const question = await this.prisma.question.create({
@@ -394,11 +365,7 @@ export class AdminQuestionnaireService {
     return question;
   }
 
-  async updateQuestion(
-    id: string,
-    dto: UpdateQuestionDto,
-    userId: string,
-  ): Promise<Question> {
+  async updateQuestion(id: string, dto: UpdateQuestionDto, userId: string): Promise<Question> {
     const existing = await this.prisma.question.findUnique({ where: { id } });
 
     if (!existing) {
@@ -605,5 +572,3 @@ export class AdminQuestionnaireService {
     });
   }
 }
-
-

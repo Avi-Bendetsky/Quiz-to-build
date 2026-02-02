@@ -1,7 +1,7 @@
 /**
  * AI Chat Widget Component
  * Sprint 34: AI Help Assistant
- * 
+ *
  * Nielsen Heuristic: Help and Documentation
  * - Contextual AI assistance
  * - Bottom-right floating widget
@@ -133,15 +133,25 @@ export const AIChatProvider: React.FC<AIChatProviderProps> = ({
   }, []);
 
   const buildContextMessage = useCallback((): string => {
-    if (!pageContext) return '';
+    if (!pageContext) {
+      return '';
+    }
 
     const parts: string[] = ['[Context]'];
     parts.push(`Page: ${pageContext.page}`);
-    
-    if (pageContext.section) parts.push(`Section: ${pageContext.section}`);
-    if (pageContext.dimensionName) parts.push(`Dimension: ${pageContext.dimensionName}`);
-    if (pageContext.questionText) parts.push(`Current Question: "${pageContext.questionText}"`);
-    if (pageContext.userRole) parts.push(`User Role: ${pageContext.userRole}`);
+
+    if (pageContext.section) {
+      parts.push(`Section: ${pageContext.section}`);
+    }
+    if (pageContext.dimensionName) {
+      parts.push(`Dimension: ${pageContext.dimensionName}`);
+    }
+    if (pageContext.questionText) {
+      parts.push(`Current Question: "${pageContext.questionText}"`);
+    }
+    if (pageContext.userRole) {
+      parts.push(`User Role: ${pageContext.userRole}`);
+    }
     if (pageContext.sessionProgress !== undefined) {
       parts.push(`Progress: ${Math.round(pageContext.sessionProgress * 100)}%`);
     }
@@ -152,131 +162,144 @@ export const AIChatProvider: React.FC<AIChatProviderProps> = ({
     return parts.join('\n');
   }, [pageContext]);
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: content.trim(),
-      timestamp: new Date(),
-    };
-
-    const assistantMessage: ChatMessage = {
-      id: generateId(),
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      isStreaming: true,
-    };
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
-    setIsLoading(true);
-
-    try {
-      // Build messages array for API
-      const contextMessage = buildContextMessage();
-      const apiMessages = [
-        { role: 'system', content: config.systemPrompt || DEFAULT_CONFIG.systemPrompt },
-        ...(contextMessage ? [{ role: 'system', content: contextMessage }] : []),
-        ...messages.filter((m) => m.role !== 'system').map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        { role: 'user', content: content.trim() },
-      ];
-
-      const response = await fetch(config.apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-        },
-        body: JSON.stringify({
-          messages: apiMessages,
-          model: config.model,
-          max_tokens: config.maxTokens,
-          temperature: config.temperature,
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!content.trim() || isLoading) {
+        return;
       }
 
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
+      const userMessage: ChatMessage = {
+        id: generateId(),
+        role: 'user',
+        content: content.trim(),
+        timestamp: new Date(),
+      };
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      const assistantMessage: ChatMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+      };
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      setIsLoading(true);
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+      try {
+        // Build messages array for API
+        const contextMessage = buildContextMessage();
+        const apiMessages = [
+          { role: 'system', content: config.systemPrompt || DEFAULT_CONFIG.systemPrompt },
+          ...(contextMessage ? [{ role: 'system', content: contextMessage }] : []),
+          ...messages
+            .filter((m) => m.role !== 'system')
+            .map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+          { role: 'user', content: content.trim() },
+        ];
 
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                fullContent += content;
+        const response = await fetch(config.apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+          },
+          body: JSON.stringify({
+            messages: apiMessages,
+            model: config.model,
+            max_tokens: config.maxTokens,
+            temperature: config.temperature,
+            stream: true,
+          }),
+        });
 
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessage.id
-                      ? { ...m, content: fullContent }
-                      : m
-                  )
-                );
-              } catch {
-                // Non-JSON line, might be plain text
-                fullContent += data;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessage.id
-                      ? { ...m, content: fullContent }
-                      : m
-                  )
-                );
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                  continue;
+                }
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content || '';
+                  fullContent += content;
+
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessage.id ? { ...m, content: fullContent } : m,
+                    ),
+                  );
+                } catch {
+                  // Non-JSON line, might be plain text
+                  fullContent += data;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessage.id ? { ...m, content: fullContent } : m,
+                    ),
+                  );
+                }
               }
             }
           }
         }
-      }
 
-      // Finalize message
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMessage.id
-            ? { ...m, content: fullContent || 'I apologize, but I could not generate a response. Please try again.', isStreaming: false }
-            : m
-        )
-      );
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMessage.id
-            ? {
-                ...m,
-                content: 'I apologize, but I encountered an error. Please try again.',
-                isStreaming: false,
-                error: errorMessage,
-              }
-            : m
-        )
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading, messages, config, buildContextMessage]);
+        // Finalize message
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessage.id
+              ? {
+                  ...m,
+                  content:
+                    fullContent ||
+                    'I apologize, but I could not generate a response. Please try again.',
+                  isStreaming: false,
+                }
+              : m,
+          ),
+        );
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessage.id
+              ? {
+                  ...m,
+                  content: 'I apologize, but I encountered an error. Please try again.',
+                  isStreaming: false,
+                  error: errorMessage,
+                }
+              : m,
+          ),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, messages, config, buildContextMessage],
+  );
 
   const value: AIChatContextValue = {
     isOpen,
@@ -293,11 +316,7 @@ export const AIChatProvider: React.FC<AIChatProviderProps> = ({
     updateConfig,
   };
 
-  return (
-    <AIChatContext.Provider value={value}>
-      {children}
-    </AIChatContext.Provider>
-  );
+  return <AIChatContext.Provider value={value}>{children}</AIChatContext.Provider>;
 };
 
 // ============================================================================
@@ -326,7 +345,9 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message }) => 
       >
         {!isUser && (
           <div style={styles.messageHeader}>
-            <span style={styles.avatarIcon} aria-hidden="true">🤖</span>
+            <span style={styles.avatarIcon} aria-hidden="true">
+              🤖
+            </span>
             <span style={styles.assistantLabel}>Quiz2Biz AI</span>
           </div>
         )}
@@ -425,10 +446,26 @@ export interface QuickAction {
 }
 
 export const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
-  { label: 'Explain this question', prompt: 'Can you explain the current question in simpler terms?', icon: '❓' },
-  { label: 'Best practices', prompt: 'What are the best practices for answering this?', icon: '✨' },
-  { label: 'Example answer', prompt: 'Can you provide an example answer for this question?', icon: '📝' },
-  { label: 'Why is this important?', prompt: 'Why is this question important for compliance?', icon: '🎯' },
+  {
+    label: 'Explain this question',
+    prompt: 'Can you explain the current question in simpler terms?',
+    icon: '❓',
+  },
+  {
+    label: 'Best practices',
+    prompt: 'What are the best practices for answering this?',
+    icon: '✨',
+  },
+  {
+    label: 'Example answer',
+    prompt: 'Can you provide an example answer for this question?',
+    icon: '📝',
+  },
+  {
+    label: 'Why is this important?',
+    prompt: 'Why is this question important for compliance?',
+    icon: '🎯',
+  },
 ];
 
 export interface QuickActionsProps {
@@ -476,7 +513,16 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
   position = 'bottom-right',
   quickActions = DEFAULT_QUICK_ACTIONS,
 }) => {
-  const { isOpen, messages, isLoading, openChat, closeChat, sendMessage, clearHistory, pageContext } = useAIChat();
+  const {
+    isOpen,
+    messages,
+    isLoading,
+    openChat,
+    closeChat,
+    sendMessage,
+    clearHistory,
+    pageContext,
+  } = useAIChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -485,9 +531,8 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
     }
   }, [messages]);
 
-  const positionStyles = position === 'bottom-right'
-    ? { right: '24px', left: 'auto' }
-    : { left: '24px', right: 'auto' };
+  const positionStyles =
+    position === 'bottom-right' ? { right: '24px', left: 'auto' } : { left: '24px', right: 'auto' };
 
   return (
     <>
@@ -500,7 +545,9 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
           aria-label="Open AI Chat Assistant"
           aria-expanded={isOpen}
         >
-          <span style={styles.toggleIcon} aria-hidden="true">💬</span>
+          <span style={styles.toggleIcon} aria-hidden="true">
+            💬
+          </span>
           <span style={styles.toggleLabel}>AI Help</span>
         </button>
       )}
@@ -516,7 +563,9 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
           {/* Header */}
           <div style={styles.header}>
             <div style={styles.headerTitle}>
-              <span style={styles.headerIcon} aria-hidden="true">🤖</span>
+              <span style={styles.headerIcon} aria-hidden="true">
+                🤖
+              </span>
               <div>
                 <div style={styles.headerText}>Quiz2Biz AI</div>
                 <div style={styles.headerSubtext}>
@@ -533,11 +582,7 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
               >
                 <span aria-hidden="true">🗑️</span>
               </button>
-              <button
-                onClick={closeChat}
-                style={styles.headerButton}
-                aria-label="Close chat"
-              >
+              <button onClick={closeChat} style={styles.headerButton} aria-label="Close chat">
                 <span aria-hidden="true">✕</span>
               </button>
             </div>
@@ -547,27 +592,24 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({
           <div style={styles.messagesContainer}>
             {messages.length === 0 ? (
               <div style={styles.welcomeMessage}>
-                <div style={styles.welcomeIcon} aria-hidden="true">👋</div>
+                <div style={styles.welcomeIcon} aria-hidden="true">
+                  👋
+                </div>
                 <div style={styles.welcomeTitle}>Hello!</div>
                 <div style={styles.welcomeText}>
-                  I'm your AI assistant. Ask me anything about the questionnaire, compliance frameworks, or how to improve your scores.
+                  I'm your AI assistant. Ask me anything about the questionnaire, compliance
+                  frameworks, or how to improve your scores.
                 </div>
               </div>
             ) : (
-              messages.map((message) => (
-                <ChatMessageItem key={message.id} message={message} />
-              ))
+              messages.map((message) => <ChatMessageItem key={message.id} message={message} />)
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Actions */}
           {messages.length === 0 && (
-            <QuickActions
-              actions={quickActions}
-              onSelect={sendMessage}
-              disabled={isLoading}
-            />
+            <QuickActions actions={quickActions} onSelect={sendMessage} disabled={isLoading} />
           )}
 
           {/* Input */}

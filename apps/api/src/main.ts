@@ -196,9 +196,7 @@ For API issues, contact: support@quiz2biz.com`,
     .setContact('Quiz2Biz Team', 'https://quiz2biz.com', 'support@quiz2biz.com')
     .setLicense('Proprietary', 'https://quiz2biz.com/terms')
     .addServer(
-      nodeEnv === 'production'
-        ? 'https://api.quiz2biz.com'
-        : `http://localhost:${port}`,
+      nodeEnv === 'production' ? 'https://api.quiz2biz.com' : `http://localhost:${port}`,
       nodeEnv === 'production' ? 'Production' : 'Development',
     )
     .addBearerAuth(
@@ -228,7 +226,7 @@ For API issues, contact: support@quiz2biz.com`,
   const openApiDocument = SwaggerModule.createDocument(app, swaggerConfig, {
     operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
   });
-  
+
   // Set up Swagger UI at /api/v1/docs
   SwaggerModule.setup(`${apiPrefix}/docs`, app, openApiDocument, {
     swaggerOptions: {
@@ -247,7 +245,7 @@ For API issues, contact: support@quiz2biz.com`,
       .swagger-ui .info .title { font-size: 2rem; }
     `,
   });
-  
+
   logger.log(`Swagger documentation available at /${apiPrefix}/docs`);
 
   // Graceful shutdown

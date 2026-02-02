@@ -1,7 +1,7 @@
 /**
  * Analytics.tsx - Usage Heatmaps, Analytics Dashboard, Session Replay
  * Sprint 36 Tasks 3-5: Complete analytics and session replay system
- * 
+ *
  * Nielsen Heuristics Addressed:
  * - #1 Visibility: Show user behavior patterns
  * - #4 Consistency: Standard analytics patterns
@@ -26,7 +26,15 @@ import React, {
  */
 export interface InteractionEvent {
   id: string;
-  type: 'click' | 'scroll' | 'hover' | 'input' | 'navigation' | 'form_start' | 'form_complete' | 'form_abandon';
+  type:
+    | 'click'
+    | 'scroll'
+    | 'hover'
+    | 'input'
+    | 'navigation'
+    | 'form_start'
+    | 'form_complete'
+    | 'form_abandon';
   timestamp: Date;
   sessionId: string;
   userId?: string;
@@ -173,7 +181,7 @@ export interface AnalyticsContextValue {
   currentSession: UserSession | null;
   metrics: AnalyticsMetrics | null;
   isRecording: boolean;
-  
+
   // Actions
   startSession: (userId?: string) => void;
   endSession: () => void;
@@ -285,7 +293,9 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
       if (savedCurrent) {
         const parsed = JSON.parse(savedCurrent);
         // Resume session if less than 30 minutes old
-        const lastActivity = new Date(parsed.pages[parsed.pages.length - 1]?.exitTime || parsed.startTime);
+        const lastActivity = new Date(
+          parsed.pages[parsed.pages.length - 1]?.exitTime || parsed.startTime,
+        );
         if (Date.now() - lastActivity.getTime() < 30 * 60 * 1000) {
           setCurrentSession(parsed);
         }
@@ -310,22 +320,25 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
   }, [currentSession]);
 
   // Start new session
-  const startSession = useCallback((userId?: string) => {
-    const session: UserSession = {
-      id: generateId(),
-      userId: privacyMode ? undefined : userId,
-      startTime: new Date(),
-      pages: [],
-      events: [],
-      device: getDeviceInfo(),
-      isRecording,
-    };
-    setCurrentSession(session);
-    
-    if (isRecording) {
-      replayFramesRef.current.set(session.id, []);
-    }
-  }, [isRecording, privacyMode]);
+  const startSession = useCallback(
+    (userId?: string) => {
+      const session: UserSession = {
+        id: generateId(),
+        userId: privacyMode ? undefined : userId,
+        startTime: new Date(),
+        pages: [],
+        events: [],
+        device: getDeviceInfo(),
+        isRecording,
+      };
+      setCurrentSession(session);
+
+      if (isRecording) {
+        replayFramesRef.current.set(session.id, []);
+      }
+    },
+    [isRecording, privacyMode],
+  );
 
   // End session
   const endSession = useCallback(() => {
@@ -335,151 +348,194 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
         endTime: new Date(),
         duration: Date.now() - new Date(currentSession.startTime).getTime(),
       };
-      setSessions(prev => [...prev, endedSession]);
+      setSessions((prev) => [...prev, endedSession]);
       setCurrentSession(null);
       localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
     }
   }, [currentSession]);
 
   // Track page view
-  const trackPageView = useCallback((page: string) => {
-    if (!currentSession) return;
-
-    // End previous page view
-    const updatedPages = currentSession.pages.map((p, index) => {
-      if (index === currentSession.pages.length - 1 && !p.exitTime) {
-        return {
-          ...p,
-          exitTime: new Date(),
-          duration: Date.now() - new Date(p.entryTime).getTime(),
-        };
+  const trackPageView = useCallback(
+    (page: string) => {
+      if (!currentSession) {
+        return;
       }
-      return p;
-    });
 
-    // Start new page view
-    const pageView: PageViewEvent = {
-      id: generateId(),
-      sessionId: currentSession.id,
-      userId: currentSession.userId,
-      page,
-      entryTime: new Date(),
-      referrer: document.referrer,
-      scrollDepthMax: 0,
-    };
-
-    setCurrentSession(prev => prev ? {
-      ...prev,
-      pages: [...updatedPages, pageView],
-    } : null);
-
-    // Record replay frame
-    if (isRecording && currentSession) {
-      const frames = replayFramesRef.current.get(currentSession.id) || [];
-      frames.push({
-        timestamp: Date.now(),
-        type: 'dom',
-        data: { page, action: 'navigation' },
+      // End previous page view
+      const updatedPages = currentSession.pages.map((p, index) => {
+        if (index === currentSession.pages.length - 1 && !p.exitTime) {
+          return {
+            ...p,
+            exitTime: new Date(),
+            duration: Date.now() - new Date(p.entryTime).getTime(),
+          };
+        }
+        return p;
       });
-    }
-  }, [currentSession, isRecording]);
+
+      // Start new page view
+      const pageView: PageViewEvent = {
+        id: generateId(),
+        sessionId: currentSession.id,
+        userId: currentSession.userId,
+        page,
+        entryTime: new Date(),
+        referrer: document.referrer,
+        scrollDepthMax: 0,
+      };
+
+      setCurrentSession((prev) =>
+        prev
+          ? {
+              ...prev,
+              pages: [...updatedPages, pageView],
+            }
+          : null,
+      );
+
+      // Record replay frame
+      if (isRecording && currentSession) {
+        const frames = replayFramesRef.current.get(currentSession.id) || [];
+        frames.push({
+          timestamp: Date.now(),
+          type: 'dom',
+          data: { page, action: 'navigation' },
+        });
+      }
+    },
+    [currentSession, isRecording],
+  );
 
   // Track generic event
-  const trackEvent = useCallback((event: Omit<InteractionEvent, 'id' | 'timestamp' | 'sessionId'>) => {
-    if (!currentSession) return;
+  const trackEvent = useCallback(
+    (event: Omit<InteractionEvent, 'id' | 'timestamp' | 'sessionId'>) => {
+      if (!currentSession) {
+        return;
+      }
 
-    const fullEvent: InteractionEvent = {
-      ...event,
-      id: generateId(),
-      timestamp: new Date(),
-      sessionId: currentSession.id,
-    };
+      const fullEvent: InteractionEvent = {
+        ...event,
+        id: generateId(),
+        timestamp: new Date(),
+        sessionId: currentSession.id,
+      };
 
-    setCurrentSession(prev => prev ? {
-      ...prev,
-      events: [...prev.events, fullEvent],
-    } : null);
+      setCurrentSession((prev) =>
+        prev
+          ? {
+              ...prev,
+              events: [...prev.events, fullEvent],
+            }
+          : null,
+      );
 
-    onEvent?.(fullEvent);
-  }, [currentSession, onEvent]);
+      onEvent?.(fullEvent);
+    },
+    [currentSession, onEvent],
+  );
 
   // Track click
-  const trackClick = useCallback((element: Element, x: number, y: number) => {
-    const selector = getElementSelector(element);
-    trackEvent({
-      type: 'click',
-      page: window.location.pathname,
-      element: {
-        selector,
-        text: element.textContent?.slice(0, 50) || undefined,
-        type: element.tagName.toLowerCase(),
-      },
-      position: { x, y },
-    });
-  }, [trackEvent]);
+  const trackClick = useCallback(
+    (element: Element, x: number, y: number) => {
+      const selector = getElementSelector(element);
+      trackEvent({
+        type: 'click',
+        page: window.location.pathname,
+        element: {
+          selector,
+          text: element.textContent?.slice(0, 50) || undefined,
+          type: element.tagName.toLowerCase(),
+        },
+        position: { x, y },
+      });
+    },
+    [trackEvent],
+  );
 
   // Track scroll
-  const trackScroll = useCallback((depth: number) => {
-    if (!currentSession) return;
-
-    // Update max scroll depth for current page
-    setCurrentSession(prev => {
-      if (!prev || prev.pages.length === 0) return prev;
-      
-      const pages = [...prev.pages];
-      const lastPage = pages[pages.length - 1];
-      if (depth > lastPage.scrollDepthMax) {
-        pages[pages.length - 1] = { ...lastPage, scrollDepthMax: depth };
+  const trackScroll = useCallback(
+    (depth: number) => {
+      if (!currentSession) {
+        return;
       }
-      
-      return { ...prev, pages };
-    });
 
-    trackEvent({
-      type: 'scroll',
-      page: window.location.pathname,
-      scrollDepth: depth,
-    });
-  }, [currentSession, trackEvent]);
+      // Update max scroll depth for current page
+      setCurrentSession((prev) => {
+        if (!prev || prev.pages.length === 0) {
+          return prev;
+        }
+
+        const pages = [...prev.pages];
+        const lastPage = pages[pages.length - 1];
+        if (depth > lastPage.scrollDepthMax) {
+          pages[pages.length - 1] = { ...lastPage, scrollDepthMax: depth };
+        }
+
+        return { ...prev, pages };
+      });
+
+      trackEvent({
+        type: 'scroll',
+        page: window.location.pathname,
+        scrollDepth: depth,
+      });
+    },
+    [currentSession, trackEvent],
+  );
 
   // Track form events
-  const trackFormStart = useCallback((formId: string) => {
-    trackEvent({
-      type: 'form_start',
-      page: window.location.pathname,
-      metadata: { formId },
-    });
-  }, [trackEvent]);
+  const trackFormStart = useCallback(
+    (formId: string) => {
+      trackEvent({
+        type: 'form_start',
+        page: window.location.pathname,
+        metadata: { formId },
+      });
+    },
+    [trackEvent],
+  );
 
-  const trackFormComplete = useCallback((formId: string) => {
-    trackEvent({
-      type: 'form_complete',
-      page: window.location.pathname,
-      metadata: { formId },
-    });
-  }, [trackEvent]);
+  const trackFormComplete = useCallback(
+    (formId: string) => {
+      trackEvent({
+        type: 'form_complete',
+        page: window.location.pathname,
+        metadata: { formId },
+      });
+    },
+    [trackEvent],
+  );
 
-  const trackFormAbandon = useCallback((formId: string) => {
-    trackEvent({
-      type: 'form_abandon',
-      page: window.location.pathname,
-      metadata: { formId },
-    });
-  }, [trackEvent]);
+  const trackFormAbandon = useCallback(
+    (formId: string) => {
+      trackEvent({
+        type: 'form_abandon',
+        page: window.location.pathname,
+        metadata: { formId },
+      });
+    },
+    [trackEvent],
+  );
 
   // Get element selector
   const getElementSelector = (element: Element): string => {
-    if (element.id) return `#${element.id}`;
-    
+    if (element.id) {
+      return `#${element.id}`;
+    }
+
     const classes = Array.from(element.classList).slice(0, 3).join('.');
-    if (classes) return `${element.tagName.toLowerCase()}.${classes}`;
-    
+    if (classes) {
+      return `${element.tagName.toLowerCase()}.${classes}`;
+    }
+
     return element.tagName.toLowerCase();
   };
 
   // Auto-track setup
   useEffect(() => {
-    if (!autoTrack) return;
+    if (!autoTrack) {
+      return;
+    }
 
     // Auto-start session
     if (!currentSession) {
@@ -501,7 +557,9 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
     let lastScrollTime = 0;
     const handleScroll = () => {
       const now = Date.now();
-      if (now - lastScrollTime < 500) return;
+      if (now - lastScrollTime < 500) {
+        return;
+      }
       lastScrollTime = now;
 
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -544,82 +602,100 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleUnload);
     };
-  }, [autoTrack, currentSession, startSession, trackPageView, trackClick, trackScroll, trackEvent, endSession]);
+  }, [
+    autoTrack,
+    currentSession,
+    startSession,
+    trackPageView,
+    trackClick,
+    trackScroll,
+    trackEvent,
+    endSession,
+  ]);
 
   // Get heatmap data
-  const getHeatmapData = useCallback((page: string, type: HeatmapConfig['type']): HeatmapPoint[] => {
-    const points: Map<string, HeatmapPoint> = new Map();
-    
-    const allEvents = [...sessions.flatMap(s => s.events), ...(currentSession?.events || [])];
-    
-    allEvents
-      .filter(e => e.page === page && (type === 'click' ? e.type === 'click' : true))
-      .forEach(event => {
-        if (event.position) {
-          const key = `${Math.round(event.position.x / 10) * 10}_${Math.round(event.position.y / 10) * 10}`;
-          const existing = points.get(key);
-          if (existing) {
-            existing.value++;
-          } else {
-            points.set(key, {
-              x: event.position.x,
-              y: event.position.y,
-              value: 1,
-              element: event.element?.selector,
-            });
-          }
-        }
-      });
+  const getHeatmapData = useCallback(
+    (page: string, type: HeatmapConfig['type']): HeatmapPoint[] => {
+      const points: Map<string, HeatmapPoint> = new Map();
 
-    return Array.from(points.values());
-  }, [sessions, currentSession]);
+      const allEvents = [...sessions.flatMap((s) => s.events), ...(currentSession?.events || [])];
+
+      allEvents
+        .filter((e) => e.page === page && (type === 'click' ? e.type === 'click' : true))
+        .forEach((event) => {
+          if (event.position) {
+            const key = `${Math.round(event.position.x / 10) * 10}_${Math.round(event.position.y / 10) * 10}`;
+            const existing = points.get(key);
+            if (existing) {
+              existing.value++;
+            } else {
+              points.set(key, {
+                x: event.position.x,
+                y: event.position.y,
+                value: 1,
+                element: event.element?.selector,
+              });
+            }
+          }
+        });
+
+      return Array.from(points.values());
+    },
+    [sessions, currentSession],
+  );
 
   // Get funnel data
-  const getFunnelData = useCallback((steps: string[]): FunnelStep[] => {
-    const allSessions = [...sessions, currentSession].filter(Boolean) as UserSession[];
-    
-    return steps.map((step, index) => {
-      const sessionsAtStep = allSessions.filter(session => 
-        session.pages.some(p => p.page === step)
-      );
-      
-      const count = sessionsAtStep.length;
-      const prevCount = index === 0 ? allSessions.length : 
-        allSessions.filter(s => s.pages.some(p => p.page === steps[index - 1])).length;
-      
-      const conversionRate = prevCount > 0 ? count / prevCount : 0;
-      const dropOffRate = 1 - conversionRate;
-      
-      const avgTime = sessionsAtStep.reduce((sum, session) => {
-        const pageView = session.pages.find(p => p.page === step);
-        return sum + (pageView?.duration || 0);
-      }, 0) / (count || 1);
+  const getFunnelData = useCallback(
+    (steps: string[]): FunnelStep[] => {
+      const allSessions = [...sessions, currentSession].filter(Boolean) as UserSession[];
 
-      return {
-        name: step,
-        page: step,
-        count,
-        conversionRate,
-        dropOffRate,
-        avgTimeOnStep: avgTime,
-      };
-    });
-  }, [sessions, currentSession]);
+      return steps.map((step, index) => {
+        const sessionsAtStep = allSessions.filter((session) =>
+          session.pages.some((p) => p.page === step),
+        );
+
+        const count = sessionsAtStep.length;
+        const prevCount =
+          index === 0
+            ? allSessions.length
+            : allSessions.filter((s) => s.pages.some((p) => p.page === steps[index - 1])).length;
+
+        const conversionRate = prevCount > 0 ? count / prevCount : 0;
+        const dropOffRate = 1 - conversionRate;
+
+        const avgTime =
+          sessionsAtStep.reduce((sum, session) => {
+            const pageView = session.pages.find((p) => p.page === step);
+            return sum + (pageView?.duration || 0);
+          }, 0) / (count || 1);
+
+        return {
+          name: step,
+          page: step,
+          count,
+          conversionRate,
+          dropOffRate,
+          avgTimeOnStep: avgTime,
+        };
+      });
+    },
+    [sessions, currentSession],
+  );
 
   // Get user journeys
   const getUserJourneys = useCallback((): UserJourney[] => {
     const allSessions = [...sessions, currentSession].filter(Boolean) as UserSession[];
-    
-    return allSessions.map(session => ({
+
+    return allSessions.map((session) => ({
       sessionId: session.id,
       userId: session.userId,
-      steps: session.pages.map(p => ({
+      steps: session.pages.map((p) => ({
         page: p.page,
         timestamp: new Date(p.entryTime),
         duration: p.duration || 0,
       })),
       completed: session.endTime !== undefined,
-      duration: session.duration || (Date.now() - new Date(session.startTime).getTime()),
+      duration: session.duration || Date.now() - new Date(session.startTime).getTime(),
     }));
   }, [sessions, currentSession]);
 
@@ -631,24 +707,26 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
   // Calculate metrics
   const calculateMetrics = useCallback((): AnalyticsMetrics => {
     const allSessions = [...sessions, currentSession].filter(Boolean) as UserSession[];
-    
+
     const totalSessions = allSessions.length;
     const totalPageViews = allSessions.reduce((sum, s) => sum + s.pages.length, 0);
-    const uniqueUsers = new Set(allSessions.map(s => s.userId).filter(Boolean)).size;
-    
-    const avgSessionDuration = allSessions.reduce((sum, s) => 
-      sum + (s.duration || (Date.now() - new Date(s.startTime).getTime())), 0
-    ) / (totalSessions || 1);
+    const uniqueUsers = new Set(allSessions.map((s) => s.userId).filter(Boolean)).size;
 
-    const bouncedSessions = allSessions.filter(s => s.pages.length === 1).length;
+    const avgSessionDuration =
+      allSessions.reduce(
+        (sum, s) => sum + (s.duration || Date.now() - new Date(s.startTime).getTime()),
+        0,
+      ) / (totalSessions || 1);
+
+    const bouncedSessions = allSessions.filter((s) => s.pages.length === 1).length;
     const bounceRate = totalSessions > 0 ? bouncedSessions / totalSessions : 0;
-    
+
     const pagesPerSession = totalSessions > 0 ? totalPageViews / totalSessions : 0;
 
     // Top pages
     const pageCounts: Record<string, number> = {};
-    allSessions.forEach(s => {
-      s.pages.forEach(p => {
+    allSessions.forEach((s) => {
+      s.pages.forEach((p) => {
         pageCounts[p.page] = (pageCounts[p.page] || 0) + 1;
       });
     });
@@ -659,8 +737,8 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
 
     // Top actions
     const actionCounts: Record<string, number> = {};
-    allSessions.forEach(s => {
-      s.events.forEach(e => {
+    allSessions.forEach((s) => {
+      s.events.forEach((e) => {
         if (e.element?.selector) {
           actionCounts[e.element.selector] = (actionCounts[e.element.selector] || 0) + 1;
         }
@@ -673,8 +751,8 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
 
     // Conversion rate (sessions that reached a goal page)
     const goalPages = ['/complete', '/success', '/thank-you'];
-    const completedSessions = allSessions.filter(s => 
-      s.pages.some(p => goalPages.some(g => p.page.includes(g)))
+    const completedSessions = allSessions.filter((s) =>
+      s.pages.some((p) => goalPages.some((g) => p.page.includes(g))),
     ).length;
     const conversionRate = totalSessions > 0 ? completedSessions / totalSessions : 0;
 
@@ -693,11 +771,15 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
 
   // Export data
   const exportData = useCallback((): string => {
-    return JSON.stringify({
-      sessions: [...sessions, currentSession].filter(Boolean),
-      metrics: calculateMetrics(),
-      exportedAt: new Date().toISOString(),
-    }, null, 2);
+    return JSON.stringify(
+      {
+        sessions: [...sessions, currentSession].filter(Boolean),
+        metrics: calculateMetrics(),
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2,
+    );
   }, [sessions, currentSession, calculateMetrics]);
 
   const metrics = useMemo(() => calculateMetrics(), [calculateMetrics]);
@@ -725,11 +807,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
     exportData,
   };
 
-  return (
-    <AnalyticsContext.Provider value={value}>
-      {children}
-    </AnalyticsContext.Provider>
-  );
+  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>;
 };
 
 // ============================================================================
@@ -1030,7 +1108,7 @@ interface FunnelChartProps {
 }
 
 export const FunnelChart: React.FC<FunnelChartProps> = ({ steps }) => {
-  const maxCount = Math.max(...steps.map(s => s.count));
+  const maxCount = Math.max(...steps.map((s) => s.count));
 
   return (
     <div style={styles.funnelContainer}>
@@ -1042,9 +1120,7 @@ export const FunnelChart: React.FC<FunnelChartProps> = ({ steps }) => {
             <div style={{ ...styles.funnelBar, height: `${height}px` }} />
             <div style={styles.funnelLabel}>{step.name}</div>
             {index > 0 && step.dropOffRate > 0 && (
-              <div style={styles.funnelDropoff}>
-                -{(step.dropOffRate * 100).toFixed(1)}% drop
-              </div>
+              <div style={styles.funnelDropoff}>-{(step.dropOffRate * 100).toFixed(1)}% drop</div>
             )}
           </div>
         );
@@ -1093,22 +1169,17 @@ interface UserJourneysProps {
   limit?: number;
 }
 
-export const UserJourneys: React.FC<UserJourneysProps> = ({
-  journeys,
-  limit = 10,
-}) => {
+export const UserJourneys: React.FC<UserJourneysProps> = ({ journeys, limit = 10 }) => {
   const displayJourneys = journeys.slice(0, limit);
 
   return (
     <div style={styles.journeyList}>
-      {displayJourneys.map(journey => (
+      {displayJourneys.map((journey) => (
         <div key={journey.sessionId} style={styles.journeyItem}>
           {journey.steps.map((step, index) => (
             <div key={index} style={styles.journeyStep}>
               <span style={styles.journeyPage}>{step.page}</span>
-              {index < journey.steps.length - 1 && (
-                <span style={styles.journeyArrow}>→</span>
-              )}
+              {index < journey.steps.length - 1 && <span style={styles.journeyArrow}>→</span>}
             </div>
           ))}
           <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#888' }}>
@@ -1126,7 +1197,7 @@ export const UserJourneys: React.FC<UserJourneysProps> = ({
 export const AnalyticsDashboard: React.FC = () => {
   const { metrics, getFunnelData, getUserJourneys, exportData } = useAnalytics();
   const [funnelSteps] = useState(['/start', '/questionnaire', '/review', '/complete']);
-  
+
   const funnelData = getFunnelData(funnelSteps);
   const journeys = getUserJourneys();
 
@@ -1202,33 +1273,34 @@ export const HeatmapVisualization: React.FC<HeatmapVisualizationProps> = ({
   const { getHeatmapData } = useAnalytics();
   const [type, setType] = useState<HeatmapConfig['type']>('click');
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const data = getHeatmapData(page, type);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      return;
+    }
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
     // Draw heatmap points
-    data.forEach(point => {
+    data.forEach((point) => {
       const intensity = Math.min(point.value / 10, 1);
       const radius = 20 + intensity * 30;
-      
-      const gradient = ctx.createRadialGradient(
-        point.x, point.y, 0,
-        point.x, point.y, radius
-      );
-      
+
+      const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, radius);
+
       gradient.addColorStop(0, `rgba(255, 0, 0, ${intensity})`);
       gradient.addColorStop(0.5, `rgba(255, 255, 0, ${intensity * 0.5})`);
       gradient.addColorStop(1, 'rgba(0, 0, 255, 0)');
-      
+
       ctx.beginPath();
       ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
       ctx.fillStyle = gradient;
@@ -1239,7 +1311,7 @@ export const HeatmapVisualization: React.FC<HeatmapVisualizationProps> = ({
   return (
     <div>
       <div style={styles.heatmapControls}>
-        {(['click', 'scroll', 'hover'] as const).map(t => (
+        {(['click', 'scroll', 'hover'] as const).map((t) => (
           <button
             key={t}
             style={{
@@ -1253,12 +1325,7 @@ export const HeatmapVisualization: React.FC<HeatmapVisualizationProps> = ({
         ))}
       </div>
       <div style={{ ...styles.heatmapContainer, width, height }}>
-        <canvas
-          ref={canvasRef}
-          width={width}
-          height={height}
-          style={styles.heatmapCanvas}
-        />
+        <canvas ref={canvasRef} width={width} height={height} style={styles.heatmapCanvas} />
       </div>
     </div>
   );
@@ -1271,23 +1338,23 @@ interface SessionReplayPlayerProps {
   sessionId: string;
 }
 
-export const SessionReplayPlayer: React.FC<SessionReplayPlayerProps> = ({
-  sessionId,
-}) => {
+export const SessionReplayPlayer: React.FC<SessionReplayPlayerProps> = ({ sessionId }) => {
   const { getSessionReplay, sessions } = useAnalytics();
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  
+
   const frames = getSessionReplay(sessionId);
-  const session = sessions.find(s => s.id === sessionId);
+  const session = sessions.find((s) => s.id === sessionId);
   const duration = session?.duration || 0;
 
   useEffect(() => {
-    if (!isPlaying || frames.length === 0) return;
+    if (!isPlaying || frames.length === 0) {
+      return;
+    }
 
     const interval = setInterval(() => {
-      setCurrentTime(prev => {
+      setCurrentTime((prev) => {
         const next = prev + 100;
         if (next >= duration) {
           setIsPlaying(false);
@@ -1316,10 +1383,7 @@ export const SessionReplayPlayer: React.FC<SessionReplayPlayerProps> = ({
         <small>Frames: {frames.length}</small>
       </div>
       <div style={styles.replayControls}>
-        <button
-          style={styles.replayButton}
-          onClick={() => setIsPlaying(!isPlaying)}
-        >
+        <button style={styles.replayButton} onClick={() => setIsPlaying(!isPlaying)}>
           {isPlaying ? '⏸ Pause' : '▶ Play'}
         </button>
         <div style={styles.replayProgress}>
@@ -1342,7 +1406,7 @@ export const SessionReplayPlayer: React.FC<SessionReplayPlayerProps> = ({
  */
 export function usePageTracking() {
   const { trackPageView } = useAnalytics();
-  
+
   useEffect(() => {
     trackPageView(window.location.pathname);
   }, [trackPageView]);

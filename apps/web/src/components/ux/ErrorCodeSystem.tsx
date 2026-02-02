@@ -1,9 +1,9 @@
 /**
  * Error Code System & Recovery Components
- * 
+ *
  * Implements a comprehensive error code taxonomy for support reference
  * and provides actionable error recovery actions.
- * 
+ *
  * Nielsen Heuristic: Help users recognize, diagnose, and recover from errors
  */
 
@@ -13,16 +13,16 @@ import React, { useState, useCallback } from 'react';
 // Error Code Taxonomy
 // ============================================================================
 
-export type ErrorCategory = 
-  | 'AUTH'   // Authentication errors
-  | 'AUTHZ'  // Authorization errors
-  | 'NET'    // Network errors
-  | 'API'    // API errors
-  | 'VALID'  // Validation errors
-  | 'FILE'   // File operation errors
-  | 'DB'     // Database errors
-  | 'PAY'    // Payment errors
-  | 'SYS'    // System errors
+export type ErrorCategory =
+  | 'AUTH' // Authentication errors
+  | 'AUTHZ' // Authorization errors
+  | 'NET' // Network errors
+  | 'API' // API errors
+  | 'VALID' // Validation errors
+  | 'FILE' // File operation errors
+  | 'DB' // Database errors
+  | 'PAY' // Payment errors
+  | 'SYS' // System errors
   | 'UNKNOWN';
 
 export interface ErrorCode {
@@ -54,10 +54,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'AUTH',
     httpStatus: 401,
     message: 'Invalid credentials',
-    userMessage: 'The email or password you entered is incorrect. Please check your spelling and try again.',
+    userMessage:
+      'The email or password you entered is incorrect. Please check your spelling and try again.',
     recoveryActions: [
-      { id: 'retry', label: 'Try Again', description: 'Re-enter your credentials', action: () => {}, isPrimary: true },
-      { id: 'reset', label: 'Reset Password', description: 'Get a password reset link', action: () => {} },
+      {
+        id: 'retry',
+        label: 'Try Again',
+        description: 'Re-enter your credentials',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'reset',
+        label: 'Reset Password',
+        description: 'Get a password reset link',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -68,7 +80,13 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     message: 'Session expired',
     userMessage: 'Your session has expired for security reasons. Please sign in again to continue.',
     recoveryActions: [
-      { id: 'login', label: 'Sign In', description: 'Return to login page', action: () => {}, isPrimary: true },
+      {
+        id: 'login',
+        label: 'Sign In',
+        description: 'Return to login page',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: false,
     supportLevel: 'self',
@@ -77,10 +95,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'AUTH',
     httpStatus: 401,
     message: 'Email not verified',
-    userMessage: 'Please verify your email address before signing in. Check your inbox for the verification link.',
+    userMessage:
+      'Please verify your email address before signing in. Check your inbox for the verification link.',
     recoveryActions: [
-      { id: 'resend', label: 'Resend Email', description: 'Send a new verification link', action: () => {}, isPrimary: true },
-      { id: 'support', label: 'Contact Support', description: 'Get help with verification', action: () => {} },
+      {
+        id: 'resend',
+        label: 'Resend Email',
+        description: 'Send a new verification link',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'support',
+        label: 'Contact Support',
+        description: 'Get help with verification',
+        action: () => {},
+      },
     ],
     isRetryable: false,
     supportLevel: 'self',
@@ -89,10 +119,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'AUTH',
     httpStatus: 403,
     message: 'Account locked',
-    userMessage: 'Your account has been temporarily locked due to too many failed login attempts. Please try again in 15 minutes.',
+    userMessage:
+      'Your account has been temporarily locked due to too many failed login attempts. Please try again in 15 minutes.',
     recoveryActions: [
-      { id: 'reset', label: 'Reset Password', description: 'Unlock with password reset', action: () => {} },
-      { id: 'support', label: 'Contact Support', description: 'Get immediate help', action: () => {}, isPrimary: true },
+      {
+        id: 'reset',
+        label: 'Reset Password',
+        description: 'Unlock with password reset',
+        action: () => {},
+      },
+      {
+        id: 'support',
+        label: 'Contact Support',
+        description: 'Get immediate help',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: false,
     supportLevel: 'contact',
@@ -103,10 +145,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'AUTHZ',
     httpStatus: 403,
     message: 'Insufficient permissions',
-    userMessage: 'You don\'t have permission to access this resource. Please contact your administrator.',
+    userMessage:
+      "You don't have permission to access this resource. Please contact your administrator.",
     recoveryActions: [
-      { id: 'back', label: 'Go Back', description: 'Return to previous page', action: () => window.history.back(), isPrimary: true },
-      { id: 'home', label: 'Go to Dashboard', description: 'Return to main dashboard', action: () => {} },
+      {
+        id: 'back',
+        label: 'Go Back',
+        description: 'Return to previous page',
+        action: () => window.history.back(),
+        isPrimary: true,
+      },
+      {
+        id: 'home',
+        label: 'Go to Dashboard',
+        description: 'Return to main dashboard',
+        action: () => {},
+      },
     ],
     isRetryable: false,
     supportLevel: 'contact',
@@ -115,9 +169,16 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'AUTHZ',
     httpStatus: 403,
     message: 'Feature not available',
-    userMessage: 'This feature requires a Professional or Enterprise subscription. Upgrade your plan to access it.',
+    userMessage:
+      'This feature requires a Professional or Enterprise subscription. Upgrade your plan to access it.',
     recoveryActions: [
-      { id: 'upgrade', label: 'View Plans', description: 'See available subscription options', action: () => {}, isPrimary: true },
+      {
+        id: 'upgrade',
+        label: 'View Plans',
+        description: 'See available subscription options',
+        action: () => {},
+        isPrimary: true,
+      },
       { id: 'contact', label: 'Contact Sales', description: 'Talk to our team', action: () => {} },
     ],
     isRetryable: false,
@@ -128,10 +189,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'NET-001': {
     category: 'NET',
     message: 'Network connection lost',
-    userMessage: 'Unable to connect to the server. Please check your internet connection and try again.',
+    userMessage:
+      'Unable to connect to the server. Please check your internet connection and try again.',
     recoveryActions: [
-      { id: 'retry', label: 'Retry', description: 'Try connecting again', action: () => window.location.reload(), isPrimary: true },
-      { id: 'offline', label: 'Work Offline', description: 'Continue in offline mode', action: () => {} },
+      {
+        id: 'retry',
+        label: 'Retry',
+        description: 'Try connecting again',
+        action: () => window.location.reload(),
+        isPrimary: true,
+      },
+      {
+        id: 'offline',
+        label: 'Work Offline',
+        description: 'Continue in offline mode',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -139,10 +212,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'NET-002': {
     category: 'NET',
     message: 'Request timeout',
-    userMessage: 'The server is taking too long to respond. This might be due to a slow connection.',
+    userMessage:
+      'The server is taking too long to respond. This might be due to a slow connection.',
     recoveryActions: [
-      { id: 'retry', label: 'Try Again', description: 'Retry the request', action: () => {}, isPrimary: true },
-      { id: 'reduce', label: 'Simplify Request', description: 'Try with smaller data', action: () => {} },
+      {
+        id: 'retry',
+        label: 'Try Again',
+        description: 'Retry the request',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'reduce',
+        label: 'Simplify Request',
+        description: 'Try with smaller data',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -155,7 +240,13 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     message: 'Bad request',
     userMessage: 'The information you provided is invalid. Please check your input and try again.',
     recoveryActions: [
-      { id: 'fix', label: 'Fix Input', description: 'Review and correct the form', action: () => {}, isPrimary: true },
+      {
+        id: 'fix',
+        label: 'Fix Input',
+        description: 'Review and correct the form',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -164,10 +255,21 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'API',
     httpStatus: 404,
     message: 'Resource not found',
-    userMessage: 'The page or resource you\'re looking for doesn\'t exist or has been moved.',
+    userMessage: "The page or resource you're looking for doesn't exist or has been moved.",
     recoveryActions: [
-      { id: 'home', label: 'Go to Dashboard', description: 'Return to main dashboard', action: () => {}, isPrimary: true },
-      { id: 'back', label: 'Go Back', description: 'Return to previous page', action: () => window.history.back() },
+      {
+        id: 'home',
+        label: 'Go to Dashboard',
+        description: 'Return to main dashboard',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'back',
+        label: 'Go Back',
+        description: 'Return to previous page',
+        action: () => window.history.back(),
+      },
     ],
     isRetryable: false,
     supportLevel: 'self',
@@ -176,10 +278,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'API',
     httpStatus: 500,
     message: 'Server error',
-    userMessage: 'Something went wrong on our end. Our team has been notified and is working on a fix.',
+    userMessage:
+      'Something went wrong on our end. Our team has been notified and is working on a fix.',
     recoveryActions: [
-      { id: 'retry', label: 'Try Again', description: 'Retry the request', action: () => window.location.reload(), isPrimary: true },
-      { id: 'support', label: 'Report Issue', description: 'Submit a bug report', action: () => {} },
+      {
+        id: 'retry',
+        label: 'Try Again',
+        description: 'Retry the request',
+        action: () => window.location.reload(),
+        isPrimary: true,
+      },
+      {
+        id: 'support',
+        label: 'Report Issue',
+        description: 'Submit a bug report',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'contact',
@@ -188,10 +302,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     category: 'API',
     httpStatus: 503,
     message: 'Service unavailable',
-    userMessage: 'The service is temporarily unavailable. We\'re working to restore it as quickly as possible.',
+    userMessage:
+      "The service is temporarily unavailable. We're working to restore it as quickly as possible.",
     recoveryActions: [
-      { id: 'status', label: 'Check Status', description: 'View system status page', action: () => {}, isPrimary: true },
-      { id: 'retry', label: 'Retry Later', description: 'Try again in a few minutes', action: () => {} },
+      {
+        id: 'status',
+        label: 'Check Status',
+        description: 'View system status page',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'retry',
+        label: 'Retry Later',
+        description: 'Try again in a few minutes',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -203,7 +329,13 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     message: 'Required field missing',
     userMessage: 'Please fill in all required fields before submitting.',
     recoveryActions: [
-      { id: 'fix', label: 'Complete Form', description: 'Fill in missing fields', action: () => {}, isPrimary: true },
+      {
+        id: 'fix',
+        label: 'Complete Form',
+        description: 'Fill in missing fields',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -213,7 +345,13 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     message: 'Invalid format',
     userMessage: 'Please check the format of your input. See the field hints for expected format.',
     recoveryActions: [
-      { id: 'fix', label: 'Fix Format', description: 'Correct the input format', action: () => {}, isPrimary: true },
+      {
+        id: 'fix',
+        label: 'Fix Format',
+        description: 'Correct the input format',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -223,10 +361,21 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'FILE-001': {
     category: 'FILE',
     message: 'File too large',
-    userMessage: 'The file you\'re trying to upload exceeds the maximum size limit (50MB).',
+    userMessage: "The file you're trying to upload exceeds the maximum size limit (50MB).",
     recoveryActions: [
-      { id: 'compress', label: 'Compress File', description: 'Reduce file size and try again', action: () => {}, isPrimary: true },
-      { id: 'different', label: 'Choose Different', description: 'Select a different file', action: () => {} },
+      {
+        id: 'compress',
+        label: 'Compress File',
+        description: 'Reduce file size and try again',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'different',
+        label: 'Choose Different',
+        description: 'Select a different file',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -234,10 +383,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'FILE-002': {
     category: 'FILE',
     message: 'Invalid file type',
-    userMessage: 'This file type is not supported. Please upload a PDF, Word document, or image file.',
+    userMessage:
+      'This file type is not supported. Please upload a PDF, Word document, or image file.',
     recoveryActions: [
-      { id: 'convert', label: 'Convert File', description: 'Convert to a supported format', action: () => {} },
-      { id: 'different', label: 'Choose Different', description: 'Select a different file', action: () => {}, isPrimary: true },
+      {
+        id: 'convert',
+        label: 'Convert File',
+        description: 'Convert to a supported format',
+        action: () => {},
+      },
+      {
+        id: 'different',
+        label: 'Choose Different',
+        description: 'Select a different file',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -247,7 +408,13 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     message: 'Upload failed',
     userMessage: 'The file upload was interrupted. Please try again.',
     recoveryActions: [
-      { id: 'retry', label: 'Retry Upload', description: 'Try uploading again', action: () => {}, isPrimary: true },
+      {
+        id: 'retry',
+        label: 'Retry Upload',
+        description: 'Try uploading again',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -257,11 +424,28 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'PAY-001': {
     category: 'PAY',
     message: 'Payment declined',
-    userMessage: 'Your payment was declined. Please check your card details or try a different payment method.',
+    userMessage:
+      'Your payment was declined. Please check your card details or try a different payment method.',
     recoveryActions: [
-      { id: 'retry', label: 'Try Again', description: 'Re-enter payment details', action: () => {}, isPrimary: true },
-      { id: 'different', label: 'Use Different Card', description: 'Try a different payment method', action: () => {} },
-      { id: 'contact', label: 'Contact Bank', description: 'Contact your card issuer', action: () => {} },
+      {
+        id: 'retry',
+        label: 'Try Again',
+        description: 'Re-enter payment details',
+        action: () => {},
+        isPrimary: true,
+      },
+      {
+        id: 'different',
+        label: 'Use Different Card',
+        description: 'Try a different payment method',
+        action: () => {},
+      },
+      {
+        id: 'contact',
+        label: 'Contact Bank',
+        description: 'Contact your card issuer',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -271,7 +455,13 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
     message: 'Insufficient funds',
     userMessage: 'Your card has insufficient funds. Please try a different payment method.',
     recoveryActions: [
-      { id: 'different', label: 'Use Different Card', description: 'Try a different payment method', action: () => {}, isPrimary: true },
+      {
+        id: 'different',
+        label: 'Use Different Card',
+        description: 'Try a different payment method',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: true,
     supportLevel: 'self',
@@ -281,10 +471,22 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'SYS-001': {
     category: 'SYS',
     message: 'Storage quota exceeded',
-    userMessage: 'You\'ve reached your storage limit. Please delete some files or upgrade your plan.',
+    userMessage:
+      "You've reached your storage limit. Please delete some files or upgrade your plan.",
     recoveryActions: [
-      { id: 'manage', label: 'Manage Files', description: 'Delete unnecessary files', action: () => {} },
-      { id: 'upgrade', label: 'Upgrade Plan', description: 'Get more storage', action: () => {}, isPrimary: true },
+      {
+        id: 'manage',
+        label: 'Manage Files',
+        description: 'Delete unnecessary files',
+        action: () => {},
+      },
+      {
+        id: 'upgrade',
+        label: 'Upgrade Plan',
+        description: 'Get more storage',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: false,
     supportLevel: 'self',
@@ -292,9 +494,16 @@ export const ERROR_CODES: Record<string, Omit<ErrorCode, 'code'>> = {
   'SYS-002': {
     category: 'SYS',
     message: 'Maintenance mode',
-    userMessage: 'The system is currently undergoing scheduled maintenance. Please try again later.',
+    userMessage:
+      'The system is currently undergoing scheduled maintenance. Please try again later.',
     recoveryActions: [
-      { id: 'status', label: 'Check Status', description: 'View maintenance schedule', action: () => {}, isPrimary: true },
+      {
+        id: 'status',
+        label: 'Check Status',
+        description: 'View maintenance schedule',
+        action: () => {},
+        isPrimary: true,
+      },
     ],
     isRetryable: false,
     supportLevel: 'self',
@@ -315,10 +524,22 @@ export function getErrorCode(code: string): ErrorCode {
     code: code || 'UNKNOWN-001',
     category: 'UNKNOWN',
     message: 'Unknown error',
-    userMessage: 'An unexpected error occurred. Please try again or contact support if the problem persists.',
+    userMessage:
+      'An unexpected error occurred. Please try again or contact support if the problem persists.',
     recoveryActions: [
-      { id: 'retry', label: 'Try Again', description: 'Retry the operation', action: () => window.location.reload(), isPrimary: true },
-      { id: 'support', label: 'Contact Support', description: 'Get help from our team', action: () => {} },
+      {
+        id: 'retry',
+        label: 'Try Again',
+        description: 'Retry the operation',
+        action: () => window.location.reload(),
+        isPrimary: true,
+      },
+      {
+        id: 'support',
+        label: 'Contact Support',
+        description: 'Get help from our team',
+        action: () => {},
+      },
     ],
     isRetryable: true,
     supportLevel: 'contact',
@@ -353,17 +574,55 @@ export interface ErrorDisplayProps {
   className?: string;
 }
 
-const categoryColors: Record<ErrorCategory, { bg: string; border: string; text: string; icon: string }> = {
-  AUTH: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', icon: 'text-yellow-600' },
-  AUTHZ: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', icon: 'text-orange-600' },
-  NET: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', icon: 'text-gray-600' },
+const categoryColors: Record<
+  ErrorCategory,
+  { bg: string; border: string; text: string; icon: string }
+> = {
+  AUTH: {
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-200',
+    text: 'text-yellow-800',
+    icon: 'text-yellow-600',
+  },
+  AUTHZ: {
+    bg: 'bg-orange-50',
+    border: 'border-orange-200',
+    text: 'text-orange-800',
+    icon: 'text-orange-600',
+  },
+  NET: {
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    text: 'text-gray-800',
+    icon: 'text-gray-600',
+  },
   API: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-600' },
-  VALID: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', icon: 'text-blue-600' },
-  FILE: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', icon: 'text-purple-600' },
+  VALID: {
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-800',
+    icon: 'text-blue-600',
+  },
+  FILE: {
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    text: 'text-purple-800',
+    icon: 'text-purple-600',
+  },
   DB: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-600' },
-  PAY: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', icon: 'text-yellow-600' },
+  PAY: {
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-200',
+    text: 'text-yellow-800',
+    icon: 'text-yellow-600',
+  },
   SYS: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-600' },
-  UNKNOWN: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', icon: 'text-gray-600' },
+  UNKNOWN: {
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    text: 'text-gray-800',
+    icon: 'text-gray-600',
+  },
 };
 
 export function ErrorDisplay({
@@ -387,17 +646,19 @@ export function ErrorDisplay({
         {/* Icon */}
         <div className={`flex-shrink-0 ${colors.icon}`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className={`text-sm font-medium ${colors.text}`}>
-              {errorObj.userMessage}
-            </h3>
+            <h3 className={`text-sm font-medium ${colors.text}`}>{errorObj.userMessage}</h3>
             {onDismiss && (
               <button
                 onClick={onDismiss}
@@ -405,7 +666,12 @@ export function ErrorDisplay({
                 aria-label="Dismiss"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -415,7 +681,8 @@ export function ErrorDisplay({
           {showCode && (
             <p className={`mt-1 text-xs ${colors.text} opacity-70`}>
               Error code: {errorObj.code}
-              {errorObj.supportLevel === 'contact' && ' • Please include this code when contacting support'}
+              {errorObj.supportLevel === 'contact' &&
+                ' • Please include this code when contacting support'}
             </p>
           )}
 
@@ -455,8 +722,12 @@ export function ErrorDisplay({
                 className={`text-sm ${colors.text} hover:underline flex items-center gap-1`}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
                 Auto-retry in 5 seconds
               </button>
@@ -479,10 +750,7 @@ export interface UseAutoRetryOptions {
   backoffMultiplier?: number;
 }
 
-export function useAutoRetry(
-  operation: () => Promise<void>,
-  options: UseAutoRetryOptions = {}
-) {
+export function useAutoRetry(operation: () => Promise<void>, options: UseAutoRetryOptions = {}) {
   const {
     maxRetries = 3,
     initialDelayMs = 1000,
@@ -495,10 +763,13 @@ export function useAutoRetry(
   const [error, setError] = useState<Error | null>(null);
   const [nextRetryIn, setNextRetryIn] = useState<number | null>(null);
 
-  const calculateDelay = useCallback((attempt: number) => {
-    const delay = initialDelayMs * Math.pow(backoffMultiplier, attempt);
-    return Math.min(delay, maxDelayMs);
-  }, [initialDelayMs, backoffMultiplier, maxDelayMs]);
+  const calculateDelay = useCallback(
+    (attempt: number) => {
+      const delay = initialDelayMs * Math.pow(backoffMultiplier, attempt);
+      return Math.min(delay, maxDelayMs);
+    },
+    [initialDelayMs, backoffMultiplier, maxDelayMs],
+  );
 
   const retry = useCallback(async () => {
     if (retryCount >= maxRetries) {
@@ -518,7 +789,7 @@ export function useAutoRetry(
       }
     }, 100);
 
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
     clearInterval(countdownInterval);
     setNextRetryIn(null);
 
@@ -528,7 +799,7 @@ export function useAutoRetry(
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
-      setRetryCount(prev => prev + 1);
+      setRetryCount((prev) => prev + 1);
     } finally {
       setIsRetrying(false);
     }

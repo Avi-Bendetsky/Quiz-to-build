@@ -32,10 +32,7 @@ export class DocumentBuilderService {
   /**
    * Build a DOCX document from template data
    */
-  async buildDocument(
-    templateData: TemplateData,
-    documentType: DocumentTypeInfo,
-  ): Promise<Buffer> {
+  async buildDocument(templateData: TemplateData, documentType: DocumentTypeInfo): Promise<Buffer> {
     this.logger.log(`Building document: ${documentType.name}`);
 
     const sections = this.buildSections(templateData, documentType);
@@ -74,10 +71,7 @@ export class DocumentBuilderService {
   /**
    * Build document sections based on category and content
    */
-  private buildSections(
-    templateData: TemplateData,
-    documentType: DocumentTypeInfo,
-  ): Paragraph[] {
+  private buildSections(templateData: TemplateData, documentType: DocumentTypeInfo): Paragraph[] {
     const sections: Paragraph[] = [];
 
     // Title
@@ -157,7 +151,9 @@ export class DocumentBuilderService {
     // Technical Overview
     if (content.technical_overview || content.architecture) {
       sections.push(this.buildHeading('Technical Overview', HeadingLevel.HEADING_1));
-      sections.push(...this.buildContentSection(content.technical_overview ?? content.architecture));
+      sections.push(
+        ...this.buildContentSection(content.technical_overview ?? content.architecture),
+      );
     }
 
     // Infrastructure
@@ -311,7 +307,10 @@ export class DocumentBuilderService {
   /**
    * Build a heading paragraph
    */
-  private buildHeading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
+  private buildHeading(
+    text: string,
+    level: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  ): Paragraph {
     return new Paragraph({
       children: [new TextRun({ text, bold: true })],
       heading: level,
@@ -334,10 +333,7 @@ export class DocumentBuilderService {
    */
   private buildLabeledParagraph(label: string, value: string): Paragraph {
     return new Paragraph({
-      children: [
-        new TextRun({ text: `${label}: `, bold: true }),
-        new TextRun({ text: value }),
-      ],
+      children: [new TextRun({ text: `${label}: `, bold: true }), new TextRun({ text: value })],
       spacing: { after: 120 },
     });
   }
@@ -484,4 +480,3 @@ export class DocumentBuilderService {
       .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 }
-

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '@libs/database';
 import { StandardCategory, EngineeringStandard } from '@prisma/client';
 import {
@@ -25,7 +30,9 @@ export class StandardsService {
       return standards.map((standard) => this.mapToResponse(standard));
     } catch (error) {
       this.logger.error('Failed to fetch standards:', error);
-      throw new InternalServerErrorException('Failed to retrieve standards. Please try again later.');
+      throw new InternalServerErrorException(
+        'Failed to retrieve standards. Please try again later.',
+      );
     }
   }
 
@@ -45,7 +52,9 @@ export class StandardsService {
         throw error;
       }
       this.logger.error(`Failed to fetch standard by category ${category}:`, error);
-      throw new InternalServerErrorException('Failed to retrieve standard. Please try again later.');
+      throw new InternalServerErrorException(
+        'Failed to retrieve standard. Please try again later.',
+      );
     }
   }
 
@@ -88,7 +97,9 @@ export class StandardsService {
         throw error;
       }
       this.logger.error(`Failed to fetch standard with mappings for ${category}:`, error);
-      throw new InternalServerErrorException('Failed to retrieve standard. Please try again later.');
+      throw new InternalServerErrorException(
+        'Failed to retrieve standard. Please try again later.',
+      );
     }
   }
 
@@ -124,7 +135,9 @@ export class StandardsService {
         throw error;
       }
       this.logger.error(`Failed to fetch standards for document ${documentTypeIdOrSlug}:`, error);
-      throw new InternalServerErrorException('Failed to retrieve standards for document. Please try again later.');
+      throw new InternalServerErrorException(
+        'Failed to retrieve standards for document. Please try again later.',
+      );
     }
   }
 
@@ -177,7 +190,9 @@ export class StandardsService {
         throw error;
       }
       this.logger.error(`Failed to generate standards section for ${documentTypeIdOrSlug}:`, error);
-      throw new InternalServerErrorException('Failed to generate standards section. Please try again later.');
+      throw new InternalServerErrorException(
+        'Failed to generate standards section. Please try again later.',
+      );
     }
   }
 

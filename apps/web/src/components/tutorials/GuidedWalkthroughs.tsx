@@ -1,7 +1,7 @@
 /**
  * Guided Walkthroughs & Usability Testing Component
  * Sprint 39: Interactive Guides, A/B Testing, UX Monitoring
- * 
+ *
  * Features:
  * - Interactive step-by-step walkthroughs
  * - Automated usability testing integration
@@ -9,7 +9,15 @@
  * - Continuous UX monitoring dashboard
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  ReactNode,
+} from 'react';
 
 // =============================================================================
 // GUIDED WALKTHROUGH TYPES
@@ -213,7 +221,7 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       {
         id: 'welcome',
         title: 'Welcome to Quiz2Biz!',
-        content: 'This quick tour will show you the main features. Let\'s get started!',
+        content: "This quick tour will show you the main features. Let's get started!",
         targetSelector: 'body',
         position: 'center',
         nextButtonText: 'Start Tour',
@@ -221,7 +229,8 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       {
         id: 'dashboard',
         title: 'Your Dashboard',
-        content: 'This is your main dashboard where you can see your readiness score and recent activity.',
+        content:
+          'This is your main dashboard where you can see your readiness score and recent activity.',
         targetSelector: '[data-tour="dashboard"]',
         position: 'bottom',
         highlightPadding: 10,
@@ -257,8 +266,8 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       },
       {
         id: 'complete',
-        title: 'You\'re Ready!',
-        content: 'You\'ve completed the tour. Start by creating your first assessment!',
+        title: "You're Ready!",
+        content: "You've completed the tour. Start by creating your first assessment!",
         targetSelector: 'body',
         position: 'center',
         nextButtonText: 'Finish',
@@ -275,7 +284,8 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       {
         id: 'intro',
         title: 'Questionnaire Overview',
-        content: 'Each questionnaire contains sections with multiple questions. Let\'s walk through the process.',
+        content:
+          "Each questionnaire contains sections with multiple questions. Let's walk through the process.",
         targetSelector: 'body',
         position: 'center',
       },
@@ -289,7 +299,8 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       {
         id: 'question-types',
         title: 'Question Types',
-        content: 'Questions come in different formats: multiple choice, text, file upload, and more.',
+        content:
+          'Questions come in different formats: multiple choice, text, file upload, and more.',
         targetSelector: '[data-tour="question-area"]',
         position: 'right',
       },
@@ -310,7 +321,7 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       {
         id: 'submit',
         title: 'Submit Your Answers',
-        content: 'When you\'re done, click Submit to finalize your assessment.',
+        content: "When you're done, click Submit to finalize your assessment.",
         targetSelector: '[data-tour="submit-btn"]',
         position: 'top',
       },
@@ -333,21 +344,24 @@ export const WALKTHROUGH_CATALOG: Walkthrough[] = [
       {
         id: 'heatmap',
         title: 'The Heatmap',
-        content: 'Green means good coverage, yellow needs attention, red is critical. Click any cell for details.',
+        content:
+          'Green means good coverage, yellow needs attention, red is critical. Click any cell for details.',
         targetSelector: '[data-tour="heatmap"]',
         position: 'right',
       },
       {
         id: 'dimensions',
         title: 'Business Dimensions',
-        content: 'Scores are broken down by 11 key business dimensions like Security, Finance, and Operations.',
+        content:
+          'Scores are broken down by 11 key business dimensions like Security, Finance, and Operations.',
         targetSelector: '[data-tour="dimension-list"]',
         position: 'right',
       },
       {
         id: 'recommendations',
         title: 'Recommendations',
-        content: 'Based on your scores, we provide specific recommendations to improve your readiness.',
+        content:
+          'Based on your scores, we provide specific recommendations to improve your readiness.',
         targetSelector: '[data-tour="recommendations"]',
         position: 'left',
       },
@@ -400,7 +414,7 @@ export const WalkthroughProvider: React.FC<{ children: ReactNode }> = ({ childre
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setState(prev => ({ ...prev, progress: new Map(Object.entries(parsed)) }));
+        setState((prev) => ({ ...prev, progress: new Map(Object.entries(parsed)) }));
       } catch (e) {
         console.error('Failed to load walkthrough progress:', e);
       }
@@ -408,39 +422,47 @@ export const WalkthroughProvider: React.FC<{ children: ReactNode }> = ({ childre
   }, []);
 
   const saveProgress = useCallback((progress: Map<string, WalkthroughProgress>) => {
-    localStorage.setItem('quiz2biz_walkthrough_progress', JSON.stringify(Object.fromEntries(progress)));
+    localStorage.setItem(
+      'quiz2biz_walkthrough_progress',
+      JSON.stringify(Object.fromEntries(progress)),
+    );
   }, []);
 
-  const startWalkthrough = useCallback((walkthroughId: string) => {
-    const walkthrough = WALKTHROUGH_CATALOG.find(w => w.id === walkthroughId);
-    if (walkthrough) {
-      setState(prev => {
-        const newProgress = new Map(prev.progress);
-        if (!newProgress.has(walkthroughId)) {
-          newProgress.set(walkthroughId, {
-            walkthroughId,
-            currentStep: 0,
-            completed: false,
-            startedAt: new Date(),
-            skippedSteps: [],
-          });
-        }
-        saveProgress(newProgress);
-        return {
-          ...prev,
-          activeWalkthrough: walkthrough,
-          currentStepIndex: 0,
-          progress: newProgress,
-          isVisible: true,
-        };
-      });
-    }
-  }, [saveProgress]);
+  const startWalkthrough = useCallback(
+    (walkthroughId: string) => {
+      const walkthrough = WALKTHROUGH_CATALOG.find((w) => w.id === walkthroughId);
+      if (walkthrough) {
+        setState((prev) => {
+          const newProgress = new Map(prev.progress);
+          if (!newProgress.has(walkthroughId)) {
+            newProgress.set(walkthroughId, {
+              walkthroughId,
+              currentStep: 0,
+              completed: false,
+              startedAt: new Date(),
+              skippedSteps: [],
+            });
+          }
+          saveProgress(newProgress);
+          return {
+            ...prev,
+            activeWalkthrough: walkthrough,
+            currentStepIndex: 0,
+            progress: newProgress,
+            isVisible: true,
+          };
+        });
+      }
+    },
+    [saveProgress],
+  );
 
   const nextStep = useCallback(() => {
-    setState(prev => {
-      if (!prev.activeWalkthrough) return prev;
-      
+    setState((prev) => {
+      if (!prev.activeWalkthrough) {
+        return prev;
+      }
+
       const nextIndex = prev.currentStepIndex + 1;
       if (nextIndex >= prev.activeWalkthrough.steps.length) {
         // Walkthrough completed
@@ -460,22 +482,24 @@ export const WalkthroughProvider: React.FC<{ children: ReactNode }> = ({ childre
           isVisible: false,
         };
       }
-      
+
       return { ...prev, currentStepIndex: nextIndex };
     });
   }, [saveProgress]);
 
   const prevStep = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       currentStepIndex: Math.max(0, prev.currentStepIndex - 1),
     }));
   }, []);
 
   const skipStep = useCallback(() => {
-    setState(prev => {
-      if (!prev.activeWalkthrough) return prev;
-      
+    setState((prev) => {
+      if (!prev.activeWalkthrough) {
+        return prev;
+      }
+
       const currentStep = prev.activeWalkthrough.steps[prev.currentStepIndex];
       const newProgress = new Map(prev.progress);
       const progress = newProgress.get(prev.activeWalkthrough.id);
@@ -484,14 +508,14 @@ export const WalkthroughProvider: React.FC<{ children: ReactNode }> = ({ childre
         newProgress.set(prev.activeWalkthrough.id, progress);
       }
       saveProgress(newProgress);
-      
+
       return { ...prev, progress: newProgress };
     });
     nextStep();
   }, [nextStep, saveProgress]);
 
   const endWalkthrough = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       activeWalkthrough: null,
       currentStepIndex: 0,
@@ -499,9 +523,12 @@ export const WalkthroughProvider: React.FC<{ children: ReactNode }> = ({ childre
     }));
   }, []);
 
-  const getProgress = useCallback((walkthroughId: string): WalkthroughProgress | null => {
-    return state.progress.get(walkthroughId) || null;
-  }, [state.progress]);
+  const getProgress = useCallback(
+    (walkthroughId: string): WalkthroughProgress | null => {
+      return state.progress.get(walkthroughId) || null;
+    },
+    [state.progress],
+  );
 
   const getCompletedWalkthroughs = useCallback((): string[] => {
     return Array.from(state.progress.entries())
@@ -509,32 +536,38 @@ export const WalkthroughProvider: React.FC<{ children: ReactNode }> = ({ childre
       .map(([id]) => id);
   }, [state.progress]);
 
-  const isWalkthroughCompleted = useCallback((walkthroughId: string): boolean => {
-    const progress = state.progress.get(walkthroughId);
-    return progress?.completed ?? false;
-  }, [state.progress]);
+  const isWalkthroughCompleted = useCallback(
+    (walkthroughId: string): boolean => {
+      const progress = state.progress.get(walkthroughId);
+      return progress?.completed ?? false;
+    },
+    [state.progress],
+  );
 
-  const contextValue = useMemo(() => ({
-    ...state,
-    startWalkthrough,
-    nextStep,
-    prevStep,
-    skipStep,
-    endWalkthrough,
-    getProgress,
-    getCompletedWalkthroughs,
-    isWalkthroughCompleted,
-  }), [
-    state,
-    startWalkthrough,
-    nextStep,
-    prevStep,
-    skipStep,
-    endWalkthrough,
-    getProgress,
-    getCompletedWalkthroughs,
-    isWalkthroughCompleted,
-  ]);
+  const contextValue = useMemo(
+    () => ({
+      ...state,
+      startWalkthrough,
+      nextStep,
+      prevStep,
+      skipStep,
+      endWalkthrough,
+      getProgress,
+      getCompletedWalkthroughs,
+      isWalkthroughCompleted,
+    }),
+    [
+      state,
+      startWalkthrough,
+      nextStep,
+      prevStep,
+      skipStep,
+      endWalkthrough,
+      getProgress,
+      getCompletedWalkthroughs,
+      isWalkthroughCompleted,
+    ],
+  );
 
   return (
     <WalkthroughContext.Provider value={contextValue}>
@@ -638,7 +671,7 @@ const WalkthroughOverlay: React.FC<WalkthroughOverlayProps> = ({
     <div className="fixed inset-0 z-50">
       {/* Backdrop with cutout */}
       <div className="absolute inset-0 bg-black/50" onClick={onEnd} />
-      
+
       {/* Highlight area */}
       {targetRect && (
         <div
@@ -668,9 +701,9 @@ const WalkthroughOverlay: React.FC<WalkthroughOverlayProps> = ({
             ✕
           </button>
         </div>
-        
+
         <p className="text-gray-600 mb-6">{currentStep.content}</p>
-        
+
         {/* Progress indicator */}
         <div className="flex items-center gap-1 mb-4">
           {walkthrough.steps.map((_, index) => (
@@ -682,7 +715,7 @@ const WalkthroughOverlay: React.FC<WalkthroughOverlayProps> = ({
             />
           ))}
         </div>
-        
+
         <div className="text-xs text-gray-500 mb-4">
           Step {currentStepIndex + 1} of {walkthrough.steps.length}
         </div>
@@ -691,19 +724,13 @@ const WalkthroughOverlay: React.FC<WalkthroughOverlayProps> = ({
         <div className="flex justify-between">
           <div>
             {currentStepIndex > 0 && (
-              <button
-                onClick={onPrev}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
+              <button onClick={onPrev} className="px-4 py-2 text-gray-600 hover:text-gray-800">
                 {currentStep.prevButtonText || '← Back'}
               </button>
             )}
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={onSkip}
-              className="px-4 py-2 text-gray-500 hover:text-gray-700"
-            >
+            <button onClick={onSkip} className="px-4 py-2 text-gray-500 hover:text-gray-700">
               Skip
             </button>
             <button
@@ -740,17 +767,21 @@ export const UXMonitoringDashboard: React.FC = () => {
     metrics: [],
   });
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'nps' | 'experiments' | 'usability'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'nps' | 'experiments' | 'usability'>(
+    'overview',
+  );
 
   // Calculate NPS
   const calculateNPS = useMemo(() => {
-    if (state.npsScores.length === 0) return { score: 0, promoters: 0, passives: 0, detractors: 0 };
-    
-    const promoters = state.npsScores.filter(s => s.score >= 9).length;
-    const passives = state.npsScores.filter(s => s.score >= 7 && s.score <= 8).length;
-    const detractors = state.npsScores.filter(s => s.score <= 6).length;
+    if (state.npsScores.length === 0) {
+      return { score: 0, promoters: 0, passives: 0, detractors: 0 };
+    }
+
+    const promoters = state.npsScores.filter((s) => s.score >= 9).length;
+    const passives = state.npsScores.filter((s) => s.score >= 7 && s.score <= 8).length;
+    const detractors = state.npsScores.filter((s) => s.score <= 6).length;
     const total = state.npsScores.length;
-    
+
     return {
       score: Math.round(((promoters - detractors) / total) * 100),
       promoters: Math.round((promoters / total) * 100),
@@ -761,8 +792,12 @@ export const UXMonitoringDashboard: React.FC = () => {
 
   // Calculate average SUS
   const averageSUS = useMemo(() => {
-    if (state.susScores.length === 0) return 0;
-    return Math.round(state.susScores.reduce((sum, s) => sum + s.totalScore, 0) / state.susScores.length);
+    if (state.susScores.length === 0) {
+      return 0;
+    }
+    return Math.round(
+      state.susScores.reduce((sum, s) => sum + s.totalScore, 0) / state.susScores.length,
+    );
   }, [state.susScores]);
 
   // Mock data for demo
@@ -788,10 +823,32 @@ export const UXMonitoringDashboard: React.FC = () => {
           hypothesis: 'Green CTA buttons will increase conversion by 10%',
           status: 'running',
           variants: [
-            { id: 'control', name: 'Blue (Control)', description: 'Current blue button', allocation: 50, isControl: true, changes: [] },
-            { id: 'variant-a', name: 'Green', description: 'Green button variant', allocation: 50, isControl: false, changes: [] },
+            {
+              id: 'control',
+              name: 'Blue (Control)',
+              description: 'Current blue button',
+              allocation: 50,
+              isControl: true,
+              changes: [],
+            },
+            {
+              id: 'variant-a',
+              name: 'Green',
+              description: 'Green button variant',
+              allocation: 50,
+              isControl: false,
+              changes: [],
+            },
           ],
-          metrics: [{ id: 'm1', name: 'Conversion Rate', type: 'conversion', definition: 'Questionnaire starts / page views', isPrimary: true }],
+          metrics: [
+            {
+              id: 'm1',
+              name: 'Conversion Rate',
+              type: 'conversion',
+              definition: 'Questionnaire starts / page views',
+              isPrimary: true,
+            },
+          ],
           trafficAllocation: 100,
           startDate: new Date('2026-01-20'),
           minimumSampleSize: 1000,
@@ -803,10 +860,32 @@ export const UXMonitoringDashboard: React.FC = () => {
           hypothesis: 'Shorter onboarding will improve completion rate',
           status: 'running',
           variants: [
-            { id: 'control', name: '7 Steps (Control)', description: 'Current 7-step flow', allocation: 50, isControl: true, changes: [] },
-            { id: 'variant-a', name: '4 Steps', description: 'Condensed 4-step flow', allocation: 50, isControl: false, changes: [] },
+            {
+              id: 'control',
+              name: '7 Steps (Control)',
+              description: 'Current 7-step flow',
+              allocation: 50,
+              isControl: true,
+              changes: [],
+            },
+            {
+              id: 'variant-a',
+              name: '4 Steps',
+              description: 'Condensed 4-step flow',
+              allocation: 50,
+              isControl: false,
+              changes: [],
+            },
           ],
-          metrics: [{ id: 'm1', name: 'Completion Rate', type: 'conversion', definition: 'Onboarding completed / started', isPrimary: true }],
+          metrics: [
+            {
+              id: 'm1',
+              name: 'Completion Rate',
+              type: 'conversion',
+              definition: 'Onboarding completed / started',
+              isPrimary: true,
+            },
+          ],
           trafficAllocation: 50,
           startDate: new Date('2026-01-22'),
           minimumSampleSize: 500,
@@ -836,7 +915,7 @@ export const UXMonitoringDashboard: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex border-b mb-6">
-        {(['overview', 'nps', 'experiments', 'usability'] as const).map(tab => (
+        {(['overview', 'nps', 'experiments', 'usability'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -856,20 +935,30 @@ export const UXMonitoringDashboard: React.FC = () => {
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-sm text-gray-500 mb-1">NPS Score</div>
-            <div className={`text-3xl font-bold ${
-              calculateNPS.score >= 50 ? 'text-green-600' :
-              calculateNPS.score >= 0 ? 'text-yellow-600' : 'text-red-600'
-            }`}>
+            <div
+              className={`text-3xl font-bold ${
+                calculateNPS.score >= 50
+                  ? 'text-green-600'
+                  : calculateNPS.score >= 0
+                    ? 'text-yellow-600'
+                    : 'text-red-600'
+              }`}
+            >
               {calculateNPS.score}
             </div>
             <div className="text-xs text-gray-400 mt-1">Target: 50+</div>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-sm text-gray-500 mb-1">SUS Score</div>
-            <div className={`text-3xl font-bold ${
-              averageSUS >= 80 ? 'text-green-600' :
-              averageSUS >= 68 ? 'text-yellow-600' : 'text-red-600'
-            }`}>
+            <div
+              className={`text-3xl font-bold ${
+                averageSUS >= 80
+                  ? 'text-green-600'
+                  : averageSUS >= 68
+                    ? 'text-yellow-600'
+                    : 'text-red-600'
+              }`}
+            >
               {averageSUS}
             </div>
             <div className="text-xs text-gray-400 mt-1">Target: 85+</div>
@@ -877,13 +966,13 @@ export const UXMonitoringDashboard: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-sm text-gray-500 mb-1">Active Experiments</div>
             <div className="text-3xl font-bold text-blue-600">
-              {state.activeExperiments.filter(e => e.status === 'running').length}
+              {state.activeExperiments.filter((e) => e.status === 'running').length}
             </div>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-sm text-gray-500 mb-1">Usability Tests</div>
             <div className="text-3xl font-bold text-purple-600">
-              {state.usabilityTests.filter(t => t.status === 'active').length}
+              {state.usabilityTests.filter((t) => t.status === 'active').length}
             </div>
           </div>
         </div>
@@ -902,18 +991,18 @@ export const UXMonitoringDashboard: React.FC = () => {
               </div>
               <div className="flex-1">
                 <div className="flex h-8 rounded overflow-hidden">
-                  <div 
-                    className="bg-green-500" 
+                  <div
+                    className="bg-green-500"
                     style={{ width: `${calculateNPS.promoters}%` }}
                     title={`Promoters: ${calculateNPS.promoters}%`}
                   />
-                  <div 
-                    className="bg-yellow-500" 
+                  <div
+                    className="bg-yellow-500"
                     style={{ width: `${calculateNPS.passives}%` }}
                     title={`Passives: ${calculateNPS.passives}%`}
                   />
-                  <div 
-                    className="bg-red-500" 
+                  <div
+                    className="bg-red-500"
                     style={{ width: `${calculateNPS.detractors}%` }}
                     title={`Detractors: ${calculateNPS.detractors}%`}
                   />
@@ -937,10 +1026,13 @@ export const UXMonitoringDashboard: React.FC = () => {
               </div>
               <div className="flex-1">
                 <div className="relative h-4 bg-gray-200 rounded">
-                  <div 
+                  <div
                     className={`absolute h-full rounded ${
-                      averageSUS >= 80 ? 'bg-green-500' :
-                      averageSUS >= 68 ? 'bg-yellow-500' : 'bg-red-500'
+                      averageSUS >= 80
+                        ? 'bg-green-500'
+                        : averageSUS >= 68
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500'
                     }`}
                     style={{ width: `${averageSUS}%` }}
                   />
@@ -964,25 +1056,29 @@ export const UXMonitoringDashboard: React.FC = () => {
       {/* Experiments Tab */}
       {activeTab === 'experiments' && (
         <div className="space-y-4">
-          {state.activeExperiments.map(exp => (
+          {state.activeExperiments.map((exp) => (
             <div key={exp.id} className="bg-white p-6 rounded-lg shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-semibold">{exp.name}</h3>
                   <p className="text-sm text-gray-600">{exp.hypothesis}</p>
                 </div>
-                <span className={`px-3 py-1 text-sm rounded ${
-                  exp.status === 'running' ? 'bg-green-100 text-green-800' :
-                  exp.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                  className={`px-3 py-1 text-sm rounded ${
+                    exp.status === 'running'
+                      ? 'bg-green-100 text-green-800'
+                      : exp.status === 'completed'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
                   {exp.status}
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
-                {exp.variants.map(variant => (
-                  <div 
+                {exp.variants.map((variant) => (
+                  <div
                     key={variant.id}
                     className={`p-4 rounded border ${variant.isControl ? 'border-gray-300' : 'border-blue-300'}`}
                   >
@@ -1009,22 +1105,26 @@ export const UXMonitoringDashboard: React.FC = () => {
       {/* Usability Tab */}
       {activeTab === 'usability' && (
         <div className="space-y-4">
-          {state.usabilityTests.map(test => (
+          {state.usabilityTests.map((test) => (
             <div key={test.id} className="bg-white p-6 rounded-lg shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-semibold">{test.name}</h3>
                   <p className="text-sm text-gray-600">{test.description}</p>
                 </div>
-                <span className={`px-3 py-1 text-sm rounded ${
-                  test.status === 'active' ? 'bg-green-100 text-green-800' :
-                  test.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                  className={`px-3 py-1 text-sm rounded ${
+                    test.status === 'active'
+                      ? 'bg-green-100 text-green-800'
+                      : test.status === 'completed'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
                   {test.status}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-8">
                 <div>
                   <div className="text-2xl font-bold">
@@ -1034,9 +1134,11 @@ export const UXMonitoringDashboard: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <div className="h-3 bg-gray-200 rounded">
-                    <div 
+                    <div
                       className="h-full bg-blue-500 rounded"
-                      style={{ width: `${(test.actualParticipants / test.targetParticipants) * 100}%` }}
+                      style={{
+                        width: `${(test.actualParticipants / test.targetParticipants) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>

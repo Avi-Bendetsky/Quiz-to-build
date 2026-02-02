@@ -1,10 +1,10 @@
 /**
  * Blur Validation Component
- * 
+ *
  * Provides onBlur validation for form fields.
  * Shows errors immediately when user leaves field.
  * Prevents submit surprise.
- * 
+ *
  * Nielsen Heuristic #9: Help Users Recognize, Diagnose, and Recover from Errors
  */
 
@@ -74,7 +74,9 @@ export const validationRules = {
 
   email: (message = 'Please enter a valid email address'): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true; // Let required rule handle empty
+      if (!value) {
+        return true;
+      } // Let required rule handle empty
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(value);
     },
@@ -84,7 +86,9 @@ export const validationRules = {
 
   pattern: (regex: RegExp, message: string): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       return regex.test(value);
     },
     message,
@@ -93,7 +97,9 @@ export const validationRules = {
 
   url: (message = 'Please enter a valid URL'): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       try {
         new URL(value);
         return true;
@@ -107,7 +113,9 @@ export const validationRules = {
 
   numeric: (message = 'Please enter a valid number'): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       return !isNaN(Number(value));
     },
     message,
@@ -116,7 +124,9 @@ export const validationRules = {
 
   integer: (message = 'Please enter a whole number'): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       return Number.isInteger(Number(value));
     },
     message,
@@ -125,7 +135,9 @@ export const validationRules = {
 
   min: (min: number, message?: string): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       return Number(value) >= min;
     },
     message: message || `Must be at least ${min}`,
@@ -134,16 +146,22 @@ export const validationRules = {
 
   max: (max: number, message?: string): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       return Number(value) <= max;
     },
     message: message || `Must be no more than ${max}`,
     when: 'blur',
   }),
 
-  password: (message = 'Password must contain uppercase, lowercase, number, and special character'): ValidationRule => ({
+  password: (
+    message = 'Password must contain uppercase, lowercase, number, and special character',
+  ): ValidationRule => ({
     validate: (value) => {
-      if (!value) return true;
+      if (!value) {
+        return true;
+      }
       const hasUpper = /[A-Z]/.test(value);
       const hasLower = /[a-z]/.test(value);
       const hasNumber = /[0-9]/.test(value);
@@ -174,14 +192,11 @@ export const validationRules = {
 export function validateField(
   value: string,
   rules: ValidationRule[],
-  when: 'blur' | 'change' | 'submit' = 'blur'
+  when: 'blur' | 'change' | 'submit' = 'blur',
 ): string | null {
   for (const rule of rules) {
-    const shouldValidate = 
-      rule.when === 'always' || 
-      rule.when === when || 
-      when === 'submit';
-    
+    const shouldValidate = rule.when === 'always' || rule.when === when || when === 'submit';
+
     if (shouldValidate && !rule.validate(value)) {
       return rule.message;
     }
@@ -212,7 +227,9 @@ interface UseBlurValidationReturn {
   dirty: boolean;
   valid: boolean;
   validating: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => void;
   onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   setValue: (value: string) => void;
   setError: (error: string | null) => void;
@@ -227,9 +244,7 @@ interface UseBlurValidationReturn {
   };
 }
 
-export function useBlurValidation(
-  options: UseBlurValidationOptions = {}
-): UseBlurValidationReturn {
+export function useBlurValidation(options: UseBlurValidationOptions = {}): UseBlurValidationReturn {
   const {
     initialValue = '',
     rules = [],
@@ -265,13 +280,15 @@ export function useBlurValidation(
     (val: string, when: 'blur' | 'change' | 'submit'): string | null => {
       return validateField(val, allRules, when);
     },
-    [allRules]
+    [allRules],
   );
 
   // Async validation with debounce
   const runAsyncValidation = useCallback(
     async (val: string) => {
-      if (!asyncValidator) return;
+      if (!asyncValidator) {
+        return;
+      }
 
       clearTimeout(asyncTimeoutRef.current);
       setValidating(true);
@@ -288,7 +305,7 @@ export function useBlurValidation(
         }
       }, asyncDebounce);
     },
-    [asyncValidator, asyncDebounce, onValidationChange]
+    [asyncValidator, asyncDebounce, onValidationChange],
   );
 
   // Handle value change
@@ -312,7 +329,7 @@ export function useBlurValidation(
         }
       }
     },
-    [validateOnChange, runSyncValidation, error, onValidationChange]
+    [validateOnChange, runSyncValidation, error, onValidationChange],
   );
 
   // Handle blur
@@ -331,7 +348,14 @@ export function useBlurValidation(
         }
       }
     },
-    [validateOnBlur, runSyncValidation, value, asyncValidator, runAsyncValidation, onValidationChange]
+    [
+      validateOnBlur,
+      runSyncValidation,
+      value,
+      asyncValidator,
+      runAsyncValidation,
+      onValidationChange,
+    ],
   );
 
   // Manual set value
@@ -559,9 +583,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
             width: '100%',
             padding: '10px 12px',
             paddingRight: showSuccessIcon && touched ? 36 : 12,
-            border: `1px solid ${
-              error ? '#e53e3e' : touched && valid ? '#48bb78' : '#e2e8f0'
-            }`,
+            border: `1px solid ${error ? '#e53e3e' : touched && valid ? '#48bb78' : '#e2e8f0'}`,
             borderRadius: 6,
             fontSize: 14,
             outline: 'none',
@@ -708,9 +730,7 @@ export const ValidatedTextarea: React.FC<ValidatedTextareaProps> = ({
         style={{
           width: '100%',
           padding: '10px 12px',
-          border: `1px solid ${
-            error ? '#e53e3e' : touched && valid ? '#48bb78' : '#e2e8f0'
-          }`,
+          border: `1px solid ${error ? '#e53e3e' : touched && valid ? '#48bb78' : '#e2e8f0'}`,
           borderRadius: 6,
           fontSize: 14,
           outline: 'none',
@@ -770,13 +790,12 @@ interface FormErrorSummaryProps {
   className?: string;
 }
 
-export const FormErrorSummary: React.FC<FormErrorSummaryProps> = ({
-  errors,
-  className = '',
-}) => {
+export const FormErrorSummary: React.FC<FormErrorSummaryProps> = ({ errors, className = '' }) => {
   const errorList = Object.entries(errors).filter(([_, error]) => error);
 
-  if (errorList.length === 0) return null;
+  if (errorList.length === 0) {
+    return null;
+  }
 
   return (
     <div

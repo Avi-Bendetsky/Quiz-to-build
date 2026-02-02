@@ -1,9 +1,9 @@
 /**
  * Draft Autosave Hook
- * 
+ *
  * Auto-saves questionnaire responses every 30 seconds to localStorage/IndexedDB.
  * Provides recovery functionality for session resumption.
- * 
+ *
  * Nielsen Heuristic: User Control & Freedom
  * - Users should not lose work due to accidental navigation or session timeout
  * - Clear indication of autosave status
@@ -79,7 +79,9 @@ class DraftStorage {
   }
 
   async init(): Promise<void> {
-    if (!this.useIndexedDB) return;
+    if (!this.useIndexedDB) {
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, 1);
@@ -222,14 +224,14 @@ class DraftStorage {
   }
 
   private removeDraftFromIndex(key: string): void {
-    const index = this.getDraftIndex().filter(k => k !== key);
+    const index = this.getDraftIndex().filter((k) => k !== key);
     localStorage.setItem(DRAFT_INDEX_KEY, JSON.stringify(index));
   }
 
   private async cleanupOldDrafts(): Promise<void> {
     const drafts = await this.getAllDrafts();
     const sortedDrafts = drafts.sort((a, b) => a.lastSavedAt - b.lastSavedAt);
-    
+
     // Remove oldest 50% of drafts
     const toRemove = sortedDrafts.slice(0, Math.ceil(sortedDrafts.length / 2));
     for (const draft of toRemove) {
@@ -287,7 +289,7 @@ export function useDraftAutosave(options: UseDraftAutosaveOptions): UseDraftAuto
       storageRef.current = await getStorage();
       const exists = await storageRef.current.exists(sessionId, questionnaireId);
       setHasDraft(exists);
-      
+
       if (exists) {
         const draft = await storageRef.current.load(sessionId, questionnaireId);
         if (draft) {
@@ -299,51 +301,56 @@ export function useDraftAutosave(options: UseDraftAutosaveOptions): UseDraftAuto
   }, [sessionId, questionnaireId]);
 
   // Save draft function
-  const saveDraft = useCallback(async (data: Partial<DraftData>) => {
-    if (!storageRef.current) {
-      await getStorage().then(s => { storageRef.current = s; });
-    }
+  const saveDraft = useCallback(
+    async (data: Partial<DraftData>) => {
+      if (!storageRef.current) {
+        await getStorage().then((s) => {
+          storageRef.current = s;
+        });
+      }
 
-    setStatus(prev => ({ ...prev, isSaving: true, error: null }));
+      setStatus((prev) => ({ ...prev, isSaving: true, error: null }));
 
-    try {
-      const now = Date.now();
-      const fullDraft: DraftData = {
-        sessionId,
-        questionnaireId,
-        responses: data.responses || {},
-        currentQuestionIndex: data.currentQuestionIndex || 0,
-        lastSavedAt: now,
-        version: DRAFT_VERSION,
-        metadata: data.metadata || {
-          questionnaireName: '',
-          totalQuestions: 0,
-          completedQuestions: 0,
-        },
-      };
+      try {
+        const now = Date.now();
+        const fullDraft: DraftData = {
+          sessionId,
+          questionnaireId,
+          responses: data.responses || {},
+          currentQuestionIndex: data.currentQuestionIndex || 0,
+          lastSavedAt: now,
+          version: DRAFT_VERSION,
+          metadata: data.metadata || {
+            questionnaireName: '',
+            totalQuestions: 0,
+            completedQuestions: 0,
+          },
+        };
 
-      await storageRef.current!.save(fullDraft);
+        await storageRef.current!.save(fullDraft);
 
-      setStatus(prev => ({
-        ...prev,
-        isSaving: false,
-        lastSaved: new Date(now),
-        hasUnsavedChanges: false,
-      }));
-      setHasDraft(true);
-      setDraftData(fullDraft);
+        setStatus((prev) => ({
+          ...prev,
+          isSaving: false,
+          lastSaved: new Date(now),
+          hasUnsavedChanges: false,
+        }));
+        setHasDraft(true);
+        setDraftData(fullDraft);
 
-      onSaveSuccess?.(fullDraft);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save draft';
-      setStatus(prev => ({
-        ...prev,
-        isSaving: false,
-        error: errorMessage,
-      }));
-      onSaveError?.(error instanceof Error ? error : new Error(errorMessage));
-    }
-  }, [sessionId, questionnaireId, onSaveSuccess, onSaveError]);
+        onSaveSuccess?.(fullDraft);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to save draft';
+        setStatus((prev) => ({
+          ...prev,
+          isSaving: false,
+          error: errorMessage,
+        }));
+        onSaveError?.(error instanceof Error ? error : new Error(errorMessage));
+      }
+    },
+    [sessionId, questionnaireId, onSaveSuccess, onSaveError],
+  );
 
   // Load draft function
   const loadDraft = useCallback(async (): Promise<DraftData | null> => {
@@ -368,7 +375,7 @@ export function useDraftAutosave(options: UseDraftAutosaveOptions): UseDraftAuto
     await storageRef.current.delete(sessionId, questionnaireId);
     setHasDraft(false);
     setDraftData(null);
-    setStatus(prev => ({
+    setStatus((prev) => ({
       ...prev,
       hasUnsavedChanges: false,
       lastSaved: null,
@@ -408,7 +415,7 @@ export function useDraftAutosave(options: UseDraftAutosaveOptions): UseDraftAuto
   // Track changes for autosave
   const trackChanges = useCallback((data: Partial<DraftData>) => {
     pendingDataRef.current = data;
-    setStatus(prev => ({ ...prev, hasUnsavedChanges: true }));
+    setStatus((prev) => ({ ...prev, hasUnsavedChanges: true }));
   }, []);
 
   // Save on page unload
@@ -418,13 +425,16 @@ export function useDraftAutosave(options: UseDraftAutosaveOptions): UseDraftAuto
         // Synchronous save using localStorage as fallback
         const key = `${DRAFT_STORAGE_PREFIX}${sessionId}_${questionnaireId}`;
         try {
-          localStorage.setItem(key, JSON.stringify({
-            ...pendingDataRef.current,
-            sessionId,
-            questionnaireId,
-            lastSavedAt: Date.now(),
-            version: DRAFT_VERSION,
-          }));
+          localStorage.setItem(
+            key,
+            JSON.stringify({
+              ...pendingDataRef.current,
+              sessionId,
+              questionnaireId,
+              lastSavedAt: Date.now(),
+              version: DRAFT_VERSION,
+            }),
+          );
         } catch {
           // Ignore errors on unload
         }
@@ -457,14 +467,24 @@ export function useDraftAutosave(options: UseDraftAutosaveOptions): UseDraftAuto
  * Format time since last save for display
  */
 export function formatTimeSinceSave(lastSaved: Date | null): string {
-  if (!lastSaved) return 'Never saved';
+  if (!lastSaved) {
+    return 'Never saved';
+  }
 
   const seconds = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
 
-  if (seconds < 5) return 'Just now';
-  if (seconds < 60) return `${seconds} seconds ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+  if (seconds < 5) {
+    return 'Just now';
+  }
+  if (seconds < 60) {
+    return `${seconds} seconds ago`;
+  }
+  if (seconds < 3600) {
+    return `${Math.floor(seconds / 60)} minutes ago`;
+  }
+  if (seconds < 86400) {
+    return `${Math.floor(seconds / 3600)} hours ago`;
+  }
   return `${Math.floor(seconds / 86400)} days ago`;
 }
 

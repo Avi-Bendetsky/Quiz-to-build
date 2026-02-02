@@ -1,12 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsInt,
-  MaxLength,
-  Min,
-  IsObject,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsInt, MaxLength, Min, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateQuestionnaireDto {
@@ -42,4 +34,3 @@ export class CreateQuestionnaireDto {
   @IsObject()
   metadata?: Record<string, unknown>;
 }
-

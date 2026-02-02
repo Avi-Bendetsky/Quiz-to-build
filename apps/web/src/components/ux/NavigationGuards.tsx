@@ -1,9 +1,9 @@
 /**
  * Navigation Guards Component
- * 
+ *
  * Prevents users from accidentally losing unsaved changes.
  * Shows "Unsaved changes will be lost" prompt.
- * 
+ *
  * Nielsen Heuristic #5: Error Prevention
  */
 
@@ -87,7 +87,7 @@ export const NavigationGuardProvider: React.FC<NavigationGuardProviderProps> = (
     setDirtyForms((prev) => {
       if (prev.some((f) => f.formId === formId)) {
         return prev.map((f) =>
-          f.formId === formId ? { ...f, isDirty: true, message, timestamp: Date.now() } : f
+          f.formId === formId ? { ...f, isDirty: true, message, timestamp: Date.now() } : f,
         );
       }
       return [...prev, { formId, isDirty: true, message, timestamp: Date.now() }];
@@ -101,17 +101,15 @@ export const NavigationGuardProvider: React.FC<NavigationGuardProviderProps> = (
 
   // Mark form as clean (e.g., after save)
   const markFormClean = useCallback((formId: string) => {
-    setDirtyForms((prev) =>
-      prev.map((f) => (f.formId === formId ? { ...f, isDirty: false } : f))
-    );
+    setDirtyForms((prev) => prev.map((f) => (f.formId === formId ? { ...f, isDirty: false } : f)));
   }, []);
 
   // Mark form as dirty
   const markFormDirty = useCallback((formId: string, message?: string) => {
     setDirtyForms((prev) =>
       prev.map((f) =>
-        f.formId === formId ? { ...f, isDirty: true, message, timestamp: Date.now() } : f
-      )
+        f.formId === formId ? { ...f, isDirty: true, message, timestamp: Date.now() } : f,
+      ),
     );
   }, []);
 
@@ -140,7 +138,7 @@ export const NavigationGuardProvider: React.FC<NavigationGuardProviderProps> = (
         }
       }
     },
-    [isDirty, showDialog, defaultMessage]
+    [isDirty, showDialog, defaultMessage],
   );
 
   // Bypass guard once
@@ -164,7 +162,9 @@ export const NavigationGuardProvider: React.FC<NavigationGuardProviderProps> = (
 
   // Prevent browser close/refresh
   useEffect(() => {
-    if (!preventBrowserClose || !isDirty) return;
+    if (!preventBrowserClose || !isDirty) {
+      return;
+    }
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -258,7 +258,9 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
         animation: 'fadeIn 0.2s ease',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
+        if (e.target === e.currentTarget) {
+          onCancel();
+        }
       }}
     >
       <div
@@ -384,7 +386,8 @@ interface UseDirtyFormReturn {
 
 export function useDirtyForm(options: UseDirtyFormOptions): UseDirtyFormReturn {
   const { formId, message, watchFields = [], initialDirty = false } = options;
-  const { registerDirtyForm, unregisterDirtyForm, markFormClean, markFormDirty } = useNavigationGuard();
+  const { registerDirtyForm, unregisterDirtyForm, markFormClean, markFormDirty } =
+    useNavigationGuard();
   const [isDirty, setIsDirty] = useState(initialDirty);
   const initialValuesRef = useRef(watchFields);
 
@@ -398,10 +401,12 @@ export function useDirtyForm(options: UseDirtyFormOptions): UseDirtyFormReturn {
 
   // Watch for field changes
   useEffect(() => {
-    if (watchFields.length === 0) return;
+    if (watchFields.length === 0) {
+      return;
+    }
 
     const hasChanged = JSON.stringify(watchFields) !== JSON.stringify(initialValuesRef.current);
-    
+
     if (hasChanged && !isDirty) {
       setIsDirty(true);
       markFormDirty(formId, message);
@@ -417,7 +422,7 @@ export function useDirtyForm(options: UseDirtyFormOptions): UseDirtyFormReturn {
         markFormClean(formId);
       }
     },
-    [formId, message, markFormDirty, markFormClean]
+    [formId, message, markFormDirty, markFormClean],
   );
 
   const markClean = useCallback(() => {
@@ -486,7 +491,7 @@ export const GuardedLink: React.FC<GuardedLinkProps> = ({ to, children, onClick,
         onClick(e);
       }
     },
-    [isDirty, to, confirmNavigation, onClick]
+    [isDirty, to, confirmNavigation, onClick],
   );
 
   return (
@@ -514,7 +519,8 @@ export const GuardedForm: React.FC<GuardedFormProps> = ({
   onSubmit,
   ...props
 }) => {
-  const { registerDirtyForm, unregisterDirtyForm, markFormClean, markFormDirty } = useNavigationGuard();
+  const { registerDirtyForm, unregisterDirtyForm, markFormClean, markFormDirty } =
+    useNavigationGuard();
   const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
@@ -530,7 +536,7 @@ export const GuardedForm: React.FC<GuardedFormProps> = ({
       }
       onChange?.(e);
     },
-    [isDirty, formId, registerDirtyForm, onDirtyChange, onChange]
+    [isDirty, formId, registerDirtyForm, onDirtyChange, onChange],
   );
 
   const handleSubmit = useCallback(
@@ -540,7 +546,7 @@ export const GuardedForm: React.FC<GuardedFormProps> = ({
       onDirtyChange?.(false);
       onSubmit?.(e);
     },
-    [formId, markFormClean, onDirtyChange, onSubmit]
+    [formId, markFormClean, onDirtyChange, onSubmit],
   );
 
   return (
@@ -567,7 +573,9 @@ export const DirtyIndicator: React.FC<DirtyIndicatorProps> = ({
   position = 'top-right',
   className = '',
 }) => {
-  if (!isDirty) return null;
+  if (!isDirty) {
+    return null;
+  }
 
   const positionStyles: Record<string, React.CSSProperties> = {
     'top-right': { position: 'absolute', top: -8, right: -8 },

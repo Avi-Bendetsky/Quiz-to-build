@@ -18,9 +18,10 @@ describe('@regression:BUG-007 File Upload Validation', () => {
   };
 
   // Server-side validation function (the fix)
-  function validateFile(
-    file: { size: number; mimeType: string; name: string }
-  ): { valid: boolean; error?: string } {
+  function validateFile(file: { size: number; mimeType: string; name: string }): {
+    valid: boolean;
+    error?: string;
+  } {
     // Check file size
     if (file.size > FILE_SIZE_LIMITS.maxFileSizeBytes) {
       return {
@@ -98,11 +99,7 @@ describe('@regression:BUG-007 File Upload Validation', () => {
 
   describe('MIME Type Validation', () => {
     it('should accept allowed MIME types', () => {
-      const allowedTypes = [
-        'application/pdf',
-        'image/png',
-        'image/jpeg',
-      ];
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
 
       for (const mimeType of allowedTypes) {
         const file = { size: 1024, mimeType, name: 'test.file' };

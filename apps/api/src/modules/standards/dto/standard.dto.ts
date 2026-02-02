@@ -9,7 +9,11 @@ export class StandardResponseDto {
   @ApiProperty({ description: 'Standard ID' })
   id: string;
 
-  @ApiProperty({ enum: StandardCategoryValues, enumName: 'StandardCategory', description: 'Standard category' })
+  @ApiProperty({
+    enum: StandardCategoryValues,
+    enumName: 'StandardCategory',
+    description: 'Standard category',
+  })
   category: StandardCategory;
 
   @ApiProperty({ description: 'Standard title' })
@@ -33,7 +37,11 @@ export class StandardResponseDto {
 }
 
 export class StandardCategoryParamDto {
-  @ApiProperty({ enum: StandardCategoryValues, enumName: 'StandardCategory', description: 'Standard category' })
+  @ApiProperty({
+    enum: StandardCategoryValues,
+    enumName: 'StandardCategory',
+    description: 'Standard category',
+  })
   @IsEnum(StandardCategory)
   category: StandardCategory;
 }

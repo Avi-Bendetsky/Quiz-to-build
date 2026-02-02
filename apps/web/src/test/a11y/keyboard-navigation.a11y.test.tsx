@@ -1,7 +1,7 @@
 /**
  * Keyboard Navigation Accessibility Tests
  * WCAG 2.2 Level AA compliance - Keyboard accessibility
- * 
+ *
  * Tests:
  * - Tab order (logical and intuitive)
  * - Skip links (bypass navigation)
@@ -72,8 +72,12 @@ function MockFormWithTabOrder() {
         <label htmlFor="message">Message</label>
         <textarea id="message" name="message" data-testid="field-4" />
       </div>
-      <button type="submit" data-testid="submit-btn">Submit</button>
-      <button type="button" data-testid="cancel-btn">Cancel</button>
+      <button type="submit" data-testid="submit-btn">
+        Submit
+      </button>
+      <button type="button" data-testid="cancel-btn">
+        Cancel
+      </button>
     </form>
   );
 }
@@ -81,14 +85,10 @@ function MockFormWithTabOrder() {
 /**
  * Mock Modal with Focus Trap
  */
-function MockModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  if (!isOpen) return null;
+function MockModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) {
+    return null;
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -127,11 +127,7 @@ function MockNoKeyboardTrap() {
   return (
     <div>
       <button data-testid="btn-before">Before</button>
-      <div
-        role="group"
-        aria-label="Non-trapping group"
-        data-testid="interactive-region"
-      >
+      <div role="group" aria-label="Non-trapping group" data-testid="interactive-region">
         <button data-testid="btn-1">Button 1</button>
         <button data-testid="btn-2">Button 2</button>
         <input type="text" data-testid="input-1" aria-label="Text input" />
@@ -186,12 +182,7 @@ function MockDropdown() {
         Select an option
       </button>
       {isOpen && (
-        <ul
-          role="listbox"
-          aria-label="Options"
-          tabIndex={-1}
-          data-testid="dropdown-menu"
-        >
+        <ul role="listbox" aria-label="Options" tabIndex={-1} data-testid="dropdown-menu">
           {options.map((option, index) => (
             <li
               key={option}
@@ -230,18 +221,15 @@ function MockFormWithErrorFocus() {
   return (
     <form onSubmit={handleSubmit} aria-label="Error focus form">
       {error && (
-        <div
-          ref={errorRef}
-          role="alert"
-          tabIndex={-1}
-          data-testid="error-message"
-        >
+        <div ref={errorRef} role="alert" tabIndex={-1} data-testid="error-message">
           {error}
         </div>
       )}
       <label htmlFor="username">Username</label>
       <input type="text" id="username" />
-      <button type="submit" data-testid="submit">Submit</button>
+      <button type="submit" data-testid="submit">
+        Submit
+      </button>
     </form>
   );
 }
@@ -309,7 +297,7 @@ describe('Keyboard Navigation Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithSkipLink />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       // Tab into the page
@@ -324,7 +312,7 @@ describe('Keyboard Navigation Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithSkipLink />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const skipLink = screen.getByTestId('skip-link');
@@ -335,7 +323,7 @@ describe('Keyboard Navigation Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithSkipLink />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const mainContent = document.getElementById('main-content');
@@ -346,7 +334,7 @@ describe('Keyboard Navigation Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithSkipLink />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const mainContent = document.getElementById('main-content');
@@ -485,16 +473,18 @@ describe('Keyboard Navigation Accessibility', () => {
     it('buttons should be keyboard activatable with Enter', async () => {
       const user = userEvent.setup();
       const mockSubmit = vi.fn((e: Event) => e.preventDefault());
-      
+
       render(
         <form onSubmit={mockSubmit}>
-          <button type="submit" data-testid="test-btn">Submit</button>
-        </form>
+          <button type="submit" data-testid="test-btn">
+            Submit
+          </button>
+        </form>,
       );
 
       const btn = screen.getByTestId('test-btn');
       btn.focus();
-      
+
       await user.keyboard('{Enter}');
       expect(mockSubmit).toHaveBeenCalled();
     });
@@ -502,16 +492,16 @@ describe('Keyboard Navigation Accessibility', () => {
     it('buttons should be keyboard activatable with Space', async () => {
       const user = userEvent.setup();
       const mockClick = vi.fn();
-      
+
       render(
         <button onClick={mockClick} data-testid="test-btn">
           Click me
-        </button>
+        </button>,
       );
 
       const btn = screen.getByTestId('test-btn');
       btn.focus();
-      
+
       await user.keyboard(' ');
       expect(mockClick).toHaveBeenCalled();
     });
@@ -537,7 +527,7 @@ describe('Keyboard Navigation Accessibility', () => {
 
       const modal = screen.getByTestId('modal');
       fireEvent.keyDown(modal, { key: 'Escape' });
-      
+
       expect(onClose).toHaveBeenCalled();
     });
 
@@ -567,7 +557,7 @@ describe('Keyboard Navigation Accessibility', () => {
       trigger.focus();
 
       await user.keyboard('{Enter}');
-      
+
       const menu = screen.getByTestId('dropdown-menu');
       expect(menu).toBeInTheDocument();
     });
@@ -612,10 +602,13 @@ describe('Keyboard Navigation Accessibility', () => {
       await user.click(submitBtn);
 
       // Wait for error to appear and focus
-      await vi.waitFor(() => {
-        const errorMessage = screen.queryByTestId('error-message');
-        expect(errorMessage).toBeInTheDocument();
-      }, { timeout: 1000 });
+      await vi.waitFor(
+        () => {
+          const errorMessage = screen.queryByTestId('error-message');
+          expect(errorMessage).toBeInTheDocument();
+        },
+        { timeout: 1000 },
+      );
     });
 
     it('error message should have role alert', async () => {
@@ -625,10 +618,13 @@ describe('Keyboard Navigation Accessibility', () => {
       const submitBtn = screen.getByTestId('submit');
       await user.click(submitBtn);
 
-      await vi.waitFor(() => {
-        const errorMessage = screen.queryByRole('alert');
-        expect(errorMessage).toBeInTheDocument();
-      }, { timeout: 1000 });
+      await vi.waitFor(
+        () => {
+          const errorMessage = screen.queryByRole('alert');
+          expect(errorMessage).toBeInTheDocument();
+        },
+        { timeout: 1000 },
+      );
     });
   });
 
@@ -680,13 +676,15 @@ describe('Keyboard Navigation Accessibility', () => {
       render(
         <div>
           <button data-testid="btn">Button</button>
-          <a href="/test" data-testid="link">Link</a>
+          <a href="/test" data-testid="link">
+            Link
+          </a>
           <input type="text" data-testid="input" aria-label="Input" />
           <select data-testid="select" aria-label="Select">
             <option>Option</option>
           </select>
           <textarea data-testid="textarea" aria-label="Textarea" />
-        </div>
+        </div>,
       );
 
       const elements = [
@@ -708,9 +706,11 @@ describe('Keyboard Navigation Accessibility', () => {
       render(
         <div>
           <button data-testid="btn-enabled">Enabled</button>
-          <button data-testid="btn-disabled" disabled>Disabled</button>
+          <button data-testid="btn-disabled" disabled>
+            Disabled
+          </button>
           <button data-testid="btn-after">After</button>
-        </div>
+        </div>,
       );
 
       const enabledBtn = screen.getByTestId('btn-enabled');
@@ -730,7 +730,7 @@ describe('Keyboard Navigation Accessibility', () => {
             Programmatically focusable
           </div>
           <button data-testid="btn-2">Button 2</button>
-        </div>
+        </div>,
       );
 
       // Can focus programmatically

@@ -1,7 +1,7 @@
 /**
  * Color Contrast & Form Accessibility Tests
  * WCAG 2.2 Level AA compliance
- * 
+ *
  * Tests:
  * - Color contrast ratios (4.5:1 normal text, 3:1 large text/UI)
  * - Form accessibility (labels, errors, required fields, hints)
@@ -26,9 +26,7 @@ expect.extend(toHaveNoViolations);
 function getLuminance(r: number, g: number, b: number): number {
   const [rs, gs, bs] = [r, g, b].map((c) => {
     const sRGB = c / 255;
-    return sRGB <= 0.03928
-      ? sRGB / 12.92
-      : Math.pow((sRGB + 0.055) / 1.055, 2.4);
+    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
   });
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
@@ -36,7 +34,10 @@ function getLuminance(r: number, g: number, b: number): number {
 /**
  * Calculate contrast ratio between two colors
  */
-function getContrastRatio(color1: [number, number, number], color2: [number, number, number]): number {
+function getContrastRatio(
+  color1: [number, number, number],
+  color2: [number, number, number],
+): number {
   const L1 = getLuminance(...color1);
   const L2 = getLuminance(...color2);
   const lighter = Math.max(L1, L2);
@@ -52,11 +53,7 @@ function hexToRgb(hex: string): [number, number, number] {
   if (!result) {
     throw new Error(`Invalid hex color: ${hex}`);
   }
-  return [
-    parseInt(result[1], 16),
-    parseInt(result[2], 16),
-    parseInt(result[3], 16),
-  ];
+  return [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)];
 }
 
 // ============================================================================
@@ -65,33 +62,33 @@ function hexToRgb(hex: string): [number, number, number] {
 
 const colors = {
   // Text colors - Updated for WCAG AA compliance
-  textPrimary: '#111827',      // gray-900
-  textSecondary: '#4B5563',    // gray-600 - Darker for better contrast
-  textMuted: '#6B7280',        // gray-500 - Meets 3:1 for large text
-  textOnDark: '#FFFFFF',       // white
-  
+  textPrimary: '#111827', // gray-900
+  textSecondary: '#4B5563', // gray-600 - Darker for better contrast
+  textMuted: '#6B7280', // gray-500 - Meets 3:1 for large text
+  textOnDark: '#FFFFFF', // white
+
   // Background colors
-  bgWhite: '#FFFFFF',          // white
-  bgGray50: '#F9FAFB',         // gray-50
-  bgGray100: '#F3F4F6',        // gray-100
-  bgGray900: '#111827',        // gray-900
-  
+  bgWhite: '#FFFFFF', // white
+  bgGray50: '#F9FAFB', // gray-50
+  bgGray100: '#F3F4F6', // gray-100
+  bgGray900: '#111827', // gray-900
+
   // Brand colors
-  primary: '#2563EB',          // blue-600
-  primaryHover: '#1D4ED8',     // blue-700
-  
+  primary: '#2563EB', // blue-600
+  primaryHover: '#1D4ED8', // blue-700
+
   // Status colors - Updated for WCAG AA compliance on colored backgrounds
-  success: '#047857',          // green-700 - Darker for 4.5:1 on green-50
-  successBg: '#ECFDF5',        // green-50
-  warning: '#92400E',          // yellow-800 - Darker for 4.5:1 on yellow-50
-  warningBg: '#FFFBEB',        // yellow-50
-  error: '#B91C1C',            // red-700 - Darker for 4.5:1 on red-50
-  errorBg: '#FEF2F2',          // red-50
-  
+  success: '#047857', // green-700 - Darker for 4.5:1 on green-50
+  successBg: '#ECFDF5', // green-50
+  warning: '#92400E', // yellow-800 - Darker for 4.5:1 on yellow-50
+  warningBg: '#FFFBEB', // yellow-50
+  error: '#B91C1C', // red-700 - Darker for 4.5:1 on red-50
+  errorBg: '#FEF2F2', // red-50
+
   // UI colors - Updated for WCAG AA compliance
-  border: '#6B7280',           // gray-500 - Darker for 3:1 against white
-  focusRing: '#3B82F6',        // blue-500
-  disabled: '#6B7280',         // gray-500 - Meets 3:1 for large text
+  border: '#6B7280', // gray-500 - Darker for 3:1 against white
+  focusRing: '#3B82F6', // blue-500
+  disabled: '#6B7280', // gray-500 - Meets 3:1 for large text
 };
 
 // ============================================================================
@@ -101,15 +98,11 @@ const colors = {
 /**
  * Mock Form with all accessibility features
  */
-function MockAccessibleForm({
-  showErrors = false,
-}: {
-  showErrors?: boolean;
-}) {
+function MockAccessibleForm({ showErrors = false }: { showErrors?: boolean }) {
   return (
     <form aria-labelledby="form-title" noValidate>
       <h2 id="form-title">Contact Form</h2>
-      
+
       {/* Form-level error summary */}
       {showErrors && (
         <div
@@ -123,8 +116,12 @@ function MockAccessibleForm({
             Please fix the following errors:
           </h3>
           <ul className="mt-2 list-disc list-inside text-red-700">
-            <li><a href="#name">Name is required</a></li>
-            <li><a href="#email">Please enter a valid email address</a></li>
+            <li>
+              <a href="#name">Name is required</a>
+            </li>
+            <li>
+              <a href="#email">Please enter a valid email address</a>
+            </li>
           </ul>
         </div>
       )}
@@ -132,7 +129,10 @@ function MockAccessibleForm({
       {/* Text input with all features */}
       <div className="mb-4">
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Full Name <span aria-hidden="true" className="text-red-500">*</span>
+          Full Name{' '}
+          <span aria-hidden="true" className="text-red-500">
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
         <input
@@ -161,7 +161,10 @@ function MockAccessibleForm({
       {/* Email input with validation */}
       <div className="mb-4">
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email Address <span aria-hidden="true" className="text-red-500">*</span>
+          Email Address{' '}
+          <span aria-hidden="true" className="text-red-500">
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
         <input
@@ -210,7 +213,10 @@ function MockAccessibleForm({
       {/* Textarea */}
       <div className="mb-4">
         <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-          Message <span aria-hidden="true" className="text-red-500">*</span>
+          Message{' '}
+          <span aria-hidden="true" className="text-red-500">
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
         <textarea
@@ -231,7 +237,10 @@ function MockAccessibleForm({
       {/* Select dropdown */}
       <div className="mb-4">
         <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-          Subject <span aria-hidden="true" className="text-red-500">*</span>
+          Subject{' '}
+          <span aria-hidden="true" className="text-red-500">
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
         <select
@@ -252,7 +261,10 @@ function MockAccessibleForm({
       {/* Checkbox group */}
       <fieldset className="mb-4">
         <legend className="text-sm font-medium text-gray-700">
-          Preferred Contact Method <span aria-hidden="true" className="text-red-500">*</span>
+          Preferred Contact Method{' '}
+          <span aria-hidden="true" className="text-red-500">
+            *
+          </span>
           <span className="sr-only">(required, select at least one)</span>
         </legend>
         <div className="mt-2 space-y-2">
@@ -287,9 +299,7 @@ function MockAccessibleForm({
 
       {/* Radio group */}
       <fieldset className="mb-4">
-        <legend className="text-sm font-medium text-gray-700">
-          Urgency Level
-        </legend>
+        <legend className="text-sm font-medium text-gray-700">Urgency Level</legend>
         <div className="mt-2 space-y-2">
           <div className="flex items-center">
             <input
@@ -355,7 +365,10 @@ function MockAccessibleForm({
             <a href="/privacy" className="text-blue-600 hover:text-blue-500 underline">
               Privacy Policy
             </a>
-            <span aria-hidden="true" className="text-red-500"> *</span>
+            <span aria-hidden="true" className="text-red-500">
+              {' '}
+              *
+            </span>
             <span className="sr-only">(required)</span>
           </label>
         </div>
@@ -416,7 +429,9 @@ function MockFormWithInlineValidation() {
           onChange={(e) => setEmail(e.target.value)}
           onBlur={(e) => validateEmail(e.target.value)}
           aria-invalid={emailError ? 'true' : undefined}
-          aria-describedby={emailError ? 'inline-email-error' : emailValid ? 'inline-email-success' : undefined}
+          aria-describedby={
+            emailError ? 'inline-email-error' : emailValid ? 'inline-email-success' : undefined
+          }
           className={`mt-1 block w-full px-3 py-2 border rounded-md ${
             emailError ? 'border-red-500' : emailValid ? 'border-green-500' : 'border-gray-300'
           }`}
@@ -428,16 +443,17 @@ function MockFormWithInlineValidation() {
             role="alert"
             className="mt-1 text-sm text-red-600 flex items-center"
           >
-            <span aria-hidden="true" className="mr-1">⚠️</span>
+            <span aria-hidden="true" className="mr-1">
+              ⚠️
+            </span>
             {emailError}
           </p>
         )}
         {emailValid && (
-          <p
-            id="inline-email-success"
-            className="mt-1 text-sm text-green-600 flex items-center"
-          >
-            <span aria-hidden="true" className="mr-1">✓</span>
+          <p id="inline-email-success" className="mt-1 text-sm text-green-600 flex items-center">
+            <span aria-hidden="true" className="mr-1">
+              ✓
+            </span>
             Email looks good!
           </p>
         )}
@@ -502,129 +518,84 @@ function MockDisabledForm() {
 describe('Color Contrast Accessibility', () => {
   describe('WCAG AA Compliance - Normal Text (4.5:1)', () => {
     it('primary text on white background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.textPrimary),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.textPrimary), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('secondary text on white background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.textSecondary),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.textSecondary), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('error text on white background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.error),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.error), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('success text on white background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.success),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.success), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('warning text on white background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.warning),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.warning), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('white text on dark background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.textOnDark),
-        hexToRgb(colors.bgGray900)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.textOnDark), hexToRgb(colors.bgGray900));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('link text on white background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.primary),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.primary), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
   });
 
   describe('WCAG AA Compliance - Large Text (3:1)', () => {
     it('muted text (large) on white background should meet 3:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.textMuted),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.textMuted), hexToRgb(colors.bgWhite));
       // Muted text should only be used for large text (>=18pt or >=14pt bold)
       expect(ratio).toBeGreaterThanOrEqual(3);
     });
 
     it('disabled text on white background should meet 3:1 for large text', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.disabled),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.disabled), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(3);
     });
   });
 
   describe('WCAG AA Compliance - UI Components (3:1)', () => {
     it('border color should meet 3:1 against background', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.border),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.border), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(3);
     });
 
     it('focus ring should meet 3:1 against background', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.focusRing),
-        hexToRgb(colors.bgWhite)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.focusRing), hexToRgb(colors.bgWhite));
       expect(ratio).toBeGreaterThanOrEqual(3);
     });
 
     it('primary button text on button background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.textOnDark),
-        hexToRgb(colors.primary)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.textOnDark), hexToRgb(colors.primary));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
   });
 
   describe('Status Colors on Status Backgrounds', () => {
     it('error text on error background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.error),
-        hexToRgb(colors.errorBg)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.error), hexToRgb(colors.errorBg));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('success text on success background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.success),
-        hexToRgb(colors.successBg)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.success), hexToRgb(colors.successBg));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
     it('warning text on warning background should meet 4.5:1', () => {
-      const ratio = getContrastRatio(
-        hexToRgb(colors.warning),
-        hexToRgb(colors.warningBg)
-      );
+      const ratio = getContrastRatio(hexToRgb(colors.warning), hexToRgb(colors.warningBg));
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
   });
@@ -791,7 +762,7 @@ describe('Form Accessibility', () => {
       render(<MockFormWithInlineValidation />);
 
       const emailInput = screen.getByTestId('inline-email');
-      
+
       await user.type(emailInput, 'invalid');
       await user.tab();
 
@@ -803,7 +774,7 @@ describe('Form Accessibility', () => {
       render(<MockFormWithInlineValidation />);
 
       const emailInput = screen.getByTestId('inline-email');
-      
+
       await user.type(emailInput, 'invalid');
       await user.tab();
 
@@ -816,7 +787,7 @@ describe('Form Accessibility', () => {
       render(<MockFormWithInlineValidation />);
 
       const emailInput = screen.getByTestId('inline-email');
-      
+
       await user.type(emailInput, 'valid@example.com');
       await user.tab();
 

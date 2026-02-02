@@ -132,10 +132,7 @@ function MockRegisterPage() {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md"
-        >
+        <button type="submit" className="w-full py-2 px-4 bg-blue-600 text-white rounded-md">
           Create account
         </button>
       </form>
@@ -165,7 +162,7 @@ describe('RegisterPage Accessibility', () => {
     const { container } = render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const results = await axe(container);
@@ -176,7 +173,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const h1 = screen.getByRole('heading', { level: 1 });
@@ -188,7 +185,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     // Check all inputs have associated labels
@@ -207,7 +204,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const form = screen.getByRole('form', { name: /registration form/i });
@@ -218,7 +215,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const passwordInput = screen.getByLabelText(/^password$/i);
@@ -229,7 +226,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const toggleButton = screen.getByRole('button', { name: /toggle password visibility/i });
@@ -240,7 +237,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const inputs = screen.getAllByRole('textbox');
@@ -261,7 +258,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const nameInput = screen.getByLabelText(/full name/i);
@@ -277,7 +274,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const main = screen.getByRole('main');
@@ -288,7 +285,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const nav = screen.getByRole('navigation', { name: /authentication navigation/i });
@@ -303,7 +300,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const submitButton = screen.getByRole('button', { name: /create account/i });
@@ -315,7 +312,7 @@ describe('RegisterPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockRegisterPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const requirementIndicators = document.querySelectorAll('[aria-live="polite"]');

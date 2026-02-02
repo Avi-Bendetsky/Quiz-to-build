@@ -21,7 +21,7 @@ export function HelpPage() {
               <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
               Back to App
             </Link>
-            
+
             <nav className="flex items-center space-x-6" aria-label="Help navigation">
               <a
                 href="mailto:support@quiz2biz.com"
@@ -58,7 +58,7 @@ export function HelpPage() {
             <p className="text-sm text-gray-500">
               &copy; {new Date().getFullYear()} Quiz2Biz. All rights reserved.
             </p>
-            
+
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
               <a
                 href="mailto:support@quiz2biz.com"
@@ -66,11 +66,15 @@ export function HelpPage() {
               >
                 support@quiz2biz.com
               </a>
-              <span className="text-gray-300" aria-hidden="true">|</span>
+              <span className="text-gray-300" aria-hidden="true">
+                |
+              </span>
               <Link to="/terms" className="text-sm text-gray-500 hover:text-gray-700">
                 Terms of Service
               </Link>
-              <span className="text-gray-300" aria-hidden="true">|</span>
+              <span className="text-gray-300" aria-hidden="true">
+                |
+              </span>
               <Link to="/privacy" className="text-sm text-gray-500 hover:text-gray-700">
                 Privacy Policy
               </Link>

@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 
 /**
  * Memory Optimization Service
- * 
+ *
  * Implements memory management best practices:
  * - Periodic GC hints for long-running sessions
  * - Memory usage monitoring with threshold alerts
@@ -14,13 +14,13 @@ export class MemoryOptimizationService implements OnModuleInit, OnModuleDestroy 
   private readonly logger = new Logger(MemoryOptimizationService.name);
   private gcIntervalId?: ReturnType<typeof setInterval>;
   private memoryCheckIntervalId?: ReturnType<typeof setInterval>;
-  
+
   // Memory thresholds in MB
   private readonly WARNING_THRESHOLD_MB = 400;
   private readonly CRITICAL_THRESHOLD_MB = 512;
   private readonly GC_INTERVAL_MS = 60000; // 1 minute
   private readonly MEMORY_CHECK_INTERVAL_MS = 30000; // 30 seconds
-  
+
   // Request cache with TTL
   private readonly requestCache = new Map<string, { data: WeakRef<object>; expiry: number }>();
   private readonly CACHE_TTL_MS = 300000; // 5 minutes
@@ -70,7 +70,9 @@ export class MemoryOptimizationService implements OnModuleInit, OnModuleDestroy 
       const before = this.getHeapUsedMB();
       global.gc();
       const after = this.getHeapUsedMB();
-      this.logger.debug(`GC completed: ${before.toFixed(2)}MB → ${after.toFixed(2)}MB (freed ${(before - after).toFixed(2)}MB)`);
+      this.logger.debug(
+        `GC completed: ${before.toFixed(2)}MB → ${after.toFixed(2)}MB (freed ${(before - after).toFixed(2)}MB)`,
+      );
     }
     // Clean expired cache entries
     this.cleanExpiredCache();
@@ -89,17 +91,17 @@ export class MemoryOptimizationService implements OnModuleInit, OnModuleDestroy 
     if (heapUsedMB > this.CRITICAL_THRESHOLD_MB) {
       this.logger.error(
         `CRITICAL: Memory usage at ${heapUsedMB.toFixed(2)}MB (${usagePercent.toFixed(1)}% of heap). ` +
-        `RSS: ${rssMB.toFixed(2)}MB. Triggering GC.`
+          `RSS: ${rssMB.toFixed(2)}MB. Triggering GC.`,
       );
       this.performGCHint();
     } else if (heapUsedMB > this.WARNING_THRESHOLD_MB) {
       this.logger.warn(
         `WARNING: Memory usage at ${heapUsedMB.toFixed(2)}MB (${usagePercent.toFixed(1)}% of heap). ` +
-        `RSS: ${rssMB.toFixed(2)}MB`
+          `RSS: ${rssMB.toFixed(2)}MB`,
       );
     } else {
       this.logger.debug(
-        `Memory: ${heapUsedMB.toFixed(2)}MB heap (${usagePercent.toFixed(1)}%), RSS: ${rssMB.toFixed(2)}MB`
+        `Memory: ${heapUsedMB.toFixed(2)}MB heap (${usagePercent.toFixed(1)}%), RSS: ${rssMB.toFixed(2)}MB`,
       );
     }
   }
@@ -161,19 +163,21 @@ export class MemoryOptimizationService implements OnModuleInit, OnModuleDestroy 
    */
   getCachedRequest<T extends object>(key: string): T | null {
     const cached = this.requestCache.get(key);
-    if (!cached) return null;
-    
+    if (!cached) {
+      return null;
+    }
+
     if (Date.now() > cached.expiry) {
       this.requestCache.delete(key);
       return null;
     }
-    
+
     const data = cached.data.deref();
     if (!data) {
       this.requestCache.delete(key);
       return null;
     }
-    
+
     return data as T;
   }
 
@@ -183,14 +187,14 @@ export class MemoryOptimizationService implements OnModuleInit, OnModuleDestroy 
   private cleanExpiredCache(): void {
     const now = Date.now();
     let cleaned = 0;
-    
+
     for (const [key, value] of this.requestCache.entries()) {
       if (now > value.expiry || !value.data.deref()) {
         this.requestCache.delete(key);
         cleaned++;
       }
     }
-    
+
     if (cleaned > 0) {
       this.logger.debug(`Cleaned ${cleaned} expired cache entries`);
     }

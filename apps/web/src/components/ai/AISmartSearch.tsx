@@ -117,7 +117,7 @@ class EmbeddingService {
   private static simpleHash(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash = (hash << 5) - hash + str.charCodeAt(i);
       hash |= 0;
     }
     return hash;
@@ -138,19 +138,53 @@ class EmbeddingService {
 
 // Initialize with sample documents
 const SAMPLE_DOCUMENTS = [
-  { id: 'help-1', title: 'Getting Started with Questionnaires', url: '/help/getting-started', category: 'help' },
-  { id: 'help-2', title: 'Understanding Your Readiness Score', url: '/help/readiness-score', category: 'help' },
-  { id: 'help-3', title: 'Uploading Evidence Documents', url: '/help/evidence-upload', category: 'help' },
-  { id: 'faq-1', title: 'How do I reset my password?', url: '/help/faq#password-reset', category: 'faq' },
-  { id: 'faq-2', title: 'What file types are supported for evidence?', url: '/help/faq#file-types', category: 'faq' },
-  { id: 'faq-3', title: 'How is the risk score calculated?', url: '/help/faq#risk-calculation', category: 'faq' },
+  {
+    id: 'help-1',
+    title: 'Getting Started with Questionnaires',
+    url: '/help/getting-started',
+    category: 'help',
+  },
+  {
+    id: 'help-2',
+    title: 'Understanding Your Readiness Score',
+    url: '/help/readiness-score',
+    category: 'help',
+  },
+  {
+    id: 'help-3',
+    title: 'Uploading Evidence Documents',
+    url: '/help/evidence-upload',
+    category: 'help',
+  },
+  {
+    id: 'faq-1',
+    title: 'How do I reset my password?',
+    url: '/help/faq#password-reset',
+    category: 'faq',
+  },
+  {
+    id: 'faq-2',
+    title: 'What file types are supported for evidence?',
+    url: '/help/faq#file-types',
+    category: 'faq',
+  },
+  {
+    id: 'faq-3',
+    title: 'How is the risk score calculated?',
+    url: '/help/faq#risk-calculation',
+    category: 'faq',
+  },
   { id: 'docs-1', title: 'ISO 27001 Compliance Guide', url: '/docs/iso-27001', category: 'docs' },
   { id: 'docs-2', title: 'NIST CSF Framework Overview', url: '/docs/nist-csf', category: 'docs' },
   { id: 'docs-3', title: 'OWASP ASVS Requirements', url: '/docs/owasp-asvs', category: 'docs' },
 ];
 
-SAMPLE_DOCUMENTS.forEach(doc => {
-  EmbeddingService.addDocument(doc.id, doc.title, { title: doc.title, url: doc.url, category: doc.category });
+SAMPLE_DOCUMENTS.forEach((doc) => {
+  EmbeddingService.addDocument(doc.id, doc.title, {
+    title: doc.title,
+    url: doc.url,
+    category: doc.category,
+  });
 });
 
 // ============================================================================
@@ -183,84 +217,90 @@ export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
   const searchTimeout = useRef<NodeJS.Timeout>();
 
   // Generate AI summary for search results
-  const generateAISummary = useCallback(async (searchQuery: string, searchResults: SearchResult[]): Promise<AISearchSummary> => {
-    // Mock AI summary generation - in production, call OpenAI/Azure API
-    await new Promise(resolve => setTimeout(resolve, 300));
+  const generateAISummary = useCallback(
+    async (searchQuery: string, searchResults: SearchResult[]): Promise<AISearchSummary> => {
+      // Mock AI summary generation - in production, call OpenAI/Azure API
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const keyPoints = searchResults.slice(0, 3).map(r => r.title);
-    const relatedTopics = searchResults
-      .flatMap(r => r.matchedKeywords)
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .slice(0, 5);
+      const keyPoints = searchResults.slice(0, 3).map((r) => r.title);
+      const relatedTopics = searchResults
+        .flatMap((r) => r.matchedKeywords)
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .slice(0, 5);
 
-    return {
-      query: searchQuery,
-      summary: `Found ${searchResults.length} relevant results for "${searchQuery}". The most relevant topics include ${keyPoints.slice(0, 2).join(' and ')}.`,
-      keyPoints,
-      relatedTopics,
-      confidence: searchResults.length > 0 ? Math.min(0.95, 0.5 + searchResults[0].relevanceScore * 0.5) : 0.3,
-    };
-  }, []);
+      return {
+        query: searchQuery,
+        summary: `Found ${searchResults.length} relevant results for "${searchQuery}". The most relevant topics include ${keyPoints.slice(0, 2).join(' and ')}.`,
+        keyPoints,
+        relatedTopics,
+        confidence:
+          searchResults.length > 0
+            ? Math.min(0.95, 0.5 + searchResults[0].relevanceScore * 0.5)
+            : 0.3,
+      };
+    },
+    [],
+  );
 
   // Semantic search function
-  const search = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setAiSummary(null);
-      return;
-    }
-
-    setQuery(searchQuery);
-    setIsSearching(true);
-
-    try {
-      // Clear previous timeout
-      if (searchTimeout.current) {
-        clearTimeout(searchTimeout.current);
-      }
-
-      // Debounce search
-      await new Promise<void>(resolve => {
-        searchTimeout.current = setTimeout(resolve, 150);
-      });
-
-      // Perform semantic search using embeddings
-      const semanticResults = await EmbeddingService.searchSimilar(searchQuery, 10);
-
-      // Also perform keyword-based search for comparison
-      const keywordResults = performKeywordSearch(searchQuery);
-
-      // Merge and deduplicate results
-      const mergedResults = mergeSearchResults(semanticResults, keywordResults);
-
-      setResults(mergedResults);
-
-      // Generate AI summary
-      if (mergedResults.length > 0) {
-        const summary = await generateAISummary(searchQuery, mergedResults);
-        setAiSummary(summary);
-      } else {
+  const search = useCallback(
+    async (searchQuery: string) => {
+      if (!searchQuery.trim()) {
+        setResults([]);
         setAiSummary(null);
+        return;
       }
 
-      // Update suggestions based on results
-      const newSuggestions: SearchSuggestion[] = mergedResults
-        .slice(0, 3)
-        .map((r, i) => ({
+      setQuery(searchQuery);
+      setIsSearching(true);
+
+      try {
+        // Clear previous timeout
+        if (searchTimeout.current) {
+          clearTimeout(searchTimeout.current);
+        }
+
+        // Debounce search
+        await new Promise<void>((resolve) => {
+          searchTimeout.current = setTimeout(resolve, 150);
+        });
+
+        // Perform semantic search using embeddings
+        const semanticResults = await EmbeddingService.searchSimilar(searchQuery, 10);
+
+        // Also perform keyword-based search for comparison
+        const keywordResults = performKeywordSearch(searchQuery);
+
+        // Merge and deduplicate results
+        const mergedResults = mergeSearchResults(semanticResults, keywordResults);
+
+        setResults(mergedResults);
+
+        // Generate AI summary
+        if (mergedResults.length > 0) {
+          const summary = await generateAISummary(searchQuery, mergedResults);
+          setAiSummary(summary);
+        } else {
+          setAiSummary(null);
+        }
+
+        // Update suggestions based on results
+        const newSuggestions: SearchSuggestion[] = mergedResults.slice(0, 3).map((r, i) => ({
           id: `related-${i}`,
           text: r.title,
           type: 'related' as const,
         }));
-      setSuggestions(newSuggestions);
-
-    } catch (error) {
-      console.error('Search error:', error);
-      setResults([]);
-      setAiSummary(null);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [generateAISummary]);
+        setSuggestions(newSuggestions);
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults([]);
+        setAiSummary(null);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [generateAISummary],
+  );
 
   const clearSearch = useCallback(() => {
     setQuery('');
@@ -270,10 +310,12 @@ export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
   }, []);
 
   const addToRecentSearches = useCallback((searchQuery: string) => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      return;
+    }
 
-    setRecentSearches(prev => {
-      const filtered = prev.filter(s => s !== searchQuery);
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((s) => s !== searchQuery);
       const updated = [searchQuery, ...filtered].slice(0, 10);
       localStorage.setItem('quiz2biz_recent_searches', JSON.stringify(updated));
       return updated;
@@ -292,11 +334,7 @@ export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
     addToRecentSearches,
   };
 
-  return (
-    <SmartSearchContext.Provider value={value}>
-      {children}
-    </SmartSearchContext.Provider>
-  );
+  return <SmartSearchContext.Provider value={value}>{children}</SmartSearchContext.Provider>;
 };
 
 // ============================================================================
@@ -304,13 +342,16 @@ export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
 // ============================================================================
 
 function performKeywordSearch(query: string): SearchResult[] {
-  const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 2);
+  const keywords = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((k) => k.length > 2);
   const results: SearchResult[] = [];
 
-  SAMPLE_DOCUMENTS.forEach(doc => {
+  SAMPLE_DOCUMENTS.forEach((doc) => {
     const titleLower = doc.title.toLowerCase();
-    const matchedKeywords = keywords.filter(k => titleLower.includes(k));
-    
+    const matchedKeywords = keywords.filter((k) => titleLower.includes(k));
+
     if (matchedKeywords.length > 0) {
       const score = matchedKeywords.length / keywords.length;
       results.push({
@@ -320,7 +361,7 @@ function performKeywordSearch(query: string): SearchResult[] {
         url: doc.url,
         relevanceScore: score,
         category: doc.category as SearchResult['category'],
-        highlights: matchedKeywords.map(k => highlightKeyword(doc.title, k)),
+        highlights: matchedKeywords.map((k) => highlightKeyword(doc.title, k)),
         matchedKeywords,
       });
     }
@@ -338,16 +379,18 @@ function mergeSearchResults(semantic: SearchResult[], keyword: SearchResult[]): 
   const merged = new Map<string, SearchResult>();
 
   // Add semantic results with higher base score
-  semantic.forEach(result => {
+  semantic.forEach((result) => {
     merged.set(result.id, { ...result, relevanceScore: result.relevanceScore * 1.2 });
   });
 
   // Merge keyword results
-  keyword.forEach(result => {
+  keyword.forEach((result) => {
     const existing = merged.get(result.id);
     if (existing) {
       existing.relevanceScore = Math.min(1, existing.relevanceScore + result.relevanceScore * 0.3);
-      existing.matchedKeywords = [...new Set([...existing.matchedKeywords, ...result.matchedKeywords])];
+      existing.matchedKeywords = [
+        ...new Set([...existing.matchedKeywords, ...result.matchedKeywords]),
+      ];
       existing.highlights = [...existing.highlights, ...result.highlights];
     } else {
       merged.set(result.id, result);
@@ -631,7 +674,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   autoFocus = false,
   showRecentOnFocus = true,
 }) => {
-  const { query, search, clearSearch, isSearching, recentSearches, addToRecentSearches } = useSmartSearch();
+  const { query, search, clearSearch, isSearching, recentSearches, addToRecentSearches } =
+    useSmartSearch();
   const [isFocused, setIsFocused] = useState(false);
   const [localQuery, setLocalQuery] = useState(query);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -688,12 +732,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           aria-describedby="search-hint"
         />
         {localQuery && (
-          <button
-            onClick={handleClear}
-            style={styles.clearButton}
-            aria-label="Clear search"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={handleClear} style={styles.clearButton} aria-label="Clear search">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -703,7 +750,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           {isSearching ? (
             <div style={styles.spinner} />
           ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -715,7 +769,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <div style={styles.resultsContainer}>
           <div style={styles.recentSearches}>
             <div style={styles.recentTitle}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12,6 12,12 16,14" />
               </svg>
@@ -730,7 +791,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
@@ -746,10 +814,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 };
 
 export const SearchResults: React.FC = () => {
-  const { results, aiSummary, isSearching, query, suggestions, search, addToRecentSearches } = useSmartSearch();
+  const { results, aiSummary, isSearching, query, suggestions, search, addToRecentSearches } =
+    useSmartSearch();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  if (!query) return null;
+  if (!query) {
+    return null;
+  }
 
   if (isSearching) {
     return (
@@ -768,7 +839,8 @@ export const SearchResults: React.FC = () => {
         <div style={styles.noResults}>
           <div style={styles.noResultsTitle}>No results found</div>
           <div style={styles.noResultsText}>
-            We couldn't find anything matching "{query}". Try different keywords or check your spelling.
+            We couldn't find anything matching "{query}". Try different keywords or check your
+            spelling.
           </div>
         </div>
       </div>
@@ -777,10 +849,14 @@ export const SearchResults: React.FC = () => {
 
   const getCategoryStyle = (category: SearchResult['category']) => {
     switch (category) {
-      case 'help': return styles.categoryHelp;
-      case 'faq': return styles.categoryFaq;
-      case 'docs': return styles.categoryDocs;
-      default: return {};
+      case 'help':
+        return styles.categoryHelp;
+      case 'faq':
+        return styles.categoryFaq;
+      case 'docs':
+        return styles.categoryDocs;
+      default:
+        return {};
     }
   };
 
@@ -801,7 +877,14 @@ export const SearchResults: React.FC = () => {
       {aiSummary && (
         <div style={styles.aiSummaryBox}>
           <div style={styles.aiSummaryHeader}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#0369a1"
+              strokeWidth="2"
+            >
               <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
               <path d="M12 6v6l4 2" />
             </svg>
@@ -814,7 +897,9 @@ export const SearchResults: React.FC = () => {
           {aiSummary.keyPoints.length > 0 && (
             <div style={styles.keyPoints}>
               {aiSummary.keyPoints.map((point, index) => (
-                <span key={index} style={styles.keyPointTag}>{point}</span>
+                <span key={index} style={styles.keyPointTag}>
+                  {point}
+                </span>
               ))}
             </div>
           )}
@@ -893,10 +978,7 @@ interface SmartSearchBoxProps {
   autoFocus?: boolean;
 }
 
-export const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({
-  placeholder,
-  autoFocus,
-}) => {
+export const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({ placeholder, autoFocus }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 

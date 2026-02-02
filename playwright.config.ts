@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   // Test directory
   testDir: './e2e',
-  
+
   // Match test files pattern
   testMatch: '**/*.e2e.test.ts',
 

@@ -26,7 +26,15 @@ import { CsrfService, CsrfGuard } from '../../common/guards/csrf.guard';
     }),
   ],
   controllers: [AuthController, OAuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, OAuthService, CsrfService, CsrfGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+    OAuthService,
+    CsrfService,
+    CsrfGuard,
+  ],
   exports: [AuthService, JwtAuthGuard, RolesGuard, OAuthService, CsrfService, CsrfGuard],
 })
 export class AuthModule {}

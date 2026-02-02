@@ -53,9 +53,9 @@ export function LoginPage() {
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {isSubmitting && 'Signing in, please wait...'}
       </div>
-      
+
       {error && (
-        <div 
+        <div
           className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm"
           role="alert"
           aria-live="assertive"
@@ -81,7 +81,11 @@ export function LoginPage() {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder="you@example.com"
           />
-          {errors.email && <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">{errors.email.message}</p>}
+          {errors.email && (
+            <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
         <div>
@@ -115,7 +119,9 @@ export function LoginPage() {
             </button>
           </div>
           {errors.password && (
-            <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">{errors.password.message}</p>
+            <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.password.message}
+            </p>
           )}
         </div>
 

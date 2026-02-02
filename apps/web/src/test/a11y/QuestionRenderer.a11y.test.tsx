@@ -81,7 +81,11 @@ function MockQuestionRenderer({
         return (
           <fieldset>
             <legend id={`question-label-${question.id}`}>{question.text}</legend>
-            <div role="radiogroup" aria-required={question.isRequired} aria-labelledby={`question-label-${question.id}`}>
+            <div
+              role="radiogroup"
+              aria-required={question.isRequired}
+              aria-labelledby={`question-label-${question.id}`}
+            >
               {question.options?.map((option, idx) => (
                 <div key={idx} className="flex items-center">
                   <input
@@ -107,7 +111,11 @@ function MockQuestionRenderer({
         return (
           <fieldset>
             <legend id={`question-label-${question.id}`}>{question.text}</legend>
-            <div role="group" aria-required={question.isRequired} aria-labelledby={`question-label-${question.id}`}>
+            <div
+              role="group"
+              aria-required={question.isRequired}
+              aria-labelledby={`question-label-${question.id}`}
+            >
               {question.options?.map((option, idx) => (
                 <div key={idx} className="flex items-center">
                   <input
@@ -169,7 +177,9 @@ function MockQuestionRenderer({
         >
           {question.text}
           {question.isRequired && (
-            <span className="text-red-500 ml-1" aria-label="required">*</span>
+            <span className="text-red-500 ml-1" aria-label="required">
+              *
+            </span>
           )}
         </label>
 

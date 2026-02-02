@@ -51,18 +51,23 @@ class VersionStorage {
   static load(): Map<string, ResponseVersion[]> {
     try {
       const data = localStorage.getItem(this.STORAGE_KEY);
-      if (!data) return new Map();
-      
+      if (!data) {
+        return new Map();
+      }
+
       const parsed = JSON.parse(data);
       const map = new Map<string, ResponseVersion[]>();
-      
+
       Object.entries(parsed).forEach(([key, versions]) => {
-        map.set(key, (versions as any[]).map(v => ({
-          ...v,
-          createdAt: new Date(v.createdAt),
-        })));
+        map.set(
+          key,
+          (versions as any[]).map((v) => ({
+            ...v,
+            createdAt: new Date(v.createdAt),
+          })),
+        );
       });
-      
+
       return map;
     } catch {
       return new Map();
@@ -114,7 +119,9 @@ export const VersionHistoryProvider: React.FC<VersionHistoryProviderProps> = ({
   children,
   userId = 'anonymous',
 }) => {
-  const [versions, setVersions] = useState<Map<string, ResponseVersion[]>>(() => VersionStorage.load());
+  const [versions, setVersions] = useState<Map<string, ResponseVersion[]>>(() =>
+    VersionStorage.load(),
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // Save to storage whenever versions change
@@ -122,103 +129,116 @@ export const VersionHistoryProvider: React.FC<VersionHistoryProviderProps> = ({
     VersionStorage.save(versions);
   }, [versions]);
 
-  const getVersions = useCallback((responseId: string): ResponseVersion[] => {
-    return versions.get(responseId) || [];
-  }, [versions]);
+  const getVersions = useCallback(
+    (responseId: string): ResponseVersion[] => {
+      return versions.get(responseId) || [];
+    },
+    [versions],
+  );
 
-  const saveVersion = useCallback((
-    responseId: string,
-    questionId: string,
-    value: string,
-    createdBy: string
-  ): void => {
-    setVersions(prev => {
-      const existing = prev.get(responseId) || [];
-      const lastVersion = existing[existing.length - 1];
-      
-      // Don't save if value hasn't changed
-      if (lastVersion && lastVersion.value === value) {
-        return prev;
-      }
+  const saveVersion = useCallback(
+    (responseId: string, questionId: string, value: string, createdBy: string): void => {
+      setVersions((prev) => {
+        const existing = prev.get(responseId) || [];
+        const lastVersion = existing[existing.length - 1];
 
-      const newVersion: ResponseVersion = {
-        id: VersionStorage.generateId(),
-        responseId,
-        questionId,
-        version: existing.length + 1,
-        value,
-        createdAt: new Date(),
-        createdBy,
-        changeType: existing.length === 0 ? 'create' : 'update',
-        previousVersionId: lastVersion?.id,
-      };
+        // Don't save if value hasn't changed
+        if (lastVersion && lastVersion.value === value) {
+          return prev;
+        }
 
-      const updated = new Map(prev);
-      updated.set(responseId, [...existing, newVersion]);
-      return updated;
-    });
-  }, []);
+        const newVersion: ResponseVersion = {
+          id: VersionStorage.generateId(),
+          responseId,
+          questionId,
+          version: existing.length + 1,
+          value,
+          createdAt: new Date(),
+          createdBy,
+          changeType: existing.length === 0 ? 'create' : 'update',
+          previousVersionId: lastVersion?.id,
+        };
 
-  const restoreVersion = useCallback((versionId: string): ResponseVersion | null => {
-    let restoredVersion: ResponseVersion | null = null;
+        const updated = new Map(prev);
+        updated.set(responseId, [...existing, newVersion]);
+        return updated;
+      });
+    },
+    [],
+  );
 
-    setVersions(prev => {
-      const updated = new Map(prev);
+  const restoreVersion = useCallback(
+    (versionId: string): ResponseVersion | null => {
+      let restoredVersion: ResponseVersion | null = null;
 
-      // Find the version to restore
-      prev.forEach((versionList, responseId) => {
-        const targetVersion = versionList.find(v => v.id === versionId);
-        if (targetVersion) {
-          // Create a new version with the restored value
-          const newVersion: ResponseVersion = {
-            id: VersionStorage.generateId(),
-            responseId: targetVersion.responseId,
-            questionId: targetVersion.questionId,
-            version: versionList.length + 1,
-            value: targetVersion.value,
-            createdAt: new Date(),
-            createdBy: userId,
-            changeType: 'restore',
-            changeDescription: `Restored to version ${targetVersion.version}`,
-            previousVersionId: versionList[versionList.length - 1]?.id,
-          };
+      setVersions((prev) => {
+        const updated = new Map(prev);
 
-          updated.set(responseId, [...versionList, newVersion]);
-          restoredVersion = newVersion;
+        // Find the version to restore
+        prev.forEach((versionList, responseId) => {
+          const targetVersion = versionList.find((v) => v.id === versionId);
+          if (targetVersion) {
+            // Create a new version with the restored value
+            const newVersion: ResponseVersion = {
+              id: VersionStorage.generateId(),
+              responseId: targetVersion.responseId,
+              questionId: targetVersion.questionId,
+              version: versionList.length + 1,
+              value: targetVersion.value,
+              createdAt: new Date(),
+              createdBy: userId,
+              changeType: 'restore',
+              changeDescription: `Restored to version ${targetVersion.version}`,
+              previousVersionId: versionList[versionList.length - 1]?.id,
+            };
+
+            updated.set(responseId, [...versionList, newVersion]);
+            restoredVersion = newVersion;
+          }
+        });
+
+        return updated;
+      });
+
+      return restoredVersion;
+    },
+    [userId],
+  );
+
+  const compareVersions = useCallback(
+    (versionId1: string, versionId2: string): VersionDiff | null => {
+      let version1: ResponseVersion | undefined;
+      let version2: ResponseVersion | undefined;
+
+      versions.forEach((versionList) => {
+        const v1 = versionList.find((v) => v.id === versionId1);
+        const v2 = versionList.find((v) => v.id === versionId2);
+        if (v1) {
+          version1 = v1;
+        }
+        if (v2) {
+          version2 = v2;
         }
       });
 
-      return updated;
-    });
+      if (!version1 || !version2) {
+        return null;
+      }
 
-    return restoredVersion;
-  }, [userId]);
+      const words1 = version1.value.split(/\s+/);
+      const words2 = version2.value.split(/\s+/);
 
-  const compareVersions = useCallback((versionId1: string, versionId2: string): VersionDiff | null => {
-    let version1: ResponseVersion | undefined;
-    let version2: ResponseVersion | undefined;
+      const added = words2.filter((w) => !words1.includes(w));
+      const removed = words1.filter((w) => !words2.includes(w));
+      const unchanged = words1.filter((w) => words2.includes(w));
 
-    versions.forEach(versionList => {
-      const v1 = versionList.find(v => v.id === versionId1);
-      const v2 = versionList.find(v => v.id === versionId2);
-      if (v1) version1 = v1;
-      if (v2) version2 = v2;
-    });
-
-    if (!version1 || !version2) return null;
-
-    const words1 = version1.value.split(/\s+/);
-    const words2 = version2.value.split(/\s+/);
-
-    const added = words2.filter(w => !words1.includes(w));
-    const removed = words1.filter(w => !words2.includes(w));
-    const unchanged = words1.filter(w => words2.includes(w));
-
-    return { added, removed, unchanged };
-  }, [versions]);
+      return { added, removed, unchanged };
+    },
+    [versions],
+  );
 
   const clearHistory = useCallback((responseId: string): void => {
-    setVersions(prev => {
+    setVersions((prev) => {
       const updated = new Map(prev);
       updated.delete(responseId);
       return updated;
@@ -235,11 +255,7 @@ export const VersionHistoryProvider: React.FC<VersionHistoryProviderProps> = ({
     clearHistory,
   };
 
-  return (
-    <VersionHistoryContext.Provider value={value}>
-      {children}
-    </VersionHistoryContext.Provider>
-  );
+  return <VersionHistoryContext.Provider value={value}>{children}</VersionHistoryContext.Provider>;
 };
 
 // ============================================================================
@@ -494,7 +510,8 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
 
   const versions = getVersions(responseId);
   const currentVersion = versions[versions.length - 1];
-  const diff = compareVersion1 && compareVersion2 ? compareVersions(compareVersion1, compareVersion2) : null;
+  const diff =
+    compareVersion1 && compareVersion2 ? compareVersions(compareVersion1, compareVersion2) : null;
 
   useEffect(() => {
     if (!isOpen) {
@@ -526,11 +543,17 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
   const formatDate = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} minutes ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
-    
+
+    if (diff < 60000) {
+      return 'Just now';
+    }
+    if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)} minutes ago`;
+    }
+    if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)} hours ago`;
+    }
+
     return date.toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
@@ -548,7 +571,9 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div style={styles.modal} onClick={onClose}>
@@ -577,7 +602,14 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
               {compareMode ? 'Exit Compare' : 'Compare'}
             </button>
             <button style={styles.closeButton} onClick={onClose}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -588,7 +620,13 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
         <div style={styles.modalBody}>
           {versions.length === 0 ? (
             <div style={styles.emptyState}>
-              <svg style={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg
+                style={styles.emptyIcon}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12,6 12,12 16,14" />
               </svg>
@@ -600,7 +638,8 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
               {[...versions].reverse().map((version, index) => {
                 const isCurrent = index === 0;
                 const isSelected = selectedVersion === version.id;
-                const isCompareSelected = compareVersion1 === version.id || compareVersion2 === version.id;
+                const isCompareSelected =
+                  compareVersion1 === version.id || compareVersion2 === version.id;
                 const isHovered = hoveredVersion === version.id;
 
                 return (
@@ -609,7 +648,9 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                     style={{
                       ...styles.versionItem,
                       ...(isSelected || isCompareSelected ? styles.versionItemActive : {}),
-                      ...(isHovered && !isSelected && !isCompareSelected ? styles.versionItemHover : {}),
+                      ...(isHovered && !isSelected && !isCompareSelected
+                        ? styles.versionItemHover
+                        : {}),
                     }}
                     onMouseEnter={() => setHoveredVersion(version.id)}
                     onMouseLeave={() => setHoveredVersion(null)}
@@ -623,39 +664,37 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                   >
                     <div style={styles.versionHeader}>
                       <div style={styles.versionNumber}>
-                        <span style={{
-                          ...styles.versionBadge,
-                          ...(isCurrent ? styles.versionBadgeCurrent : {}),
-                          ...getChangeTypeBadgeStyle(version.changeType),
-                        }}>
+                        <span
+                          style={{
+                            ...styles.versionBadge,
+                            ...(isCurrent ? styles.versionBadgeCurrent : {}),
+                            ...getChangeTypeBadgeStyle(version.changeType),
+                          }}
+                        >
                           v{version.version}
                           {isCurrent && ' (Current)'}
                         </span>
                         {version.changeType === 'restore' && (
-                          <span style={{ fontSize: '12px', color: '#16a34a' }}>
-                            Restored
-                          </span>
+                          <span style={{ fontSize: '12px', color: '#16a34a' }}>Restored</span>
                         )}
                         {compareMode && isCompareSelected && (
-                          <span style={{
-                            padding: '2px 6px',
-                            fontSize: '10px',
-                            backgroundColor: '#3b82f6',
-                            color: '#fff',
-                            borderRadius: '10px',
-                          }}>
+                          <span
+                            style={{
+                              padding: '2px 6px',
+                              fontSize: '10px',
+                              backgroundColor: '#3b82f6',
+                              color: '#fff',
+                              borderRadius: '10px',
+                            }}
+                          >
                             {compareVersion1 === version.id ? 'A' : 'B'}
                           </span>
                         )}
                       </div>
-                      <span style={styles.versionTime}>
-                        {formatDate(version.createdAt)}
-                      </span>
+                      <span style={styles.versionTime}>{formatDate(version.createdAt)}</span>
                     </div>
 
-                    <p style={styles.versionPreview}>
-                      {version.value || '(empty)'}
-                    </p>
+                    <p style={styles.versionPreview}>{version.value || '(empty)'}</p>
 
                     {isSelected && !compareMode && !isCurrent && (
                       <div style={styles.versionActions}>
@@ -690,10 +729,14 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
             </div>
             <div style={styles.diffContent}>
               {diff.removed.map((word, i) => (
-                <span key={`r-${i}`} style={styles.diffRemoved}>{word} </span>
+                <span key={`r-${i}`} style={styles.diffRemoved}>
+                  {word}{' '}
+                </span>
               ))}
               {diff.added.map((word, i) => (
-                <span key={`a-${i}`} style={styles.diffAdded}>{word} </span>
+                <span key={`a-${i}`} style={styles.diffAdded}>
+                  {word}{' '}
+                </span>
               ))}
             </div>
           </div>
@@ -731,7 +774,14 @@ export const VersionHistoryTrigger: React.FC<VersionHistoryTriggerProps> = ({
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
         title="View version history"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <circle cx="12" cy="12" r="10" />
           <polyline points="12,6 12,12 16,14" />
         </svg>
@@ -765,18 +815,21 @@ export const useVersionedResponse = (options: UseVersionedResponseOptions) => {
   const [value, setValue] = useState('');
   const timeoutRef = React.useRef<NodeJS.Timeout>();
 
-  const updateValue = useCallback((newValue: string) => {
-    setValue(newValue);
+  const updateValue = useCallback(
+    (newValue: string) => {
+      setValue(newValue);
 
-    // Debounce save
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+      // Debounce save
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    timeoutRef.current = setTimeout(() => {
-      saveVersion(options.responseId, options.questionId, newValue, options.userId);
-    }, options.debounceMs ?? 1000);
-  }, [options, saveVersion]);
+      timeoutRef.current = setTimeout(() => {
+        saveVersion(options.responseId, options.questionId, newValue, options.userId);
+      }, options.debounceMs ?? 1000);
+    },
+    [options, saveVersion],
+  );
 
   useEffect(() => {
     return () => {

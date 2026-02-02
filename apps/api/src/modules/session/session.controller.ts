@@ -58,7 +58,11 @@ export class SessionController {
     items: SessionResponse[];
     pagination: { page: number; limit: number; totalItems: number; totalPages: number };
   }> {
-    const { items, total } = await this.sessionService.findAllByUser(user.id, pagination, status as SessionStatus);
+    const { items, total } = await this.sessionService.findAllByUser(
+      user.id,
+      pagination,
+      status as SessionStatus,
+    );
     return {
       items,
       pagination: {

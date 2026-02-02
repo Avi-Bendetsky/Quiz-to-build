@@ -10,12 +10,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -42,9 +37,7 @@ import {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('JWT-auth')
 export class AdminQuestionnaireController {
-  constructor(
-    private readonly questionnaireService: AdminQuestionnaireService,
-  ) {}
+  constructor(private readonly questionnaireService: AdminQuestionnaireService) {}
 
   // ==========================================================================
   // QUESTIONNAIRE ENDPOINTS
@@ -236,9 +229,7 @@ export class AdminQuestionnaireController {
   @ApiOperation({ summary: 'List visibility rules for question' })
   @ApiResponse({ status: 200, description: 'List of visibility rules' })
   @ApiResponse({ status: 404, description: 'Question not found' })
-  async listVisibilityRules(
-    @Param('questionId', ParseUUIDPipe) questionId: string,
-  ) {
+  async listVisibilityRules(@Param('questionId', ParseUUIDPipe) questionId: string) {
     return this.questionnaireService.findRulesByQuestion(questionId);
   }
 

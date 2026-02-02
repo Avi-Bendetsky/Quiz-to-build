@@ -1,10 +1,10 @@
 /**
  * WCAG 2.2 Level AA Accessibility Audit Report
  * Quiz2Biz Web Application
- * 
+ *
  * This document outlines the manual accessibility audit checklist and findings
  * for compliance with WCAG 2.2 Level AA standards.
- * 
+ *
  * Audit Date: 2026-01-28
  * Auditor: Automated Testing + Manual Review
  */
@@ -36,7 +36,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.1.1 Non-text Content',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'All images have alt text, decorative images use empty alt or aria-hidden. Icons have aria-labels.',
+    findings:
+      'All images have alt text, decorative images use empty alt or aria-hidden. Icons have aria-labels.',
   },
   {
     criterion: '1.2.1 Audio-only and Video-only (Prerecorded)',
@@ -72,7 +73,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.3.1 Info and Relationships',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'Forms use proper labels with htmlFor/id associations. Headings follow logical hierarchy. Tables use proper markup.',
+    findings:
+      'Forms use proper labels with htmlFor/id associations. Headings follow logical hierarchy. Tables use proper markup.',
   },
   {
     criterion: '1.3.2 Meaningful Sequence',
@@ -84,7 +86,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.3.3 Sensory Characteristics',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'Instructions do not rely solely on shape, size, or location. Color is not the only indicator.',
+    findings:
+      'Instructions do not rely solely on shape, size, or location. Color is not the only indicator.',
   },
   {
     criterion: '1.3.4 Orientation',
@@ -102,7 +105,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.4.1 Use of Color',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'Color is not the sole means of conveying information. Error states use icons and text in addition to color.',
+    findings:
+      'Color is not the sole means of conveying information. Error states use icons and text in addition to color.',
   },
   {
     criterion: '1.4.2 Audio Control',
@@ -114,13 +118,15 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.4.3 Contrast (Minimum)',
     wcagLevel: 'AA',
     status: 'PASS',
-    findings: 'All text meets 4.5:1 contrast ratio for normal text, 3:1 for large text. Verified via automated testing.',
+    findings:
+      'All text meets 4.5:1 contrast ratio for normal text, 3:1 for large text. Verified via automated testing.',
   },
   {
     criterion: '1.4.4 Resize Text',
     wcagLevel: 'AA',
     status: 'PASS',
-    findings: 'Text can be resized up to 200% without loss of content or functionality. Uses relative units (rem/em).',
+    findings:
+      'Text can be resized up to 200% without loss of content or functionality. Uses relative units (rem/em).',
   },
   {
     criterion: '1.4.5 Images of Text',
@@ -132,7 +138,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.4.10 Reflow',
     wcagLevel: 'AA',
     status: 'PASS',
-    findings: 'Content reflows at 320px width without horizontal scrolling. Responsive design implemented.',
+    findings:
+      'Content reflows at 320px width without horizontal scrolling. Responsive design implemented.',
   },
   {
     criterion: '1.4.11 Non-text Contrast',
@@ -144,13 +151,15 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '1.4.12 Text Spacing',
     wcagLevel: 'AA',
     status: 'PASS',
-    findings: 'Content works with increased line height, paragraph spacing, letter spacing, and word spacing.',
+    findings:
+      'Content works with increased line height, paragraph spacing, letter spacing, and word spacing.',
   },
   {
     criterion: '1.4.13 Content on Hover or Focus',
     wcagLevel: 'AA',
     status: 'PASS',
-    findings: 'Tooltips are dismissible, hoverable, and persistent. No content obscured by hover states.',
+    findings:
+      'Tooltips are dismissible, hoverable, and persistent. No content obscured by hover states.',
   },
 
   // 2. Operable
@@ -158,25 +167,29 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '2.1.1 Keyboard',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'All functionality accessible via keyboard. Tab, Enter, Space, Arrow keys work as expected.',
+    findings:
+      'All functionality accessible via keyboard. Tab, Enter, Space, Arrow keys work as expected.',
   },
   {
     criterion: '2.1.2 No Keyboard Trap',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'No keyboard traps. Modal dialogs can be closed with Escape key. Focus returns to trigger element.',
+    findings:
+      'No keyboard traps. Modal dialogs can be closed with Escape key. Focus returns to trigger element.',
   },
   {
     criterion: '2.1.4 Character Key Shortcuts',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'No single-key shortcuts without modifier keys that could conflict with assistive technology.',
+    findings:
+      'No single-key shortcuts without modifier keys that could conflict with assistive technology.',
   },
   {
     criterion: '2.2.1 Timing Adjustable',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'Session timeout provides warning and extension option. Auto-save prevents data loss.',
+    findings:
+      'Session timeout provides warning and extension option. Auto-save prevents data loss.',
   },
   {
     criterion: '2.2.2 Pause, Stop, Hide',
@@ -212,7 +225,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '2.4.4 Link Purpose (In Context)',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'Link text describes destination. No "click here" or "read more" links without context.',
+    findings:
+      'Link text describes destination. No "click here" or "read more" links without context.',
   },
   {
     criterion: '2.4.5 Multiple Ways',
@@ -242,13 +256,15 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '2.5.1 Pointer Gestures',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'No multi-point or path-based gestures required. Single-pointer alternatives available.',
+    findings:
+      'No multi-point or path-based gestures required. Single-pointer alternatives available.',
   },
   {
     criterion: '2.5.2 Pointer Cancellation',
     wcagLevel: 'A',
     status: 'PASS',
-    findings: 'Actions trigger on click (up-event), not down-event. Can abort by moving pointer away.',
+    findings:
+      'Actions trigger on click (up-event), not down-event. Can abort by moving pointer away.',
   },
   {
     criterion: '2.5.3 Label in Name',
@@ -352,7 +368,8 @@ export const wcagAuditResults: AccessibilityAuditResult[] = [
     criterion: '3.3.8 Accessible Authentication (Minimum)',
     wcagLevel: 'AA',
     status: 'PASS',
-    findings: 'No cognitive function tests (CAPTCHAs). Social login available. Password can be pasted.',
+    findings:
+      'No cognitive function tests (CAPTCHAs). Social login available. Password can be pasted.',
   },
 
   // 4. Robust
@@ -517,11 +534,19 @@ export const screenReaderChecklist = {
  */
 export const keyboardNavigationChecklist = {
   tests: [
-    { test: 'Tab through entire page', result: 'PASS', notes: 'All interactive elements focusable' },
+    {
+      test: 'Tab through entire page',
+      result: 'PASS',
+      notes: 'All interactive elements focusable',
+    },
     { test: 'Skip link works', result: 'PASS', notes: 'Focus moves to main content' },
     { test: 'Focus visible', result: 'PASS', notes: 'Clear focus ring on all elements' },
     { test: 'No keyboard traps', result: 'PASS', notes: 'Can always escape modals with Esc' },
-    { test: 'Arrow key navigation in menus', result: 'PASS', notes: 'Dropdowns navigable with arrows' },
+    {
+      test: 'Arrow key navigation in menus',
+      result: 'PASS',
+      notes: 'Dropdowns navigable with arrows',
+    },
     { test: 'Enter/Space activates buttons', result: 'PASS', notes: 'Consistent activation' },
     { test: 'Escape closes modals', result: 'PASS', notes: 'Focus returns to trigger' },
     { test: 'Tab order logical', result: 'PASS', notes: 'Matches visual flow' },
@@ -629,7 +654,10 @@ export const toolsUsed = [
  * Export audit report for documentation
  */
 export function generateAuditReport(): string {
-  const passRate = ((auditSummary.passed / (auditSummary.totalCriteria - auditSummary.notApplicable)) * 100).toFixed(1);
+  const passRate = (
+    (auditSummary.passed / (auditSummary.totalCriteria - auditSummary.notApplicable)) *
+    100
+  ).toFixed(1);
 
   return `
 # WCAG 2.2 Level AA Accessibility Audit Report

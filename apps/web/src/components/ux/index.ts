@@ -1,6 +1,6 @@
 /**
  * UX Enhancement Components
- * 
+ *
  * Nielsen Heuristic compliant UI components for:
  * - User Control & Freedom (drafts, confirmations, undo)
  * - Error Prevention & Recovery

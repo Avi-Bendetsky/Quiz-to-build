@@ -152,9 +152,9 @@ test.describe('Adaptive Logic Flow', () => {
 
     // Verify dimension indicator is shown
     await expect(
-      page.locator('[data-testid="current-dimension"]').or(
-        page.locator('[data-testid="dimension-badge"]')
-      )
+      page
+        .locator('[data-testid="current-dimension"]')
+        .or(page.locator('[data-testid="dimension-badge"]')),
     ).toBeVisible();
 
     // Answer questions in the current dimension
@@ -297,9 +297,11 @@ test.describe('Section Visibility', () => {
     expect(newSections).toBeGreaterThanOrEqual(0);
   });
 
-  test('should complete questionnaire when all visible questions are answered', async ({ page }) => {
+  test('should complete questionnaire when all visible questions are answered', async ({
+    page,
+  }) => {
     await page.goto('/questionnaires');
-    
+
     // Look for a short/completed questionnaire
     const completedSession = page.locator('[data-testid="completed-session"]').first();
     if (await completedSession.isVisible()) {
@@ -307,7 +309,7 @@ test.describe('Section Visibility', () => {
 
       // Should show completion status
       await expect(
-        page.locator('text=Completed').or(page.locator('[data-testid="completion-badge"]'))
+        page.locator('text=Completed').or(page.locator('[data-testid="completion-badge"]')),
       ).toBeVisible();
     }
   });

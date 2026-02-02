@@ -43,17 +43,27 @@ function MockScoreDashboard({
 }) {
   const getTrendLabel = (trend: string) => {
     switch (trend) {
-      case 'UP': return 'Score is improving';
-      case 'DOWN': return 'Score is declining';
-      case 'STABLE': return 'Score is stable';
-      default: return 'First assessment';
+      case 'UP':
+        return 'Score is improving';
+      case 'DOWN':
+        return 'Score is declining';
+      case 'STABLE':
+        return 'Score is stable';
+      default:
+        return 'First assessment';
     }
   };
 
   const getScoreLabel = (score: number) => {
-    if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Good';
-    if (score >= 40) return 'Needs Improvement';
+    if (score >= 80) {
+      return 'Excellent';
+    }
+    if (score >= 60) {
+      return 'Good';
+    }
+    if (score >= 40) {
+      return 'Needs Improvement';
+    }
     return 'Critical';
   };
 
@@ -82,10 +92,7 @@ function MockScoreDashboard({
       <div className="score-dashboard text-center py-12" role="region" aria-label="Score dashboard">
         <p className="text-gray-500">No score data available</p>
         {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
+          <button onClick={onRefresh} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">
             Calculate Score
           </button>
         )}
@@ -111,10 +118,7 @@ function MockScoreDashboard({
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-400">Last updated</p>
-            <time
-              dateTime={scoreData.calculatedAt.toISOString()}
-              className="text-sm text-gray-300"
-            >
+            <time dateTime={scoreData.calculatedAt.toISOString()} className="text-sm text-gray-300">
               {scoreData.calculatedAt.toLocaleTimeString()}
             </time>
             {onRefresh && (
@@ -135,11 +139,7 @@ function MockScoreDashboard({
           aria-label={`Readiness score: ${Math.round(scoreData.score)} out of 100, rated ${getScoreLabel(scoreData.score)}`}
         >
           <div className="relative">
-            <svg
-              className="w-48 h-48 transform -rotate-90"
-              role="img"
-              aria-hidden="true"
-            >
+            <svg className="w-48 h-48 transform -rotate-90" role="img" aria-hidden="true">
               <circle
                 strokeWidth="12"
                 stroke="currentColor"
@@ -153,7 +153,9 @@ function MockScoreDashboard({
               <span className="text-5xl font-bold" aria-hidden="true">
                 {Math.round(scoreData.score)}
               </span>
-              <span className="text-gray-400 text-sm" aria-hidden="true">out of 100</span>
+              <span className="text-gray-400 text-sm" aria-hidden="true">
+                out of 100
+              </span>
             </div>
           </div>
         </figure>
@@ -209,7 +211,9 @@ function MockScoreDashboard({
                   />
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>{dim.answeredCount}/{dim.questionCount} answered</span>
+                  <span>
+                    {dim.answeredCount}/{dim.questionCount} answered
+                  </span>
                   <span>Weight: {(dim.weight * 100).toFixed(0)}%</span>
                 </div>
               </div>
@@ -234,7 +238,12 @@ function MockScoreDashboard({
               .slice(0, 3)
               .map((dim) => (
                 <li key={dim.key} className="flex items-center gap-2 text-red-700 mb-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -264,7 +273,12 @@ function MockScoreDashboard({
               .slice(0, 3)
               .map((dim) => (
                 <li key={dim.key} className="flex items-center gap-2 text-green-700 mb-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -290,10 +304,42 @@ const mockScoreData: ScoreData = {
   score: 72,
   portfolioResidual: 0.28,
   dimensions: [
-    { key: 'security', name: 'Security', weight: 0.2, residualRisk: 0.15, questionCount: 10, answeredCount: 8, averageCoverage: 0.85 },
-    { key: 'architecture', name: 'Architecture', weight: 0.15, residualRisk: 0.25, questionCount: 8, answeredCount: 6, averageCoverage: 0.75 },
-    { key: 'operations', name: 'Operations', weight: 0.15, residualRisk: 0.55, questionCount: 12, answeredCount: 5, averageCoverage: 0.45 },
-    { key: 'compliance', name: 'Compliance', weight: 0.2, residualRisk: 0.35, questionCount: 15, answeredCount: 10, averageCoverage: 0.65 },
+    {
+      key: 'security',
+      name: 'Security',
+      weight: 0.2,
+      residualRisk: 0.15,
+      questionCount: 10,
+      answeredCount: 8,
+      averageCoverage: 0.85,
+    },
+    {
+      key: 'architecture',
+      name: 'Architecture',
+      weight: 0.15,
+      residualRisk: 0.25,
+      questionCount: 8,
+      answeredCount: 6,
+      averageCoverage: 0.75,
+    },
+    {
+      key: 'operations',
+      name: 'Operations',
+      weight: 0.15,
+      residualRisk: 0.55,
+      questionCount: 12,
+      answeredCount: 5,
+      averageCoverage: 0.45,
+    },
+    {
+      key: 'compliance',
+      name: 'Compliance',
+      weight: 0.2,
+      residualRisk: 0.35,
+      questionCount: 15,
+      answeredCount: 10,
+      averageCoverage: 0.65,
+    },
   ],
   totalQuestions: 45,
   answeredQuestions: 29,
@@ -350,7 +396,7 @@ describe('ScoreDashboard Accessibility', () => {
     it('should have accessible progress bars with ARIA attributes', () => {
       render(<MockScoreDashboard scoreData={mockScoreData} />);
       const progressBars = screen.getAllByRole('progressbar');
-      
+
       progressBars.forEach((bar) => {
         expect(bar).toHaveAttribute('aria-valuenow');
         expect(bar).toHaveAttribute('aria-valuemin', '0');
@@ -370,7 +416,7 @@ describe('ScoreDashboard Accessibility', () => {
 
     it('should have accessible high risk areas section', () => {
       render(<MockScoreDashboard scoreData={mockScoreData} />);
-      
+
       const section = screen.getByRole('region', { name: /high risk areas/i });
       expect(section).toBeInTheDocument();
 
@@ -380,7 +426,7 @@ describe('ScoreDashboard Accessibility', () => {
 
     it('should have accessible top performers section', () => {
       render(<MockScoreDashboard scoreData={mockScoreData} />);
-      
+
       const section = screen.getByRole('region', { name: /top performers/i });
       expect(section).toBeInTheDocument();
 

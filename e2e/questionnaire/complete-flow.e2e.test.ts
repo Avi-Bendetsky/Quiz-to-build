@@ -187,7 +187,9 @@ test.describe('Complete Questionnaire Flow', () => {
       });
 
       // Verify file is shown
-      await expect(page.locator('[data-testid="uploaded-file-name"]')).toContainText('test-evidence.pdf');
+      await expect(page.locator('[data-testid="uploaded-file-name"]')).toContainText(
+        'test-evidence.pdf',
+      );
       await page.click('[data-testid="submit-answer"]');
     }
   });
@@ -231,9 +233,9 @@ test.describe('Complete Questionnaire Flow', () => {
 
     // Check for best practice section
     await expect(
-      page.locator('[data-testid="best-practice"]').or(
-        page.locator('[data-testid="practical-explainer"]')
-      )
+      page
+        .locator('[data-testid="best-practice"]')
+        .or(page.locator('[data-testid="practical-explainer"]')),
     ).toBeVisible();
   });
 
@@ -269,12 +271,12 @@ test.describe('Questionnaire Completion', () => {
   test('should show completion screen when all questions answered', async ({ page }) => {
     // Navigate to a completed questionnaire (if exists) or complete one
     await page.goto('/questionnaires');
-    
+
     // Look for completed questionnaire
     const completedSession = page.locator('[data-testid="completed-session"]').first();
     if (await completedSession.isVisible()) {
       await completedSession.click();
-      
+
       // Should show completion summary
       await expect(page.locator('[data-testid="completion-summary"]')).toBeVisible();
     }
@@ -310,7 +312,9 @@ test.describe('Questionnaire Completion', () => {
     await page.click('[data-testid="view-heatmap"]');
 
     // Should show heatmap visualization
-    await expect(page.locator('[data-testid="heatmap-visualization"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="heatmap-visualization"]')).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should save progress and resume later', async ({ page }) => {
@@ -356,7 +360,7 @@ test.describe('Question Validation', () => {
 
     // Should show validation error
     await expect(
-      page.locator('text=required').or(page.locator('text=Please answer'))
+      page.locator('text=required').or(page.locator('text=Please answer')),
     ).toBeVisible();
   });
 
@@ -384,9 +388,7 @@ test.describe('Question Validation', () => {
       await page.click('[data-testid="submit-answer"]');
 
       // Should show validation error
-      await expect(
-        page.locator('text=minimum').or(page.locator('text=at least'))
-      ).toBeVisible();
+      await expect(page.locator('text=minimum').or(page.locator('text=at least'))).toBeVisible();
     }
   });
 });

@@ -1,9 +1,9 @@
 /**
  * Keyboard Shortcuts Component
- * 
+ *
  * Modal showing all keyboard shortcuts.
  * Press '?' to open from anywhere.
- * 
+ *
  * Nielsen Heuristic #7: Flexibility and Efficiency
  */
 
@@ -30,7 +30,7 @@ export interface KeyboardShortcut {
   enabled?: boolean;
 }
 
-export type ShortcutCategory = 
+export type ShortcutCategory =
   | 'navigation'
   | 'forms'
   | 'questionnaire'
@@ -80,12 +80,42 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
   { keys: ['Ctrl', 'Enter'], description: 'Submit form', category: 'forms' },
 
   // Questionnaire
-  { keys: ['→'], description: 'Next question', category: 'questionnaire', context: 'Questionnaire' },
-  { keys: ['←'], description: 'Previous question', category: 'questionnaire', context: 'Questionnaire' },
-  { keys: ['s'], description: 'Skip current question', category: 'questionnaire', context: 'Questionnaire' },
-  { keys: ['1-5'], description: 'Select answer (numbered)', category: 'questionnaire', context: 'Multiple choice' },
-  { keys: ['Ctrl', 'Shift', 'u'], description: 'Upload evidence', category: 'questionnaire', context: 'Questionnaire' },
-  { keys: ['Space'], description: 'Toggle checkbox/option', category: 'questionnaire', context: 'Selection' },
+  {
+    keys: ['→'],
+    description: 'Next question',
+    category: 'questionnaire',
+    context: 'Questionnaire',
+  },
+  {
+    keys: ['←'],
+    description: 'Previous question',
+    category: 'questionnaire',
+    context: 'Questionnaire',
+  },
+  {
+    keys: ['s'],
+    description: 'Skip current question',
+    category: 'questionnaire',
+    context: 'Questionnaire',
+  },
+  {
+    keys: ['1-5'],
+    description: 'Select answer (numbered)',
+    category: 'questionnaire',
+    context: 'Multiple choice',
+  },
+  {
+    keys: ['Ctrl', 'Shift', 'u'],
+    description: 'Upload evidence',
+    category: 'questionnaire',
+    context: 'Questionnaire',
+  },
+  {
+    keys: ['Space'],
+    description: 'Toggle checkbox/option',
+    category: 'questionnaire',
+    context: 'Selection',
+  },
 
   // Editing
   { keys: ['Ctrl', 'z'], description: 'Undo', category: 'editing', global: true },
@@ -103,8 +133,18 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
   { keys: ['Alt', 'F4'], description: 'Close window', category: 'general', global: true },
 
   // Accessibility
-  { keys: ['Alt', '1'], description: 'Skip to main content', category: 'accessibility', global: true },
-  { keys: ['Alt', '2'], description: 'Skip to navigation', category: 'accessibility', global: true },
+  {
+    keys: ['Alt', '1'],
+    description: 'Skip to main content',
+    category: 'accessibility',
+    global: true,
+  },
+  {
+    keys: ['Alt', '2'],
+    description: 'Skip to navigation',
+    category: 'accessibility',
+    global: true,
+  },
   { keys: ['Ctrl', '+'], description: 'Zoom in', category: 'accessibility', global: true },
   { keys: ['Ctrl', '-'], description: 'Zoom out', category: 'accessibility', global: true },
   { keys: ['Ctrl', '0'], description: 'Reset zoom', category: 'accessibility', global: true },
@@ -157,18 +197,16 @@ export const KeyboardShortcutsProvider: React.FC<KeyboardShortcutsProviderProps>
   const registerShortcut = useCallback((shortcut: KeyboardShortcut) => {
     setShortcuts((prev) => {
       // Check if shortcut already exists
-      const exists = prev.some(
-        (s) => JSON.stringify(s.keys) === JSON.stringify(shortcut.keys)
-      );
-      if (exists) return prev;
+      const exists = prev.some((s) => JSON.stringify(s.keys) === JSON.stringify(shortcut.keys));
+      if (exists) {
+        return prev;
+      }
       return [...prev, shortcut];
     });
   }, []);
 
   const unregisterShortcut = useCallback((keys: string[]) => {
-    setShortcuts((prev) =>
-      prev.filter((s) => JSON.stringify(s.keys) !== JSON.stringify(keys))
-    );
+    setShortcuts((prev) => prev.filter((s) => JSON.stringify(s.keys) !== JSON.stringify(keys)));
   }, []);
 
   const openModal = useCallback(() => setIsModalOpen(true), []);
@@ -177,25 +215,25 @@ export const KeyboardShortcutsProvider: React.FC<KeyboardShortcutsProviderProps>
 
   // Global keyboard handler
   useEffect(() => {
-    if (!enableGlobalShortcuts) return;
+    if (!enableGlobalShortcuts) {
+      return;
+    }
 
     let sequenceTimeout: NodeJS.Timeout;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if typing in input/textarea
       const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         // Allow '?' shortcut even in inputs
-        if (e.key !== '?') return;
+        if (e.key !== '?') {
+          return;
+        }
       }
 
       // Build key string
       const key = e.key.toLowerCase();
-      
+
       // '?' opens shortcuts modal
       if (e.key === '?') {
         e.preventDefault();
@@ -212,16 +250,22 @@ export const KeyboardShortcutsProvider: React.FC<KeyboardShortcutsProviderProps>
 
       // Build modifier+key combo
       const modifiers: string[] = [];
-      if (e.ctrlKey || e.metaKey) modifiers.push('Ctrl');
-      if (e.altKey) modifiers.push('Alt');
-      if (e.shiftKey) modifiers.push('Shift');
-      
+      if (e.ctrlKey || e.metaKey) {
+        modifiers.push('Ctrl');
+      }
+      if (e.altKey) {
+        modifiers.push('Alt');
+      }
+      if (e.shiftKey) {
+        modifiers.push('Shift');
+      }
+
       const keyCombo = [...modifiers, key].join('+').toLowerCase();
 
       // Add to sequence for multi-key shortcuts (like g+h)
       setKeySequence((prev) => {
         const newSequence = [...prev, key];
-        
+
         // Clear sequence after delay
         clearTimeout(sequenceTimeout);
         sequenceTimeout = setTimeout(() => {
@@ -230,21 +274,21 @@ export const KeyboardShortcutsProvider: React.FC<KeyboardShortcutsProviderProps>
 
         // Check for matching shortcut
         const matchingShortcut = shortcuts.find((s) => {
-          if (s.enabled === false) return false;
-          
+          if (s.enabled === false) {
+            return false;
+          }
+
           // Check single key shortcut
           if (s.keys.length === 1) {
             const shortcutKey = s.keys[0].toLowerCase();
             return keyCombo === shortcutKey || key === shortcutKey;
           }
-          
+
           // Check multi-key sequence
           if (s.keys.length === newSequence.length) {
-            return s.keys.every(
-              (k, i) => k.toLowerCase() === newSequence[i]?.toLowerCase()
-            );
+            return s.keys.every((k, i) => k.toLowerCase() === newSequence[i]?.toLowerCase());
           }
-          
+
           return false;
         });
 
@@ -309,7 +353,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ onClose
       result = result.filter(
         (s) =>
           s.description.toLowerCase().includes(query) ||
-          s.keys.some((k) => k.toLowerCase().includes(query))
+          s.keys.some((k) => k.toLowerCase().includes(query)),
       );
     }
 
@@ -342,8 +386,8 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ onClose
   };
 
   return (
-    <div 
-      className="shortcuts-modal-backdrop" 
+    <div
+      className="shortcuts-modal-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -354,11 +398,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ onClose
           <h2 id="shortcuts-title" className="shortcuts-modal__title">
             ⌨️ Keyboard Shortcuts
           </h2>
-          <button
-            className="shortcuts-modal__close"
-            onClick={onClose}
-            aria-label="Close shortcuts"
-          >
+          <button className="shortcuts-modal__close" onClick={onClose} aria-label="Close shortcuts">
             ✕
           </button>
         </div>
@@ -399,7 +439,9 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ onClose
         <div className="shortcuts-modal__content">
           {SHORTCUT_CATEGORIES.map((category) => {
             const categoryShortcuts = groupedShortcuts[category.id];
-            if (categoryShortcuts.length === 0) return null;
+            if (categoryShortcuts.length === 0) {
+              return null;
+            }
 
             return (
               <div key={category.id} className="shortcuts-section">
@@ -420,9 +462,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ onClose
                       <div className="shortcut-item__description">
                         {shortcut.description}
                         {shortcut.context && (
-                          <span className="shortcut-item__context">
-                            ({shortcut.context})
-                          </span>
+                          <span className="shortcut-item__context">({shortcut.context})</span>
                         )}
                         {shortcut.global && (
                           <span className="shortcut-item__global" title="Works anywhere">
@@ -705,7 +745,7 @@ function formatKey(key: string): string {
 export function useShortcut(
   keys: string[],
   callback: () => void,
-  options: Partial<Omit<KeyboardShortcut, 'keys' | 'action'>> = {}
+  options: Partial<Omit<KeyboardShortcut, 'keys' | 'action'>> = {},
 ) {
   const { registerShortcut, unregisterShortcut } = useKeyboardShortcuts();
 

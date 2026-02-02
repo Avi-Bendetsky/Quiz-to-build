@@ -1,11 +1,11 @@
 /**
  * Personalization System
- * 
+ *
  * Sprint 37: Adaptive UI & Personalization
  * Task ux37t3: Personalized Dashboards - Allow widget customization, save layouts per user
  * Task ux37t4: Smart Recommendations - ML model for question suggestions, completion time prediction
  * Task ux37t5: A/B Testing Framework - Integrate feature flags, define experiments, track metrics
- * 
+ *
  * Features:
  * - Customizable dashboard widgets
  * - Drag-and-drop layout editor
@@ -220,16 +220,16 @@ export interface PersonalizationState {
   layouts: DashboardLayout[];
   activeLayoutId: string | null;
   isEditMode: boolean;
-  
+
   // Recommendations
   recommendations: Recommendation[];
   predictions: Map<string, PredictionModel>;
-  
+
   // A/B Testing
   experiments: Experiment[];
   userVariants: Map<string, string>; // experimentId -> variantId
   featureFlags: FeatureFlag[];
-  
+
   // User context
   userId: string | null;
   userRole: string | null;
@@ -244,22 +244,27 @@ type PersonalizationAction =
   | { type: 'DELETE_LAYOUT'; layoutId: string }
   | { type: 'SET_ACTIVE_LAYOUT'; layoutId: string }
   | { type: 'ADD_WIDGET_INSTANCE'; layoutId: string; widget: WidgetInstance }
-  | { type: 'UPDATE_WIDGET_INSTANCE'; layoutId: string; widgetInstanceId: string; updates: Partial<WidgetInstance> }
+  | {
+      type: 'UPDATE_WIDGET_INSTANCE';
+      layoutId: string;
+      widgetInstanceId: string;
+      updates: Partial<WidgetInstance>;
+    }
   | { type: 'REMOVE_WIDGET_INSTANCE'; layoutId: string; widgetInstanceId: string }
   | { type: 'SET_EDIT_MODE'; enabled: boolean }
-  
+
   // Recommendation actions
   | { type: 'ADD_RECOMMENDATION'; recommendation: Recommendation }
   | { type: 'DISMISS_RECOMMENDATION'; recommendationId: string }
   | { type: 'CLEAR_EXPIRED_RECOMMENDATIONS' }
   | { type: 'SET_PREDICTION'; prediction: PredictionModel }
-  
+
   // A/B Testing actions
   | { type: 'SET_EXPERIMENTS'; experiments: Experiment[] }
   | { type: 'ASSIGN_VARIANT'; experimentId: string; variantId: string }
   | { type: 'SET_FEATURE_FLAGS'; flags: FeatureFlag[] }
   | { type: 'UPDATE_FEATURE_FLAG'; flagId: string; updates: Partial<FeatureFlag> }
-  
+
   // User context actions
   | { type: 'SET_USER_CONTEXT'; userId: string | null; role: string | null; tier: string | null }
   | { type: 'LOAD_STATE'; state: Partial<PersonalizationState> };
@@ -276,13 +281,13 @@ export interface PersonalizationContextType extends PersonalizationState {
   removeWidget: (widgetInstanceId: string) => void;
   toggleEditMode: () => void;
   resetToDefault: () => void;
-  
+
   // Recommendations
   getRecommendations: (type?: RecommendationType) => Recommendation[];
   dismissRecommendation: (recommendationId: string) => void;
   getPrediction: (questionId: string) => PredictionModel | null;
   predictCompletionTime: (questionIds: string[]) => number;
-  
+
   // A/B Testing
   getVariant: (experimentId: string) => ExperimentVariant | null;
   isFeatureEnabled: (flagId: string) => boolean;
@@ -381,12 +386,60 @@ const defaultLayout: DashboardLayout = {
   id: 'default',
   name: 'Default Layout',
   widgets: [
-    { id: '1', widgetId: 'score_overview', position: { x: 0, y: 0 }, size: { width: 2, height: 2 }, visible: true, collapsed: false, settings: {} },
-    { id: '2', widgetId: 'progress_chart', position: { x: 2, y: 0 }, size: { width: 2, height: 2 }, visible: true, collapsed: false, settings: {} },
-    { id: '3', widgetId: 'quick_actions', position: { x: 4, y: 0 }, size: { width: 1, height: 2 }, visible: true, collapsed: false, settings: {} },
-    { id: '4', widgetId: 'notifications', position: { x: 5, y: 0 }, size: { width: 1, height: 2 }, visible: true, collapsed: false, settings: {} },
-    { id: '5', widgetId: 'recent_activity', position: { x: 0, y: 2 }, size: { width: 2, height: 3 }, visible: true, collapsed: false, settings: {} },
-    { id: '6', widgetId: 'recommendations', position: { x: 2, y: 2 }, size: { width: 2, height: 2 }, visible: true, collapsed: false, settings: {} },
+    {
+      id: '1',
+      widgetId: 'score_overview',
+      position: { x: 0, y: 0 },
+      size: { width: 2, height: 2 },
+      visible: true,
+      collapsed: false,
+      settings: {},
+    },
+    {
+      id: '2',
+      widgetId: 'progress_chart',
+      position: { x: 2, y: 0 },
+      size: { width: 2, height: 2 },
+      visible: true,
+      collapsed: false,
+      settings: {},
+    },
+    {
+      id: '3',
+      widgetId: 'quick_actions',
+      position: { x: 4, y: 0 },
+      size: { width: 1, height: 2 },
+      visible: true,
+      collapsed: false,
+      settings: {},
+    },
+    {
+      id: '4',
+      widgetId: 'notifications',
+      position: { x: 5, y: 0 },
+      size: { width: 1, height: 2 },
+      visible: true,
+      collapsed: false,
+      settings: {},
+    },
+    {
+      id: '5',
+      widgetId: 'recent_activity',
+      position: { x: 0, y: 2 },
+      size: { width: 2, height: 3 },
+      visible: true,
+      collapsed: false,
+      settings: {},
+    },
+    {
+      id: '6',
+      widgetId: 'recommendations',
+      position: { x: 2, y: 2 },
+      size: { width: 2, height: 2 },
+      visible: true,
+      collapsed: false,
+      settings: {},
+    },
   ],
   gridColumns: 6,
   gridRows: 6,
@@ -427,7 +480,7 @@ const STORAGE_KEYS = {
 
 function personalizationReducer(
   state: PersonalizationState,
-  action: PersonalizationAction
+  action: PersonalizationAction,
 ): PersonalizationState {
   switch (action.type) {
     case 'SET_WIDGETS':
@@ -437,20 +490,21 @@ function personalizationReducer(
       return { ...state, layouts: [...state.layouts, action.layout] };
 
     case 'UPDATE_LAYOUT': {
-      const layouts = state.layouts.map(layout =>
+      const layouts = state.layouts.map((layout) =>
         layout.id === action.layoutId
           ? { ...layout, ...action.updates, updatedAt: new Date() }
-          : layout
+          : layout,
       );
       return { ...state, layouts };
     }
 
     case 'DELETE_LAYOUT': {
-      if (action.layoutId === 'default') return state;
-      const layouts = state.layouts.filter(l => l.id !== action.layoutId);
-      const activeLayoutId = state.activeLayoutId === action.layoutId
-        ? 'default'
-        : state.activeLayoutId;
+      if (action.layoutId === 'default') {
+        return state;
+      }
+      const layouts = state.layouts.filter((l) => l.id !== action.layoutId);
+      const activeLayoutId =
+        state.activeLayoutId === action.layoutId ? 'default' : state.activeLayoutId;
       return { ...state, layouts, activeLayoutId };
     }
 
@@ -458,38 +512,38 @@ function personalizationReducer(
       return { ...state, activeLayoutId: action.layoutId };
 
     case 'ADD_WIDGET_INSTANCE': {
-      const layouts = state.layouts.map(layout =>
+      const layouts = state.layouts.map((layout) =>
         layout.id === action.layoutId
           ? { ...layout, widgets: [...layout.widgets, action.widget], updatedAt: new Date() }
-          : layout
+          : layout,
       );
       return { ...state, layouts };
     }
 
     case 'UPDATE_WIDGET_INSTANCE': {
-      const layouts = state.layouts.map(layout =>
+      const layouts = state.layouts.map((layout) =>
         layout.id === action.layoutId
           ? {
               ...layout,
-              widgets: layout.widgets.map(w =>
-                w.id === action.widgetInstanceId ? { ...w, ...action.updates } : w
+              widgets: layout.widgets.map((w) =>
+                w.id === action.widgetInstanceId ? { ...w, ...action.updates } : w,
               ),
               updatedAt: new Date(),
             }
-          : layout
+          : layout,
       );
       return { ...state, layouts };
     }
 
     case 'REMOVE_WIDGET_INSTANCE': {
-      const layouts = state.layouts.map(layout =>
+      const layouts = state.layouts.map((layout) =>
         layout.id === action.layoutId
           ? {
               ...layout,
-              widgets: layout.widgets.filter(w => w.id !== action.widgetInstanceId),
+              widgets: layout.widgets.filter((w) => w.id !== action.widgetInstanceId),
               updatedAt: new Date(),
             }
-          : layout
+          : layout,
       );
       return { ...state, layouts };
     }
@@ -498,8 +552,10 @@ function personalizationReducer(
       return { ...state, isEditMode: action.enabled };
 
     case 'ADD_RECOMMENDATION': {
-      const existing = state.recommendations.find(r => r.id === action.recommendation.id);
-      if (existing) return state;
+      const existing = state.recommendations.find((r) => r.id === action.recommendation.id);
+      if (existing) {
+        return state;
+      }
       const recommendations = [...state.recommendations, action.recommendation]
         .sort((a, b) => b.priority - a.priority)
         .slice(0, 20);
@@ -509,15 +565,15 @@ function personalizationReducer(
     case 'DISMISS_RECOMMENDATION':
       return {
         ...state,
-        recommendations: state.recommendations.map(r =>
-          r.id === action.recommendationId ? { ...r, dismissed: true } : r
+        recommendations: state.recommendations.map((r) =>
+          r.id === action.recommendationId ? { ...r, dismissed: true } : r,
         ),
       };
 
     case 'CLEAR_EXPIRED_RECOMMENDATIONS': {
       const now = new Date();
-      const recommendations = state.recommendations.filter(r =>
-        !r.expiresAt || r.expiresAt > now
+      const recommendations = state.recommendations.filter(
+        (r) => !r.expiresAt || r.expiresAt > now,
       );
       return { ...state, recommendations };
     }
@@ -541,10 +597,8 @@ function personalizationReducer(
       return { ...state, featureFlags: action.flags };
 
     case 'UPDATE_FEATURE_FLAG': {
-      const featureFlags = state.featureFlags.map(flag =>
-        flag.id === action.flagId
-          ? { ...flag, ...action.updates, updatedAt: new Date() }
-          : flag
+      const featureFlags = state.featureFlags.map((flag) =>
+        flag.id === action.flagId ? { ...flag, ...action.updates, updatedAt: new Date() } : flag,
       );
       return { ...state, featureFlags };
     }
@@ -576,7 +630,7 @@ function generateId(): string {
 function assignVariant(experiment: Experiment, userId: string): string {
   // Deterministic assignment based on user ID
   const hash = Array.from(userId).reduce((acc, char) => {
-    return ((acc << 5) - acc) + char.charCodeAt(0);
+    return (acc << 5) - acc + char.charCodeAt(0);
   }, 0);
 
   const normalizedHash = Math.abs(hash) / 2147483647;
@@ -660,16 +714,17 @@ export const PersonalizationProvider: React.FC<PersonalizationProviderProps> = (
       try {
         localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(state.layouts));
         localStorage.setItem(STORAGE_KEYS.ACTIVE_LAYOUT, state.activeLayoutId || '');
-        
+
         const variantsObj: Record<string, string> = {};
         state.userVariants.forEach((value, key) => {
           variantsObj[key] = value;
         });
         localStorage.setItem(STORAGE_KEYS.VARIANTS, JSON.stringify(variantsObj));
-        
-        localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify(
-          state.recommendations.filter(r => !r.dismissed)
-        ));
+
+        localStorage.setItem(
+          STORAGE_KEYS.RECOMMENDATIONS,
+          JSON.stringify(state.recommendations.filter((r) => !r.dismissed)),
+        );
       } catch (error) {
         console.error('[Personalization] Failed to save state:', error);
       }
@@ -689,7 +744,7 @@ export const PersonalizationProvider: React.FC<PersonalizationProviderProps> = (
 
   // Dashboard functions
   const getActiveLayout = useCallback((): DashboardLayout | null => {
-    return state.layouts.find(l => l.id === state.activeLayoutId) || null;
+    return state.layouts.find((l) => l.id === state.activeLayoutId) || null;
   }, [state.layouts, state.activeLayoutId]);
 
   const createLayout = useCallback((name: string) => {
@@ -719,47 +774,64 @@ export const PersonalizationProvider: React.FC<PersonalizationProviderProps> = (
     dispatch({ type: 'SET_ACTIVE_LAYOUT', layoutId });
   }, []);
 
-  const addWidget = useCallback((widgetId: string, position?: WidgetPosition) => {
-    if (!state.activeLayoutId) return;
+  const addWidget = useCallback(
+    (widgetId: string, position?: WidgetPosition) => {
+      if (!state.activeLayoutId) {
+        return;
+      }
 
-    const widget = state.availableWidgets.find(w => w.id === widgetId);
-    if (!widget) return;
+      const widget = state.availableWidgets.find((w) => w.id === widgetId);
+      if (!widget) {
+        return;
+      }
 
-    const widgetInstance: WidgetInstance = {
-      id: generateId(),
-      widgetId,
-      position: position || { x: 0, y: 0 },
-      size: widget.defaultSize,
-      visible: true,
-      collapsed: false,
-      settings: {},
-    };
+      const widgetInstance: WidgetInstance = {
+        id: generateId(),
+        widgetId,
+        position: position || { x: 0, y: 0 },
+        size: widget.defaultSize,
+        visible: true,
+        collapsed: false,
+        settings: {},
+      };
 
-    dispatch({
-      type: 'ADD_WIDGET_INSTANCE',
-      layoutId: state.activeLayoutId,
-      widget: widgetInstance,
-    });
-  }, [state.activeLayoutId, state.availableWidgets]);
+      dispatch({
+        type: 'ADD_WIDGET_INSTANCE',
+        layoutId: state.activeLayoutId,
+        widget: widgetInstance,
+      });
+    },
+    [state.activeLayoutId, state.availableWidgets],
+  );
 
-  const updateWidget = useCallback((widgetInstanceId: string, updates: Partial<WidgetInstance>) => {
-    if (!state.activeLayoutId) return;
-    dispatch({
-      type: 'UPDATE_WIDGET_INSTANCE',
-      layoutId: state.activeLayoutId,
-      widgetInstanceId,
-      updates,
-    });
-  }, [state.activeLayoutId]);
+  const updateWidget = useCallback(
+    (widgetInstanceId: string, updates: Partial<WidgetInstance>) => {
+      if (!state.activeLayoutId) {
+        return;
+      }
+      dispatch({
+        type: 'UPDATE_WIDGET_INSTANCE',
+        layoutId: state.activeLayoutId,
+        widgetInstanceId,
+        updates,
+      });
+    },
+    [state.activeLayoutId],
+  );
 
-  const removeWidget = useCallback((widgetInstanceId: string) => {
-    if (!state.activeLayoutId) return;
-    dispatch({
-      type: 'REMOVE_WIDGET_INSTANCE',
-      layoutId: state.activeLayoutId,
-      widgetInstanceId,
-    });
-  }, [state.activeLayoutId]);
+  const removeWidget = useCallback(
+    (widgetInstanceId: string) => {
+      if (!state.activeLayoutId) {
+        return;
+      }
+      dispatch({
+        type: 'REMOVE_WIDGET_INSTANCE',
+        layoutId: state.activeLayoutId,
+        widgetInstanceId,
+      });
+    },
+    [state.activeLayoutId],
+  );
 
   const toggleEditMode = useCallback(() => {
     dispatch({ type: 'SET_EDIT_MODE', enabled: !state.isEditMode });
@@ -770,79 +842,100 @@ export const PersonalizationProvider: React.FC<PersonalizationProviderProps> = (
   }, []);
 
   // Recommendation functions
-  const getRecommendations = useCallback((type?: RecommendationType): Recommendation[] => {
-    let recommendations = state.recommendations.filter(r => !r.dismissed);
-    if (type) {
-      recommendations = recommendations.filter(r => r.type === type);
-    }
-    return recommendations.slice(0, 10);
-  }, [state.recommendations]);
+  const getRecommendations = useCallback(
+    (type?: RecommendationType): Recommendation[] => {
+      let recommendations = state.recommendations.filter((r) => !r.dismissed);
+      if (type) {
+        recommendations = recommendations.filter((r) => r.type === type);
+      }
+      return recommendations.slice(0, 10);
+    },
+    [state.recommendations],
+  );
 
   const dismissRecommendation = useCallback((recommendationId: string) => {
     dispatch({ type: 'DISMISS_RECOMMENDATION', recommendationId });
   }, []);
 
-  const getPrediction = useCallback((questionId: string): PredictionModel | null => {
-    return state.predictions.get(questionId) || null;
-  }, [state.predictions]);
+  const getPrediction = useCallback(
+    (questionId: string): PredictionModel | null => {
+      return state.predictions.get(questionId) || null;
+    },
+    [state.predictions],
+  );
 
-  const predictCompletionTime = useCallback((questionIds: string[]): number => {
-    let totalTime = 0;
-    let predictedCount = 0;
+  const predictCompletionTime = useCallback(
+    (questionIds: string[]): number => {
+      let totalTime = 0;
+      let predictedCount = 0;
 
-    for (const questionId of questionIds) {
-      const prediction = state.predictions.get(questionId);
-      if (prediction) {
-        totalTime += prediction.predictedTime;
-        predictedCount++;
-      } else {
-        // Default estimate: 2 minutes per question
-        totalTime += 120000;
+      for (const questionId of questionIds) {
+        const prediction = state.predictions.get(questionId);
+        if (prediction) {
+          totalTime += prediction.predictedTime;
+          predictedCount++;
+        } else {
+          // Default estimate: 2 minutes per question
+          totalTime += 120000;
+        }
       }
-    }
 
-    // Add buffer for transitions and thinking
-    const buffer = questionIds.length * 15000; // 15 seconds per question
-    return totalTime + buffer;
-  }, [state.predictions]);
+      // Add buffer for transitions and thinking
+      const buffer = questionIds.length * 15000; // 15 seconds per question
+      return totalTime + buffer;
+    },
+    [state.predictions],
+  );
 
   // A/B Testing functions
-  const getVariant = useCallback((experimentId: string): ExperimentVariant | null => {
-    const experiment = state.experiments.find(e => e.id === experimentId);
-    if (!experiment || experiment.status !== 'running') return null;
-
-    let variantId = state.userVariants.get(experimentId);
-    
-    if (!variantId && state.userId) {
-      variantId = assignVariant(experiment, state.userId);
-      dispatch({ type: 'ASSIGN_VARIANT', experimentId, variantId });
-    }
-
-    return experiment.variants.find(v => v.id === variantId) || null;
-  }, [state.experiments, state.userVariants, state.userId]);
-
-  const isFeatureEnabled = useCallback((flagId: string): boolean => {
-    const flag = state.featureFlags.find(f => f.id === flagId);
-    if (!flag) return false;
-    if (!flag.enabled) return flag.defaultValue;
-
-    // Evaluate rules in priority order
-    const sortedRules = [...flag.rules].sort((a, b) => b.priority - a.priority);
-    
-    for (const rule of sortedRules) {
-      const conditionMet = evaluateCondition(rule.condition, {
-        userId: state.userId,
-        role: state.userRole,
-        tier: state.userTier,
-      });
-      
-      if (conditionMet) {
-        return rule.value;
+  const getVariant = useCallback(
+    (experimentId: string): ExperimentVariant | null => {
+      const experiment = state.experiments.find((e) => e.id === experimentId);
+      if (!experiment || experiment.status !== 'running') {
+        return null;
       }
-    }
 
-    return flag.defaultValue;
-  }, [state.featureFlags, state.userId, state.userRole, state.userTier]);
+      let variantId = state.userVariants.get(experimentId);
+
+      if (!variantId && state.userId) {
+        variantId = assignVariant(experiment, state.userId);
+        dispatch({ type: 'ASSIGN_VARIANT', experimentId, variantId });
+      }
+
+      return experiment.variants.find((v) => v.id === variantId) || null;
+    },
+    [state.experiments, state.userVariants, state.userId],
+  );
+
+  const isFeatureEnabled = useCallback(
+    (flagId: string): boolean => {
+      const flag = state.featureFlags.find((f) => f.id === flagId);
+      if (!flag) {
+        return false;
+      }
+      if (!flag.enabled) {
+        return flag.defaultValue;
+      }
+
+      // Evaluate rules in priority order
+      const sortedRules = [...flag.rules].sort((a, b) => b.priority - a.priority);
+
+      for (const rule of sortedRules) {
+        const conditionMet = evaluateCondition(rule.condition, {
+          userId: state.userId,
+          role: state.userRole,
+          tier: state.userTier,
+        });
+
+        if (conditionMet) {
+          return rule.value;
+        }
+      }
+
+      return flag.defaultValue;
+    },
+    [state.featureFlags, state.userId, state.userRole, state.userTier],
+  );
 
   const trackMetric = useCallback((experimentId: string, metricId: string, value: number) => {
     // In production, this would send to analytics service
@@ -880,31 +973,33 @@ export const PersonalizationProvider: React.FC<PersonalizationProviderProps> = (
 // Helper function
 function evaluateCondition(
   condition: FlagCondition,
-  context: { userId: string | null; role: string | null; tier: string | null }
+  context: { userId: string | null; role: string | null; tier: string | null },
 ): boolean {
   switch (condition.type) {
     case 'user_id':
       return condition.operator === 'equals'
         ? context.userId === condition.value
         : condition.operator === 'in_list'
-        ? (condition.value as string[]).includes(context.userId || '')
-        : false;
+          ? (condition.value as string[]).includes(context.userId || '')
+          : false;
     case 'role':
       return condition.operator === 'equals'
         ? context.role === condition.value
         : condition.operator === 'in_list'
-        ? (condition.value as string[]).includes(context.role || '')
-        : false;
+          ? (condition.value as string[]).includes(context.role || '')
+          : false;
     case 'tier':
       return condition.operator === 'equals'
         ? context.tier === condition.value
         : condition.operator === 'in_list'
-        ? (condition.value as string[]).includes(context.tier || '')
-        : false;
+          ? (condition.value as string[]).includes(context.tier || '')
+          : false;
     case 'percentage':
-      if (!context.userId) return false;
+      if (!context.userId) {
+        return false;
+      }
       const hash = Array.from(context.userId).reduce((acc, char) => {
-        return ((acc << 5) - acc) + char.charCodeAt(0);
+        return (acc << 5) - acc + char.charCodeAt(0);
       }, 0);
       const percentage = (Math.abs(hash) % 100) / 100;
       return percentage < (condition.value as number);
@@ -1103,7 +1198,9 @@ export const DashboardToolbar: React.FC = () => {
         }}
         onClick={() => {
           const name = prompt('Enter layout name:');
-          if (name) createLayout(name);
+          if (name) {
+            createLayout(name);
+          }
         }}
       >
         + New Layout
@@ -1125,9 +1222,7 @@ export const DashboardToolbar: React.FC = () => {
 };
 
 // Widget Picker Component
-export const WidgetPicker: React.FC<{ onSelect: (widgetId: string) => void }> = ({
-  onSelect,
-}) => {
+export const WidgetPicker: React.FC<{ onSelect: (widgetId: string) => void }> = ({ onSelect }) => {
   const { availableWidgets, getActiveLayout } = usePersonalization();
   const activeLayout = getActiveLayout();
   const usedWidgetIds = activeLayout?.widgets.map((w) => w.widgetId) || [];
@@ -1137,16 +1232,10 @@ export const WidgetPicker: React.FC<{ onSelect: (widgetId: string) => void }> = 
       {availableWidgets
         .filter((w) => !usedWidgetIds.includes(w.id))
         .map((widget) => (
-          <div
-            key={widget.id}
-            style={styles.widgetPickerItem}
-            onClick={() => onSelect(widget.id)}
-          >
+          <div key={widget.id} style={styles.widgetPickerItem} onClick={() => onSelect(widget.id)}>
             <div style={{ fontSize: '24px', marginBottom: '8px' }}>{widget.icon}</div>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>{widget.title}</h4>
-            <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
-              {widget.description}
-            </p>
+            <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>{widget.description}</p>
           </div>
         ))}
     </div>
@@ -1160,11 +1249,7 @@ export interface WidgetComponentProps {
   children?: ReactNode;
 }
 
-export const WidgetComponent: React.FC<WidgetComponentProps> = ({
-  instance,
-  widget,
-  children,
-}) => {
+export const WidgetComponent: React.FC<WidgetComponentProps> = ({ instance, widget, children }) => {
   const { isEditMode, updateWidget, removeWidget } = usePersonalization();
 
   return (
@@ -1187,10 +1272,7 @@ export const WidgetComponent: React.FC<WidgetComponentProps> = ({
             {instance.collapsed ? '▼' : '▲'}
           </button>
           {isEditMode && (
-            <button
-              style={styles.widgetAction}
-              onClick={() => removeWidget(instance.id)}
-            >
+            <button style={styles.widgetAction} onClick={() => removeWidget(instance.id)}>
               ✕
             </button>
           )}
@@ -1228,10 +1310,10 @@ export const RecommendationsWidget: React.FC = () => {
             {rec.type === 'next_question'
               ? '❓'
               : rec.type === 'completion_reminder'
-              ? '⏰'
-              : rec.type === 'time_optimization'
-              ? '⚡'
-              : '💡'}
+                ? '⏰'
+                : rec.type === 'time_optimization'
+                  ? '⚡'
+                  : '💡'}
           </span>
           <div style={styles.recommendationContent}>
             <h4 style={styles.recommendationTitle}>{rec.title}</h4>
@@ -1284,9 +1366,16 @@ export const PersonalizedDashboard: React.FC = () => {
       <DashboardToolbar />
 
       {isEditMode && (
-        <div style={{ padding: '16px 24px', backgroundColor: '#fef3c7', borderBottom: '1px solid #fcd34d' }}>
+        <div
+          style={{
+            padding: '16px 24px',
+            backgroundColor: '#fef3c7',
+            borderBottom: '1px solid #fcd34d',
+          }}
+        >
           <p style={{ margin: 0, fontSize: '14px', color: '#92400e' }}>
-            ✏️ Edit mode active. Drag widgets to reposition or click the + button to add new widgets.
+            ✏️ Edit mode active. Drag widgets to reposition or click the + button to add new
+            widgets.
           </p>
           <button
             style={{
@@ -1348,16 +1437,16 @@ export const PersonalizedDashboard: React.FC = () => {
           .filter((w) => w.visible)
           .map((instance) => {
             const widget = availableWidgets.find((w) => w.id === instance.widgetId);
-            if (!widget) return null;
+            if (!widget) {
+              return null;
+            }
 
             return (
               <WidgetComponent key={instance.id} instance={instance} widget={widget}>
                 {widget.type === 'recommendations' ? (
                   <RecommendationsWidget />
                 ) : (
-                  <div style={{ color: '#6b7280', fontSize: '14px' }}>
-                    {widget.description}
-                  </div>
+                  <div style={{ color: '#6b7280', fontSize: '14px' }}>{widget.description}</div>
                 )}
               </WidgetComponent>
             );
@@ -1374,11 +1463,7 @@ export interface ABTestProps {
   fallback?: ReactNode;
 }
 
-export const ABTest: React.FC<ABTestProps> = ({
-  experimentId,
-  children,
-  fallback,
-}) => {
+export const ABTest: React.FC<ABTestProps> = ({ experimentId, children, fallback }) => {
   const { getVariant } = usePersonalization();
   const variant = getVariant(experimentId);
 
@@ -1396,11 +1481,7 @@ export interface FeatureFlagProps {
   fallback?: ReactNode;
 }
 
-export const FeatureFlag: React.FC<FeatureFlagProps> = ({
-  flag,
-  children,
-  fallback,
-}) => {
+export const FeatureFlag: React.FC<FeatureFlagProps> = ({ flag, children, fallback }) => {
   const { isFeatureEnabled } = usePersonalization();
 
   if (isFeatureEnabled(flag)) {
@@ -1425,7 +1506,9 @@ export const CompletionTimePredictor: React.FC<CompletionTimePredictorProps> = (
 
   const formatTime = (ms: number): string => {
     const minutes = Math.floor(ms / 60000);
-    if (minutes < 60) return `${minutes} min`;
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return `${hours}h ${remainingMinutes}m`;

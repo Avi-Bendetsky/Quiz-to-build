@@ -47,7 +47,7 @@ test.describe('User Login Flow', () => {
 
     // Check for error message
     await expect(
-      page.locator('text=Invalid credentials').or(page.locator('text=incorrect'))
+      page.locator('text=Invalid credentials').or(page.locator('text=incorrect')),
     ).toBeVisible();
   });
 
@@ -58,7 +58,7 @@ test.describe('User Login Flow', () => {
 
     // Check for error message
     await expect(
-      page.locator('text=Invalid credentials').or(page.locator('text=not found'))
+      page.locator('text=Invalid credentials').or(page.locator('text=not found')),
     ).toBeVisible();
   });
 
@@ -188,7 +188,7 @@ test.describe('Session Management', () => {
     // Should redirect to login with appropriate message
     await page.waitForURL(/\/login/);
     await expect(
-      page.locator('text=session expired').or(page.locator('text=Please login'))
+      page.locator('text=session expired').or(page.locator('text=Please login')),
     ).toBeVisible();
   });
 });
@@ -210,7 +210,7 @@ test.describe('Password Reset Flow', () => {
 
     // Should show success message
     await expect(
-      page.locator('text=reset email sent').or(page.locator('text=Check your email'))
+      page.locator('text=reset email sent').or(page.locator('text=Check your email')),
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -247,7 +247,7 @@ test.describe('Password Reset Flow', () => {
 
     // Should show password strength error
     await expect(
-      page.locator('text=Password must be at least').or(page.locator('text=requirements'))
+      page.locator('text=Password must be at least').or(page.locator('text=requirements')),
     ).toBeVisible();
   });
 
@@ -255,9 +255,9 @@ test.describe('Password Reset Flow', () => {
     await page.goto('/reset-password?token=invalid-token');
 
     // Should show error message
-    await expect(
-      page.locator('text=invalid').or(page.locator('text=expired'))
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=invalid').or(page.locator('text=expired'))).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
 
@@ -287,11 +287,11 @@ test.describe('Admin Login', () => {
     await page.goto('/admin');
 
     // Should show access denied or redirect
-    await expect(
-      page.locator('text=Access denied').or(page.locator('text=Unauthorized'))
-    ).toBeVisible({ timeout: 5000 }).catch(async () => {
-      // Or should redirect to dashboard
-      expect(page.url()).not.toContain('/admin');
-    });
+    await expect(page.locator('text=Access denied').or(page.locator('text=Unauthorized')))
+      .toBeVisible({ timeout: 5000 })
+      .catch(async () => {
+        // Or should redirect to dashboard
+        expect(page.url()).not.toContain('/admin');
+      });
   });
 });

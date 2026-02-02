@@ -1,7 +1,7 @@
 /**
  * Screen Reader Accessibility Tests
  * WCAG 2.2 Level AA compliance - Screen Reader compatibility
- * 
+ *
  * Tests:
  * - ARIA labels and roles
  * - Form labels
@@ -33,13 +33,19 @@ function MockPageWithLandmarks() {
       <a href="#main-content" className="sr-only focus:not-sr-only">
         Skip to main content
       </a>
-      
+
       <header role="banner">
         <nav aria-label="Main navigation">
           <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/contact">Contact</a></li>
+            <li>
+              <a href="/">Home</a>
+            </li>
+            <li>
+              <a href="/about">About</a>
+            </li>
+            <li>
+              <a href="/contact">Contact</a>
+            </li>
           </ul>
         </nav>
       </header>
@@ -48,8 +54,12 @@ function MockPageWithLandmarks() {
         <h2>Related Links</h2>
         <nav aria-label="Related navigation">
           <ul>
-            <li><a href="/faq">FAQ</a></li>
-            <li><a href="/help">Help</a></li>
+            <li>
+              <a href="/faq">FAQ</a>
+            </li>
+            <li>
+              <a href="/help">Help</a>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -75,7 +85,7 @@ function MockAccessibleForm() {
   return (
     <form aria-labelledby="form-title">
       <h2 id="form-title">Contact Form</h2>
-      
+
       {/* Standard label */}
       <div>
         <label htmlFor="name">Full Name</label>
@@ -100,12 +110,7 @@ function MockAccessibleForm() {
       {/* Label with error */}
       <div>
         <label htmlFor="phone">Phone Number</label>
-        <input
-          type="tel"
-          id="phone"
-          aria-invalid="true"
-          aria-describedby="phone-error"
-        />
+        <input type="tel" id="phone" aria-invalid="true" aria-describedby="phone-error" />
         <p id="phone-error" role="alert" className="text-red-500">
           Please enter a valid phone number.
         </p>
@@ -116,11 +121,7 @@ function MockAccessibleForm() {
         <label htmlFor="search" className="sr-only">
           Search
         </label>
-        <input
-          type="search"
-          id="search"
-          placeholder="Search..."
-        />
+        <input type="search" id="search" placeholder="Search..." />
       </div>
 
       {/* aria-label instead of visible label */}
@@ -170,11 +171,7 @@ function MockImagesComponent() {
   return (
     <div>
       {/* Informative image with alt text */}
-      <img
-        src="/logo.png"
-        alt="Quiz2Biz company logo"
-        data-testid="logo-img"
-      />
+      <img src="/logo.png" alt="Quiz2Biz company logo" data-testid="logo-img" />
 
       {/* Complex image with detailed description */}
       <figure>
@@ -190,12 +187,7 @@ function MockImagesComponent() {
       </figure>
 
       {/* Decorative image */}
-      <img
-        src="/decorative-divider.png"
-        alt=""
-        role="presentation"
-        data-testid="decorative-img"
-      />
+      <img src="/decorative-divider.png" alt="" role="presentation" data-testid="decorative-img" />
 
       {/* Icon with aria-hidden */}
       <span aria-hidden="true" data-testid="icon">
@@ -227,43 +219,24 @@ function MockLiveRegions() {
   return (
     <div>
       {/* Status region - polite announcements */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        data-testid="status-region"
-      >
+      <div role="status" aria-live="polite" aria-atomic="true" data-testid="status-region">
         {status}
       </div>
 
       {/* Alert region - assertive announcements */}
-      <div
-        role="alert"
-        aria-live="assertive"
-        data-testid="alert-region"
-      >
+      <div role="alert" aria-live="assertive" data-testid="alert-region">
         {alert}
       </div>
 
       {/* Log region - additions only */}
-      <div
-        role="log"
-        aria-live="polite"
-        aria-relevant="additions"
-        data-testid="log-region"
-      >
+      <div role="log" aria-live="polite" aria-relevant="additions" data-testid="log-region">
         {log.map((entry, i) => (
           <p key={i}>{entry}</p>
         ))}
       </div>
 
       {/* Timer region */}
-      <div
-        role="timer"
-        aria-live="off"
-        aria-atomic="true"
-        data-testid="timer-region"
-      >
+      <div role="timer" aria-live="off" aria-atomic="true" data-testid="timer-region">
         00:00:00
       </div>
 
@@ -278,15 +251,9 @@ function MockLiveRegions() {
       />
 
       {/* Controls */}
-      <button onClick={() => setStatus('Form saved successfully')}>
-        Save
-      </button>
-      <button onClick={() => setAlert('Error: Unable to save')}>
-        Trigger Error
-      </button>
-      <button onClick={() => setLog([...log, `Log entry ${log.length + 1}`])}>
-        Add Log
-      </button>
+      <button onClick={() => setStatus('Form saved successfully')}>Save</button>
+      <button onClick={() => setAlert('Error: Unable to save')}>Trigger Error</button>
+      <button onClick={() => setLog([...log, `Log entry ${log.length + 1}`])}>Add Log</button>
     </div>
   );
 }
@@ -311,11 +278,7 @@ function MockExpandableContent() {
         >
           {accordionOpen ? 'Collapse' : 'Expand'} Section
         </button>
-        <div
-          id="accordion-content"
-          hidden={!accordionOpen}
-          data-testid="accordion-content"
-        >
+        <div id="accordion-content" hidden={!accordionOpen} data-testid="accordion-content">
           Accordion content here
         </div>
       </div>
@@ -332,15 +295,16 @@ function MockExpandableContent() {
           Options
         </button>
         {menuOpen && (
-          <ul
-            id="dropdown-menu"
-            role="menu"
-            aria-label="Actions"
-            data-testid="dropdown-menu"
-          >
-            <li role="menuitem"><button>Edit</button></li>
-            <li role="menuitem"><button>Delete</button></li>
-            <li role="menuitem"><button>Share</button></li>
+          <ul id="dropdown-menu" role="menu" aria-label="Actions" data-testid="dropdown-menu">
+            <li role="menuitem">
+              <button>Edit</button>
+            </li>
+            <li role="menuitem">
+              <button>Delete</button>
+            </li>
+            <li role="menuitem">
+              <button>Share</button>
+            </li>
           </ul>
         )}
       </div>
@@ -371,12 +335,7 @@ function MockExpandableContent() {
         Open Dialog
       </button>
       {dialogOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="dialog-title"
-          data-testid="dialog"
-        >
+        <div role="dialog" aria-modal="true" aria-labelledby="dialog-title" data-testid="dialog">
           <h2 id="dialog-title">Dialog Title</h2>
           <p>Dialog content</p>
           <button onClick={() => setDialogOpen(false)}>Close</button>
@@ -392,9 +351,7 @@ function MockExpandableContent() {
 function MockAccessibleTable() {
   return (
     <table aria-labelledby="table-caption">
-      <caption id="table-caption">
-        Monthly Sales Report
-      </caption>
+      <caption id="table-caption">Monthly Sales Report</caption>
       <thead>
         <tr>
           <th scope="col">Month</th>
@@ -444,7 +401,7 @@ describe('Screen Reader Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -454,7 +411,7 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       expect(screen.getByRole('banner')).toBeInTheDocument();
     });
@@ -463,7 +420,7 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       expect(screen.getByRole('main')).toBeInTheDocument();
     });
@@ -472,7 +429,7 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       expect(screen.getByRole('navigation', { name: /main navigation/i })).toBeInTheDocument();
     });
@@ -481,7 +438,7 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       expect(screen.getByRole('complementary', { name: /sidebar/i })).toBeInTheDocument();
     });
@@ -490,7 +447,7 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       expect(screen.getByRole('contentinfo')).toBeInTheDocument();
     });
@@ -499,7 +456,7 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       expect(screen.getByRole('article', { name: /page title/i })).toBeInTheDocument();
     });
@@ -508,12 +465,12 @@ describe('Screen Reader Accessibility', () => {
       render(
         <BrowserRouter>
           <MockPageWithLandmarks />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
-      
+
       const navigations = screen.getAllByRole('navigation');
       expect(navigations).toHaveLength(2);
-      
+
       // Each should have a unique label
       expect(screen.getByRole('navigation', { name: /main navigation/i })).toBeInTheDocument();
       expect(screen.getByRole('navigation', { name: /related navigation/i })).toBeInTheDocument();
@@ -610,7 +567,7 @@ describe('Screen Reader Accessibility', () => {
 
       const chart = screen.getByTestId('chart-img');
       expect(chart).toHaveAttribute('aria-describedby', 'chart-description');
-      
+
       const description = document.getElementById('chart-description');
       expect(description).toHaveTextContent(/Q1-Q4 sales figures/i);
     });
@@ -628,7 +585,7 @@ describe('Screen Reader Accessibility', () => {
 
       const icon = screen.getByTestId('icon');
       expect(icon).toHaveAttribute('aria-hidden', 'true');
-      
+
       // Should have a text alternative
       expect(screen.getByText('Home')).toBeInTheDocument();
     });

@@ -1,6 +1,6 @@
 /**
  * Google Analytics GA4 Configuration
- * 
+ *
  * Provides user analytics tracking including page views, custom events,
  * user properties, and conversion goals.
  */
@@ -20,7 +20,7 @@ export interface AnalyticsConfig {
 
 const getAnalyticsConfig = (): AnalyticsConfig => {
   const isProd = import.meta.env.PROD;
-  
+
   return {
     measurementId: import.meta.env.VITE_GA_MEASUREMENT_ID || '',
     debugMode: !isProd,
@@ -42,12 +42,12 @@ let isInitialized = false;
  */
 export function initializeAnalytics(): void {
   const config = getAnalyticsConfig();
-  
+
   if (isInitialized) {
     console.log('[Analytics] Already initialized');
     return;
   }
-  
+
   if (!config.measurementId) {
     console.log('[Analytics] No measurement ID configured, skipping initialization');
     return;
@@ -63,7 +63,7 @@ export function initializeAnalytics(): void {
         debug_mode: config.debugMode,
       },
     });
-    
+
     isInitialized = true;
     console.log(`[Analytics] Initialized with measurement ID: ${config.measurementId}`);
   } catch (error) {
@@ -88,8 +88,10 @@ export function isAnalyticsEnabled(): boolean {
  * @param title - Optional page title
  */
 export function trackPageView(path: string, title?: string): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.send({
     hitType: 'pageview',
     page: path,
@@ -122,8 +124,10 @@ export interface EventParams {
  * Track a custom event
  */
 export function trackEvent(params: EventParams): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.event({
     category: params.category,
     action: params.action,
@@ -138,8 +142,10 @@ export function trackEvent(params: EventParams): void {
  * Track GA4 event with custom parameters
  */
 export function trackGA4Event(eventName: string, params?: Record<string, unknown>): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.event(eventName, params);
 }
 
@@ -152,8 +158,10 @@ export function trackGA4Event(eventName: string, params?: Record<string, unknown
  * Call this after user authentication
  */
 export function setUserId(userId: string): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.set({ userId });
 }
 
@@ -161,8 +169,10 @@ export function setUserId(userId: string): void {
  * Clear user ID on logout
  */
 export function clearUserId(): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.set({ userId: undefined });
 }
 
@@ -170,8 +180,10 @@ export function clearUserId(): void {
  * Set user properties (dimensions)
  */
 export function setUserProperties(properties: Record<string, string | number | boolean>): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.gtag('set', 'user_properties', properties);
 }
 
@@ -184,16 +196,16 @@ export const AuthEvents = {
   login: (method: string = 'email') => {
     trackGA4Event('login', { method });
   },
-  
+
   logout: () => {
     trackGA4Event('logout');
     clearUserId();
   },
-  
+
   signUp: (method: string = 'email') => {
     trackGA4Event('sign_up', { method });
   },
-  
+
   passwordReset: () => {
     trackGA4Event('password_reset');
   },
@@ -207,22 +219,26 @@ export const QuestionnaireEvents = {
       questionnaire_name: questionnaireName,
     });
   },
-  
-  completed: (questionnaireId: string, questionnaireName: string, completionTimeSeconds: number) => {
+
+  completed: (
+    questionnaireId: string,
+    questionnaireName: string,
+    completionTimeSeconds: number,
+  ) => {
     trackGA4Event('questionnaire_completed', {
       questionnaire_id: questionnaireId,
       questionnaire_name: questionnaireName,
       completion_time_seconds: completionTimeSeconds,
     });
   },
-  
+
   abandoned: (questionnaireId: string, progress: number) => {
     trackGA4Event('questionnaire_abandoned', {
       questionnaire_id: questionnaireId,
       progress_percentage: progress,
     });
   },
-  
+
   questionAnswered: (questionId: string, questionType: string, dimensionName: string) => {
     trackGA4Event('question_answered', {
       question_id: questionId,
@@ -230,7 +246,7 @@ export const QuestionnaireEvents = {
       dimension_name: dimensionName,
     });
   },
-  
+
   sectionCompleted: (sectionName: string, questionsInSection: number) => {
     trackGA4Event('section_completed', {
       section_name: sectionName,
@@ -246,13 +262,13 @@ export const ScoreEvents = {
       readiness_score: score,
     });
   },
-  
+
   heatmapViewed: (dimensionsCount: number) => {
     trackGA4Event('heatmap_viewed', {
       dimensions_count: dimensionsCount,
     });
   },
-  
+
   dimensionDrilldown: (dimensionName: string) => {
     trackGA4Event('dimension_drilldown', {
       dimension_name: dimensionName,
@@ -268,14 +284,14 @@ export const DocumentEvents = {
       format: format,
     });
   },
-  
+
   downloaded: (documentType: string, format: string) => {
     trackGA4Event('document_downloaded', {
       document_type: documentType,
       format: format,
     });
   },
-  
+
   deliverablesPackDownloaded: (documentsIncluded: number) => {
     trackGA4Event('deliverables_pack_downloaded', {
       documents_included: documentsIncluded,
@@ -290,7 +306,7 @@ export const PaymentEvents = {
       item_list_name: 'Subscription Tiers',
     });
   },
-  
+
   selectTier: (tierName: string, price: number) => {
     trackGA4Event('select_item', {
       item_name: tierName,
@@ -298,7 +314,7 @@ export const PaymentEvents = {
       currency: 'USD',
     });
   },
-  
+
   beginCheckout: (tierName: string, price: number) => {
     trackGA4Event('begin_checkout', {
       value: price,
@@ -306,7 +322,7 @@ export const PaymentEvents = {
       items: [{ item_name: tierName, price }],
     });
   },
-  
+
   purchase: (tierName: string, transactionId: string, price: number) => {
     trackGA4Event('purchase', {
       transaction_id: transactionId,
@@ -315,7 +331,7 @@ export const PaymentEvents = {
       items: [{ item_name: tierName, price }],
     });
   },
-  
+
   subscriptionCancelled: (tierName: string) => {
     trackGA4Event('subscription_cancelled', {
       tier_name: tierName,
@@ -331,7 +347,7 @@ export const EvidenceEvents = {
       file_size_kb: fileSizeKB,
     });
   },
-  
+
   verified: (evidenceId: string, result: 'approved' | 'rejected') => {
     trackGA4Event('evidence_verified', {
       evidence_id: evidenceId,
@@ -347,19 +363,19 @@ export const UIEvents = {
       nav_item: navItem,
     });
   },
-  
+
   searchPerformed: (searchTerm: string) => {
     trackGA4Event('search', {
       search_term: searchTerm,
     });
   },
-  
+
   helpOpened: (helpSection?: string) => {
     trackGA4Event('help_opened', {
       help_section: helpSection || 'general',
     });
   },
-  
+
   errorDisplayed: (errorCode: string, errorMessage: string) => {
     trackGA4Event('error_displayed', {
       error_code: errorCode,
@@ -377,14 +393,14 @@ export const ConversionGoals = {
   firstQuestionnaireComplete: () => {
     trackGA4Event('conversion_first_questionnaire');
   },
-  
+
   // Goal: User achieves readiness score >= 80%
   highReadinessAchieved: (score: number) => {
     trackGA4Event('conversion_high_readiness', {
       readiness_score: score,
     });
   },
-  
+
   // Goal: User upgrades from free tier
   tierUpgrade: (fromTier: string, toTier: string) => {
     trackGA4Event('conversion_tier_upgrade', {
@@ -392,12 +408,12 @@ export const ConversionGoals = {
       to_tier: toTier,
     });
   },
-  
+
   // Goal: User generates deliverables pack
   deliverablesGenerated: () => {
     trackGA4Event('conversion_deliverables_generated');
   },
-  
+
   // Goal: User invites team member
   teamMemberInvited: () => {
     trackGA4Event('conversion_team_invited');
@@ -411,9 +427,16 @@ export const ConversionGoals = {
 /**
  * Track timing of a specific action
  */
-export function trackTiming(category: string, variable: string, valueMs: number, label?: string): void {
-  if (!isInitialized) return;
-  
+export function trackTiming(
+  category: string,
+  variable: string,
+  valueMs: number,
+  label?: string,
+): void {
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.gtag('event', 'timing_complete', {
     name: variable,
     value: valueMs,
@@ -427,7 +450,7 @@ export function trackTiming(category: string, variable: string, valueMs: number,
  */
 export function createTimingTracker(category: string) {
   const startTime = performance.now();
-  
+
   return {
     stop: (variable: string, label?: string) => {
       const duration = Math.round(performance.now() - startTime);
@@ -445,8 +468,10 @@ export function createTimingTracker(category: string) {
  * Track an exception/error
  */
 export function trackException(description: string, fatal: boolean = false): void {
-  if (!isInitialized) return;
-  
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.gtag('event', 'exception', {
     description: description.substring(0, 150),
     fatal,
@@ -460,9 +485,14 @@ export function trackException(description: string, fatal: boolean = false): voi
 /**
  * Update consent status (for GDPR compliance)
  */
-export function updateConsent(analyticsConsent: 'granted' | 'denied', adConsent: 'granted' | 'denied' = 'denied'): void {
-  if (!isInitialized) return;
-  
+export function updateConsent(
+  analyticsConsent: 'granted' | 'denied',
+  adConsent: 'granted' | 'denied' = 'denied',
+): void {
+  if (!isInitialized) {
+    return;
+  }
+
   ReactGA.gtag('consent', 'update', {
     analytics_storage: analyticsConsent,
     ad_storage: adConsent,
@@ -507,12 +537,12 @@ export function debugLogEvent(eventName: string, params?: Record<string, unknown
 /**
  * Hook to track page views automatically
  * Use this in your root App component with React Router
- * 
+ *
  * Example:
  * ```tsx
  * import { useAnalyticsPageView } from './analytics.config';
  * import { useLocation } from 'react-router-dom';
- * 
+ *
  * function App() {
  *   const location = useLocation();
  *   useAnalyticsPageView(location);

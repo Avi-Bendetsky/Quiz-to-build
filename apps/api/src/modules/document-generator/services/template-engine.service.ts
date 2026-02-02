@@ -32,10 +32,7 @@ export class TemplateEngineService {
   /**
    * Assemble template data from session responses
    */
-  async assembleTemplateData(
-    sessionId: string,
-    documentTypeSlug: string,
-  ): Promise<TemplateData> {
+  async assembleTemplateData(sessionId: string, documentTypeSlug: string): Promise<TemplateData> {
     // Fetch document type
     const documentType = await this.prisma.documentType.findUnique({
       where: { slug: documentTypeSlug },
@@ -50,9 +47,7 @@ export class TemplateEngineService {
     });
 
     if (!documentType) {
-      throw new NotFoundException(
-        `Document type with slug '${documentTypeSlug}' not found`,
-      );
+      throw new NotFoundException(`Document type with slug '${documentTypeSlug}' not found`);
     }
 
     // Fetch all responses for the session with their question mappings
@@ -117,10 +112,7 @@ export class TemplateEngineService {
     const content: Record<string, unknown> = {};
 
     for (const response of responses) {
-      const mappings = response.question.documentMappings as Record<
-        string,
-        string
-      > | null;
+      const mappings = response.question.documentMappings as Record<string, string> | null;
 
       if (!mappings || !mappings[documentTypeSlug]) {
         continue;
@@ -202,11 +194,7 @@ export class TemplateEngineService {
   /**
    * Set a value at a nested path using dot notation
    */
-  private setNestedValue(
-    obj: Record<string, unknown>,
-    path: string,
-    value: unknown,
-  ): void {
+  private setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
     const parts = path.split('.');
     let current = obj;
 
@@ -287,4 +275,3 @@ export class TemplateEngineService {
     };
   }
 }
-

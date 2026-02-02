@@ -79,9 +79,9 @@ test.describe('User Registration Flow', () => {
 
     // Check for password strength error
     await expect(
-      page.locator('text=Password must be at least 8 characters').or(
-        page.locator('text=Password must contain')
-      )
+      page
+        .locator('text=Password must be at least 8 characters')
+        .or(page.locator('text=Password must contain')),
     ).toBeVisible();
   });
 
@@ -106,7 +106,7 @@ test.describe('User Registration Flow', () => {
 
     // Check for existing email error
     await expect(
-      page.locator('text=email already exists').or(page.locator('text=already registered'))
+      page.locator('text=email already exists').or(page.locator('text=already registered')),
     ).toBeVisible();
   });
 
@@ -158,7 +158,7 @@ test.describe('Email Verification Flow', () => {
 
     // Should show success or redirect to login
     await expect(
-      page.locator('text=Email verified').or(page.locator('[data-testid="login-button"]'))
+      page.locator('text=Email verified').or(page.locator('[data-testid="login-button"]')),
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -166,9 +166,9 @@ test.describe('Email Verification Flow', () => {
     await page.goto('/verify-email?token=invalid-token');
 
     // Should show error message
-    await expect(
-      page.locator('text=invalid').or(page.locator('text=expired'))
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=invalid').or(page.locator('text=expired'))).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('should allow resending verification email', async ({ page }) => {
@@ -178,8 +178,8 @@ test.describe('Email Verification Flow', () => {
     await page.click('[data-testid="resend-email-button"]');
 
     // Should show confirmation
-    await expect(
-      page.locator('text=email sent').or(page.locator('text=Resent'))
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=email sent').or(page.locator('text=Resent'))).toBeVisible({
+      timeout: 5000,
+    });
   });
 });

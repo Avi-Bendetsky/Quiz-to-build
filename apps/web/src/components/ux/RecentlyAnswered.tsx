@@ -1,9 +1,9 @@
 /**
  * Recently Answered Indicator Component
- * 
+ *
  * Shows timestamp badges on recently answered questions.
  * Highlights items answered in the last 5 minutes.
- * 
+ *
  * Nielsen Heuristic #1: Visibility of System Status
  */
 
@@ -51,12 +51,22 @@ export function formatRelativeTime(date: Date): string {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffSec < 10) return 'Just now';
-  if (diffSec < 60) return `${diffSec}s ago`;
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  
+  if (diffSec < 10) {
+    return 'Just now';
+  }
+  if (diffSec < 60) {
+    return `${diffSec}s ago`;
+  }
+  if (diffMin < 60) {
+    return `${diffMin}m ago`;
+  }
+  if (diffHour < 24) {
+    return `${diffHour}h ago`;
+  }
+  if (diffDay < 7) {
+    return `${diffDay}d ago`;
+  }
+
   return date.toLocaleDateString();
 }
 
@@ -116,7 +126,9 @@ export const RecentlyAnsweredProvider: React.FC<RecentlyAnsweredProviderProps> =
 
   const [answers, setAnswers] = useState<AnsweredQuestion[]>(() => {
     // Load from localStorage
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') {
+      return [];
+    }
     try {
       const stored = localStorage.getItem(persistKey);
       if (stored) {
@@ -135,14 +147,18 @@ export const RecentlyAnsweredProvider: React.FC<RecentlyAnsweredProviderProps> =
   // Auto-refresh to update relative times
   const [, setTick] = useState(0);
   useEffect(() => {
-    if (!autoUpdate) return;
+    if (!autoUpdate) {
+      return;
+    }
     const interval = setInterval(() => setTick((t) => t + 1), updateInterval);
     return () => clearInterval(interval);
   }, [autoUpdate, updateInterval]);
 
   // Persist to localStorage
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     try {
       localStorage.setItem(persistKey, JSON.stringify(answers));
     } catch {
@@ -157,10 +173,10 @@ export const RecentlyAnsweredProvider: React.FC<RecentlyAnsweredProviderProps> =
         prev.filter((a) => {
           const age = Date.now() - a.answeredAt.getTime();
           return age < 24 * 60 * 60 * 1000; // Keep for 24 hours max
-        })
+        }),
       );
     };
-    
+
     cleanup(); // Initial cleanup
     const interval = setInterval(cleanup, 60 * 60 * 1000); // Every hour
     return () => clearInterval(interval);
@@ -186,7 +202,7 @@ export const RecentlyAnsweredProvider: React.FC<RecentlyAnsweredProviderProps> =
     (thresholdMs: number = recentThreshold) => {
       return answers.filter((a) => isRecent(a.answeredAt, thresholdMs));
     },
-    [answers, recentThreshold]
+    [answers, recentThreshold],
   );
 
   const isQuestionRecent = useCallback(
@@ -194,7 +210,7 @@ export const RecentlyAnsweredProvider: React.FC<RecentlyAnsweredProviderProps> =
       const answer = answers.find((a) => a.questionId === questionId);
       return answer ? isRecent(answer.answeredAt, recentThreshold) : false;
     },
-    [answers, recentThreshold]
+    [answers, recentThreshold],
   );
 
   return (
@@ -234,8 +250,10 @@ export const RecentBadge: React.FC<RecentBadgeProps> = ({
 }) => {
   const isVery = isVeryRecent(answeredAt);
   const recent = isRecent(answeredAt);
-  
-  if (!recent) return null;
+
+  if (!recent) {
+    return null;
+  }
 
   const sizeStyles = {
     sm: { fontSize: 10, padding: '2px 6px' },
@@ -260,9 +278,7 @@ export const RecentBadge: React.FC<RecentBadgeProps> = ({
       title={`Answered ${answeredAt.toLocaleString()}`}
     >
       {showIcon && (
-        <span style={{ fontSize: sizeStyles[size].fontSize }}>
-          {isVery ? '✨' : '🕐'}
-        </span>
+        <span style={{ fontSize: sizeStyles[size].fontSize }}>{isVery ? '✨' : '🕐'}</span>
       )}
       {formatRelativeTime(answeredAt)}
       {wasModified && (
@@ -300,7 +316,7 @@ export const QuestionNavItem: React.FC<QuestionNavItemProps> = ({
   className = '',
 }) => {
   const { answers, isQuestionRecent } = useRecentlyAnswered();
-  
+
   const answer = answers.find((a) => a.questionId === questionId);
   const isRecent = isQuestionRecent(questionId);
 
@@ -334,16 +350,14 @@ export const QuestionNavItem: React.FC<QuestionNavItemProps> = ({
           borderRadius: '50%',
           fontSize: 14,
           fontWeight: 600,
-          background: isAnswered 
-            ? isRecent ? '#c6f6d5' : '#9ae6b4'
-            : isSkipped 
-              ? '#fefcbf' 
+          background: isAnswered
+            ? isRecent
+              ? '#c6f6d5'
+              : '#9ae6b4'
+            : isSkipped
+              ? '#fefcbf'
               : '#edf2f7',
-          color: isAnswered 
-            ? '#22543d' 
-            : isSkipped 
-              ? '#744210' 
-              : '#4a5568',
+          color: isAnswered ? '#22543d' : isSkipped ? '#744210' : '#4a5568',
         }}
       >
         {isAnswered ? '✓' : isSkipped ? '○' : questionNumber}
@@ -365,11 +379,7 @@ export const QuestionNavItem: React.FC<QuestionNavItemProps> = ({
 
       {/* Recent badge */}
       {answer && isRecent && (
-        <RecentBadge
-          answeredAt={answer.answeredAt}
-          wasModified={answer.wasModified}
-          size="sm"
-        />
+        <RecentBadge answeredAt={answer.answeredAt} wasModified={answer.wasModified} size="sm" />
       )}
     </button>
   );
@@ -383,39 +393,29 @@ interface RecentActivitySummaryProps {
   className?: string;
 }
 
-export const RecentActivitySummary: React.FC<RecentActivitySummaryProps> = ({
-  className = '',
-}) => {
+export const RecentActivitySummary: React.FC<RecentActivitySummaryProps> = ({ className = '' }) => {
   const { getRecentAnswers } = useRecentlyAnswered();
-  
+
   const veryRecent = getRecentAnswers(60 * 1000); // Last minute
   const recent = getRecentAnswers(5 * 60 * 1000); // Last 5 minutes
   const lastHour = getRecentAnswers(60 * 60 * 1000); // Last hour
 
   return (
     <div className={`recent-activity ${className}`}>
-      <h4 style={{ margin: '0 0 12px', fontSize: 14, color: '#4a5568' }}>
-        📊 Recent Activity
-      </h4>
-      
+      <h4 style={{ margin: '0 0 12px', fontSize: 14, color: '#4a5568' }}>📊 Recent Activity</h4>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span>Last minute:</span>
-          <span style={{ fontWeight: 600, color: '#22543d' }}>
-            {veryRecent.length} answered
-          </span>
+          <span style={{ fontWeight: 600, color: '#22543d' }}>{veryRecent.length} answered</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span>Last 5 minutes:</span>
-          <span style={{ fontWeight: 600, color: '#2b6cb0' }}>
-            {recent.length} answered
-          </span>
+          <span style={{ fontWeight: 600, color: '#2b6cb0' }}>{recent.length} answered</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span>Last hour:</span>
-          <span style={{ fontWeight: 600, color: '#4a5568' }}>
-            {lastHour.length} answered
-          </span>
+          <span style={{ fontWeight: 600, color: '#4a5568' }}>{lastHour.length} answered</span>
         </div>
       </div>
 
@@ -444,7 +444,7 @@ export const RecentAnswersTimeline: React.FC<RecentAnswersTimelineProps> = ({
   className = '',
 }) => {
   const { answers } = useRecentlyAnswered();
-  
+
   const recentAnswers = useMemo(() => {
     return answers
       .sort((a, b) => b.answeredAt.getTime() - a.answeredAt.getTime())
@@ -453,7 +453,10 @@ export const RecentAnswersTimeline: React.FC<RecentAnswersTimelineProps> = ({
 
   if (recentAnswers.length === 0) {
     return (
-      <div className={`recent-timeline ${className}`} style={{ textAlign: 'center', padding: 20, color: '#718096' }}>
+      <div
+        className={`recent-timeline ${className}`}
+        style={{ textAlign: 'center', padding: 20, color: '#718096' }}
+      >
         <p>No recent answers yet.</p>
         <p style={{ fontSize: 13 }}>Start answering questions to see your progress here!</p>
       </div>
@@ -462,10 +465,8 @@ export const RecentAnswersTimeline: React.FC<RecentAnswersTimelineProps> = ({
 
   return (
     <div className={`recent-timeline ${className}`}>
-      <h4 style={{ margin: '0 0 16px', fontSize: 14, color: '#4a5568' }}>
-        🕐 Recent Answers
-      </h4>
-      
+      <h4 style={{ margin: '0 0 16px', fontSize: 14, color: '#4a5568' }}>🕐 Recent Answers</h4>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {recentAnswers.map((answer) => (
           <div
@@ -477,9 +478,7 @@ export const RecentAnswersTimeline: React.FC<RecentAnswersTimelineProps> = ({
               padding: 12,
               background: '#f7fafc',
               borderRadius: 8,
-              borderLeft: `3px solid ${
-                isVeryRecent(answer.answeredAt) ? '#48bb78' : '#ecc94b'
-              }`,
+              borderLeft: `3px solid ${isVeryRecent(answer.answeredAt) ? '#48bb78' : '#ecc94b'}`,
             }}
           >
             <div style={{ flex: 1 }}>
@@ -512,14 +511,17 @@ export function useMarkAnswered() {
   const { addAnswer } = useRecentlyAnswered();
 
   const markAnswered = useCallback(
-    (questionId: string, options: Partial<Omit<AnsweredQuestion, 'questionId' | 'answeredAt'>> = {}) => {
+    (
+      questionId: string,
+      options: Partial<Omit<AnsweredQuestion, 'questionId' | 'answeredAt'>> = {},
+    ) => {
       addAnswer({
         questionId,
         answeredAt: new Date(),
         ...options,
       });
     },
-    [addAnswer]
+    [addAnswer],
   );
 
   return markAnswered;

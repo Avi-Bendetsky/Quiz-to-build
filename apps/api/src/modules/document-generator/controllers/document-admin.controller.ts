@@ -9,12 +9,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { PrismaService } from '@libs/database';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -76,9 +71,7 @@ export class DocumentAdminController {
   @ApiOperation({ summary: 'Get document type details' })
   @ApiResponse({ status: 200, description: 'Document type details' })
   @ApiResponse({ status: 404, description: 'Document type not found' })
-  async getDocumentType(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<DocumentTypeResponseDto> {
+  async getDocumentType(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentTypeResponseDto> {
     const documentType = await this.prisma.documentType.findUnique({
       where: { id },
       include: {
@@ -100,9 +93,7 @@ export class DocumentAdminController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Create document type' })
   @ApiResponse({ status: 201, description: 'Document type created' })
-  async createDocumentType(
-    @Body() dto: CreateDocumentTypeDto,
-  ): Promise<DocumentTypeResponseDto> {
+  async createDocumentType(@Body() dto: CreateDocumentTypeDto): Promise<DocumentTypeResponseDto> {
     return this.prisma.documentType.create({
       data: {
         name: dto.name,
@@ -187,10 +178,7 @@ export class DocumentAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const document = await this.documentGeneratorService.approveDocument(
-      id,
-      user.id,
-    );
+    const document = await this.documentGeneratorService.approveDocument(id, user.id);
     return {
       message: 'Document approved successfully',
       document: {
@@ -212,11 +200,7 @@ export class DocumentAdminController {
     @Body() dto: RejectDocumentDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const document = await this.documentGeneratorService.rejectDocument(
-      id,
-      user.id,
-      dto.reason,
-    );
+    const document = await this.documentGeneratorService.rejectDocument(id, user.id, dto.reason);
     return {
       message: 'Document rejected',
       document: {
@@ -227,4 +211,3 @@ export class DocumentAdminController {
     };
   }
 }
-

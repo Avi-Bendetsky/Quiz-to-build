@@ -1,9 +1,9 @@
 /**
  * Adaptive Navigation System
- * 
+ *
  * Sprint 37: Adaptive UI & Personalization
  * Task ux37t2: Reorder menu items based on usage frequency, suggest next action based on past behavior
- * 
+ *
  * Features:
  * - Dynamic menu reordering based on usage frequency
  * - Smart next action suggestions
@@ -106,23 +106,23 @@ export interface AdaptiveNavContextType extends AdaptiveNavState {
   // Navigation
   navigateTo: (path: string) => void;
   trackNavigation: (path: string, duration?: number) => void;
-  
+
   // Suggestions
   getSuggestions: (limit?: number) => NavigationSuggestion[];
   dismissSuggestion: (suggestionId: string) => void;
   generateSuggestions: () => void;
-  
+
   // Quick Access
   addToQuickAccess: (item: NavItem, pinned?: boolean) => void;
   removeFromQuickAccess: (itemId: string) => void;
   reorderQuickAccess: (fromIndex: number, toIndex: number) => void;
   getQuickAccessItems: () => QuickAccessItem[];
-  
+
   // Menu
   getReorderedItems: () => NavItem[];
   getItemUsage: (itemId: string) => NavItemUsage | undefined;
   setAdaptive: (enabled: boolean) => void;
-  
+
   // Predictions
   predictNextAction: () => NavItem | null;
   getFrequentItems: (limit?: number) => NavItem[];
@@ -173,10 +173,7 @@ const initialState: AdaptiveNavState = {
 // REDUCER
 // =============================================================================
 
-function adaptiveNavReducer(
-  state: AdaptiveNavState,
-  action: AdaptiveNavAction
-): AdaptiveNavState {
+function adaptiveNavReducer(state: AdaptiveNavState, action: AdaptiveNavAction): AdaptiveNavState {
   switch (action.type) {
     case 'SET_ITEMS':
       return { ...state, items: action.items, reorderedItems: action.items };
@@ -236,9 +233,11 @@ function adaptiveNavReducer(
     }
 
     case 'ADD_SUGGESTION': {
-      const existing = state.suggestions.find(s => s.id === action.suggestion.id);
-      if (existing) return state;
-      
+      const existing = state.suggestions.find((s) => s.id === action.suggestion.id);
+      if (existing) {
+        return state;
+      }
+
       const suggestions = [...state.suggestions, action.suggestion]
         .sort((a, b) => b.confidence - a.confidence)
         .slice(0, 10);
@@ -248,12 +247,14 @@ function adaptiveNavReducer(
     case 'DISMISS_SUGGESTION':
       return {
         ...state,
-        suggestions: state.suggestions.filter(s => s.id !== action.suggestionId),
+        suggestions: state.suggestions.filter((s) => s.id !== action.suggestionId),
       };
 
     case 'ADD_TO_QUICK_ACCESS': {
-      const exists = state.quickAccess.some(qa => qa.navItem.id === action.item.id);
-      if (exists) return state;
+      const exists = state.quickAccess.some((qa) => qa.navItem.id === action.item.id);
+      if (exists) {
+        return state;
+      }
 
       const quickAccess = [
         ...state.quickAccess,
@@ -270,7 +271,7 @@ function adaptiveNavReducer(
     case 'REMOVE_FROM_QUICK_ACCESS':
       return {
         ...state,
-        quickAccess: state.quickAccess.filter(qa => qa.navItem.id !== action.itemId),
+        quickAccess: state.quickAccess.filter((qa) => qa.navItem.id !== action.itemId),
       };
 
     case 'REORDER_QUICK_ACCESS': {
@@ -288,7 +289,7 @@ function adaptiveNavReducer(
         return { ...state, reorderedItems: state.items };
       }
 
-      const itemsWithUsage = state.items.map(item => ({
+      const itemsWithUsage = state.items.map((item) => ({
         item,
         usage: state.itemUsage.get(item.id),
       }));
@@ -296,9 +297,9 @@ function adaptiveNavReducer(
       const sorted = [...itemsWithUsage].sort((a, b) => {
         const aCount = a.usage?.usageCount || 0;
         const bCount = b.usage?.usageCount || 0;
-        
+
         // Give bonus to recently used items
-        const aRecency = a.usage?.lastUsed 
+        const aRecency = a.usage?.lastUsed
           ? (Date.now() - a.usage.lastUsed.getTime()) / (1000 * 60 * 60 * 24)
           : 999;
         const bRecency = b.usage?.lastUsed
@@ -311,7 +312,7 @@ function adaptiveNavReducer(
         return bScore - aScore;
       });
 
-      return { ...state, reorderedItems: sorted.map(s => s.item) };
+      return { ...state, reorderedItems: sorted.map((s) => s.item) };
     }
 
     case 'LOAD_STATE':
@@ -328,10 +329,14 @@ function adaptiveNavReducer(
 
 function findItemByPath(items: NavItem[], path: string): NavItem | null {
   for (const item of items) {
-    if (item.path === path) return item;
+    if (item.path === path) {
+      return item;
+    }
     if (item.children) {
       const found = findItemByPath(item.children, path);
-      if (found) return found;
+      if (found) {
+        return found;
+      }
     }
   }
   return null;
@@ -417,7 +422,10 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
         localStorage.setItem(STORAGE_KEYS.USAGE, JSON.stringify(usageObj));
         localStorage.setItem(STORAGE_KEYS.QUICK_ACCESS, JSON.stringify(state.quickAccess));
         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history.slice(0, 50)));
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({ isAdaptive: state.isAdaptive }));
+        localStorage.setItem(
+          STORAGE_KEYS.SETTINGS,
+          JSON.stringify({ isAdaptive: state.isAdaptive }),
+        );
       } catch (error) {
         console.error('[AdaptiveNav] Failed to save state:', error);
       }
@@ -446,15 +454,21 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
   }, []);
 
   // Navigate to path
-  const navigateTo = useCallback((path: string) => {
-    trackNavigation(path);
-    onNavigate?.(path);
-  }, [trackNavigation, onNavigate]);
+  const navigateTo = useCallback(
+    (path: string) => {
+      trackNavigation(path);
+      onNavigate?.(path);
+    },
+    [trackNavigation, onNavigate],
+  );
 
   // Get suggestions
-  const getSuggestions = useCallback((limit: number = 5): NavigationSuggestion[] => {
-    return state.suggestions.slice(0, limit);
-  }, [state.suggestions]);
+  const getSuggestions = useCallback(
+    (limit: number = 5): NavigationSuggestion[] => {
+      return state.suggestions.slice(0, limit);
+    },
+    [state.suggestions],
+  );
 
   // Dismiss suggestion
   const dismissSuggestion = useCallback((suggestionId: string) => {
@@ -464,7 +478,7 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
   // Generate suggestions based on patterns
   const generateSuggestions = useCallback(() => {
     // Clear old suggestions
-    state.suggestions.forEach(s => {
+    state.suggestions.forEach((s) => {
       if (Date.now() - s.timestamp.getTime() > 5 * 60 * 1000) {
         dispatch({ type: 'DISMISS_SUGGESTION', suggestionId: s.id });
       }
@@ -474,7 +488,7 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
     const recentHistory = state.history.slice(0, 10);
     if (recentHistory.length >= 2) {
       const currentPath = state.currentPath;
-      
+
       // Find common next paths from current location
       const nextPaths = new Map<string, number>();
       for (let i = 0; i < state.history.length - 1; i++) {
@@ -518,7 +532,7 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
       .slice(0, 2);
 
     timeBasedItems.forEach(([itemId]) => {
-      const item = state.items.find(i => i.id === itemId);
+      const item = state.items.find((i) => i.id === itemId);
       if (item && item.path !== state.currentPath) {
         dispatch({
           type: 'ADD_SUGGESTION',
@@ -554,8 +568,12 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
   const getQuickAccessItems = useCallback((): QuickAccessItem[] => {
     return [...state.quickAccess].sort((a, b) => {
       // Pinned items first, then by order
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
+      if (a.pinned && !b.pinned) {
+        return -1;
+      }
+      if (!a.pinned && b.pinned) {
+        return 1;
+      }
       return a.order - b.order;
     });
   }, [state.quickAccess]);
@@ -566,9 +584,12 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
   }, [state.reorderedItems]);
 
   // Get item usage
-  const getItemUsage = useCallback((itemId: string): NavItemUsage | undefined => {
-    return state.itemUsage.get(itemId);
-  }, [state.itemUsage]);
+  const getItemUsage = useCallback(
+    (itemId: string): NavItemUsage | undefined => {
+      return state.itemUsage.get(itemId);
+    },
+    [state.itemUsage],
+  );
 
   // Set adaptive mode
   const setAdaptive = useCallback((enabled: boolean) => {
@@ -577,7 +598,9 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
 
   // Predict next action
   const predictNextAction = useCallback((): NavItem | null => {
-    if (state.history.length < 2) return null;
+    if (state.history.length < 2) {
+      return null;
+    }
 
     const currentPath = state.currentPath;
     const nextPaths = new Map<string, number>();
@@ -609,34 +632,42 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
   }, [state.history, state.currentPath, state.items]);
 
   // Get frequent items
-  const getFrequentItems = useCallback((limit: number = 5): NavItem[] => {
-    const sorted = Array.from(state.itemUsage.entries())
-      .sort((a, b) => b[1].usageCount - a[1].usageCount)
-      .slice(0, limit);
+  const getFrequentItems = useCallback(
+    (limit: number = 5): NavItem[] => {
+      const sorted = Array.from(state.itemUsage.entries())
+        .sort((a, b) => b[1].usageCount - a[1].usageCount)
+        .slice(0, limit);
 
-    return sorted
-      .map(([itemId]) => state.items.find(i => i.id === itemId))
-      .filter((item): item is NavItem => item !== undefined);
-  }, [state.itemUsage, state.items]);
+      return sorted
+        .map(([itemId]) => state.items.find((i) => i.id === itemId))
+        .filter((item): item is NavItem => item !== undefined);
+    },
+    [state.itemUsage, state.items],
+  );
 
   // Get recent items
-  const getRecentItems = useCallback((limit: number = 5): NavItem[] => {
-    const uniquePaths = new Set<string>();
-    const recentItems: NavItem[] = [];
+  const getRecentItems = useCallback(
+    (limit: number = 5): NavItem[] => {
+      const uniquePaths = new Set<string>();
+      const recentItems: NavItem[] = [];
 
-    for (const entry of state.history) {
-      if (!uniquePaths.has(entry.path)) {
-        uniquePaths.add(entry.path);
-        const item = findItemByPath(state.items, entry.path);
-        if (item) {
-          recentItems.push(item);
-          if (recentItems.length >= limit) break;
+      for (const entry of state.history) {
+        if (!uniquePaths.has(entry.path)) {
+          uniquePaths.add(entry.path);
+          const item = findItemByPath(state.items, entry.path);
+          if (item) {
+            recentItems.push(item);
+            if (recentItems.length >= limit) {
+              break;
+            }
+          }
         }
       }
-    }
 
-    return recentItems;
-  }, [state.history, state.items]);
+      return recentItems;
+    },
+    [state.history, state.items],
+  );
 
   const contextValue: AdaptiveNavContextType = {
     ...state,
@@ -657,11 +688,7 @@ export const AdaptiveNavProvider: React.FC<AdaptiveNavProviderProps> = ({
     getRecentItems,
   };
 
-  return (
-    <AdaptiveNavContext.Provider value={contextValue}>
-      {children}
-    </AdaptiveNavContext.Provider>
-  );
+  return <AdaptiveNavContext.Provider value={contextValue}>{children}</AdaptiveNavContext.Provider>;
 };
 
 // =============================================================================
@@ -845,11 +872,7 @@ interface NavItemComponentProps {
   onClick: () => void;
 }
 
-const NavItemComponent: React.FC<NavItemComponentProps> = ({
-  item,
-  isActive,
-  onClick,
-}) => {
+const NavItemComponent: React.FC<NavItemComponentProps> = ({ item, isActive, onClick }) => {
   const [isHovered, setIsHovered] = React.useState(false);
 
   return (
@@ -878,11 +901,7 @@ interface SuggestionBoxProps {
   onDismiss: () => void;
 }
 
-const SuggestionBox: React.FC<SuggestionBoxProps> = ({
-  suggestion,
-  onAccept,
-  onDismiss,
-}) => (
+const SuggestionBox: React.FC<SuggestionBoxProps> = ({ suggestion, onAccept, onDismiss }) => (
   <div style={styles.suggestionBox}>
     <p style={styles.suggestionTitle}>
       <span aria-hidden="true">💡</span>
@@ -959,7 +978,11 @@ export const AdaptiveSidebar: React.FC<AdaptiveSidebarProps> = ({
             >
               <span>{qa.navItem.icon}</span>
               <span>{qa.navItem.label}</span>
-              {qa.pinned && <span style={{ fontSize: '10px' }} aria-hidden="true">📌</span>}
+              {qa.pinned && (
+                <span style={{ fontSize: '10px' }} aria-hidden="true">
+                  📌
+                </span>
+              )}
               <button
                 style={styles.removeButton}
                 onClick={(e) => {
@@ -1033,7 +1056,9 @@ export const NextActionSuggestion: React.FC = () => {
   const { predictNextAction, navigateTo } = useAdaptiveNav();
   const predictedItem = predictNextAction();
 
-  if (!predictedItem) return null;
+  if (!predictedItem) {
+    return null;
+  }
 
   return (
     <div
@@ -1050,9 +1075,7 @@ export const NextActionSuggestion: React.FC = () => {
     >
       <span style={{ fontSize: '20px' }}>{predictedItem.icon}</span>
       <div>
-        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
-          Suggested next
-        </p>
+        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>Suggested next</p>
         <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e40af', margin: 0 }}>
           {predictedItem.label}
         </p>
@@ -1068,10 +1091,7 @@ export interface AdaptiveBreadcrumbProps {
   className?: string;
 }
 
-export const AdaptiveBreadcrumb: React.FC<AdaptiveBreadcrumbProps> = ({
-  items,
-  className,
-}) => {
+export const AdaptiveBreadcrumb: React.FC<AdaptiveBreadcrumbProps> = ({ items, className }) => {
   const { navigateTo, getFrequentItems } = useAdaptiveNav();
   const frequentItems = getFrequentItems(3);
 

@@ -69,7 +69,7 @@ function MockFileUploadInput({
           }
         }}
       />
-      
+
       {/* Drop zone - using div with button behavior */}
       <div
         role="button"
@@ -100,20 +100,14 @@ function MockFileUploadInput({
         <p id="upload-instructions" className="mt-2 text-sm text-gray-600">
           <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
         </p>
-        <p className="text-xs text-gray-500 mt-1">
-          Images, PDFs, Documents up to 50MB
-        </p>
+        <p className="text-xs text-gray-500 mt-1">Images, PDFs, Documents up to 50MB</p>
       </div>
 
       {/* File list with thumbnails */}
       {files.length > 0 && (
         <div role="list" aria-label="Uploaded files" className="mt-4 grid grid-cols-2 gap-4">
           {files.map((fileItem) => (
-            <div
-              key={fileItem.id}
-              role="listitem"
-              className="relative group"
-            >
+            <div key={fileItem.id} role="listitem" className="relative group">
               <div className="aspect-square rounded-lg border overflow-hidden bg-gray-50">
                 {fileItem.preview ? (
                   <img
@@ -144,12 +138,8 @@ function MockFileUploadInput({
                   </div>
                 )}
               </div>
-              <p className="mt-1 text-xs text-gray-600 truncate">
-                {fileItem.file.name}
-              </p>
-              <p className="text-xs text-gray-400">
-                {formatFileSize(fileItem.file.size)}
-              </p>
+              <p className="mt-1 text-xs text-gray-600 truncate">{fileItem.file.name}</p>
+              <p className="text-xs text-gray-400">{formatFileSize(fileItem.file.size)}</p>
               {/* Remove button */}
               <button
                 type="button"
@@ -189,8 +179,12 @@ function MockFileUploadInput({
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024) {
+    return bytes + ' B';
+  }
+  if (bytes < 1024 * 1024) {
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
@@ -323,7 +317,7 @@ describe('FileUploadInput Accessibility', () => {
   describe('Error state', () => {
     it('should have no accessibility violations with error', async () => {
       const { container } = render(
-        <MockFileUploadInput error="File too large. Maximum size is 50MB." />
+        <MockFileUploadInput error="File too large. Maximum size is 50MB." />,
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -347,7 +341,7 @@ describe('FileUploadInput Accessibility', () => {
     it('should support Enter key to trigger file selection', () => {
       const onFilesChange = vi.fn();
       render(<MockFileUploadInput onFilesChange={onFilesChange} />);
-      
+
       const dropZone = screen.getByRole('button');
       fireEvent.keyDown(dropZone, { key: 'Enter' });
       // Note: In real implementation, this would trigger file input click
@@ -356,7 +350,7 @@ describe('FileUploadInput Accessibility', () => {
     it('should support Space key to trigger file selection', () => {
       const onFilesChange = vi.fn();
       render(<MockFileUploadInput onFilesChange={onFilesChange} />);
-      
+
       const dropZone = screen.getByRole('button');
       fireEvent.keyDown(dropZone, { key: ' ' });
       // Note: In real implementation, this would trigger file input click

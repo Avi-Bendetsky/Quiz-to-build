@@ -82,11 +82,13 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'email-format',
     name: 'Email Format',
     test: (value, config) => {
-      if (config.type !== 'email') return true;
+      if (config.type !== 'email') {
+        return true;
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(value);
     },
-    message: 'This doesn\'t look like a valid email address',
+    message: "This doesn't look like a valid email address",
     suggestion: 'Check for typos - emails should be like name@example.com',
     severity: 'error',
     autoFixable: false,
@@ -95,8 +97,17 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'email-typo-domain',
     name: 'Common Email Typo',
     test: (value, config) => {
-      if (config.type !== 'email') return true;
-      const commonTypos = ['gmial.com', 'gmal.com', 'gmail.co', 'hotmal.com', 'yaho.com', 'outloo.com'];
+      if (config.type !== 'email') {
+        return true;
+      }
+      const commonTypos = [
+        'gmial.com',
+        'gmal.com',
+        'gmail.co',
+        'hotmal.com',
+        'yaho.com',
+        'outloo.com',
+      ];
       const domain = value.split('@')[1]?.toLowerCase();
       return !commonTypos.includes(domain);
     },
@@ -123,7 +134,9 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'min-length',
     name: 'Minimum Length',
     test: (value, config) => {
-      if (!config.minLength) return true;
+      if (!config.minLength) {
+        return true;
+      }
       return value.length >= config.minLength;
     },
     message: 'This response seems too short',
@@ -135,7 +148,9 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'max-length',
     name: 'Maximum Length',
     test: (value, config) => {
-      if (!config.maxLength) return true;
+      if (!config.maxLength) {
+        return true;
+      }
       return value.length <= config.maxLength;
     },
     message: 'This response is too long',
@@ -150,7 +165,9 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'number-format',
     name: 'Number Format',
     test: (value, config) => {
-      if (config.type !== 'number') return true;
+      if (config.type !== 'number') {
+        return true;
+      }
       return !isNaN(parseFloat(value)) && isFinite(Number(value));
     },
     message: 'This should be a number',
@@ -187,7 +204,9 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'all-caps',
     name: 'All Caps',
     test: (value) => {
-      if (value.length < 10) return true;
+      if (value.length < 10) {
+        return true;
+      }
       return value !== value.toUpperCase();
     },
     message: 'Writing in ALL CAPS can be hard to read',
@@ -202,7 +221,9 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'incomplete-sentence',
     name: 'Incomplete Sentence',
     test: (value, config) => {
-      if (config.type !== 'textarea' || value.length < 20) return true;
+      if (config.type !== 'textarea' || value.length < 20) {
+        return true;
+      }
       // Check if ends with proper punctuation or continues
       return /[.!?]$/.test(value.trim()) || value.length < 50;
     },
@@ -217,13 +238,15 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'vague-answer',
     name: 'Vague Answer Detection',
     test: (value, config) => {
-      if (config.type !== 'textarea') return true;
+      if (config.type !== 'textarea') {
+        return true;
+      }
       const vaguePatterns = [
         /^(yes|no|maybe|depends|n\/a|na|none|nothing|idk|dunno)$/i,
         /^(we do|we have|we use)$/i,
         /^(it|this|that|there)$/i,
       ];
-      return !vaguePatterns.some(p => p.test(value.trim()));
+      return !vaguePatterns.some((p) => p.test(value.trim()));
     },
     message: 'This answer might be too vague',
     suggestion: 'Try providing specific details, examples, or context',
@@ -237,9 +260,13 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     name: 'PII Detection',
     test: (value) => {
       // SSN pattern
-      if (/\b\d{3}-\d{2}-\d{4}\b/.test(value)) return false;
+      if (/\b\d{3}-\d{2}-\d{4}\b/.test(value)) {
+        return false;
+      }
       // Credit card pattern
-      if (/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/.test(value)) return false;
+      if (/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/.test(value)) {
+        return false;
+      }
       return true;
     },
     message: 'Potential sensitive information detected',
@@ -253,7 +280,9 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
     id: 'url-format',
     name: 'URL Format',
     test: (value, config) => {
-      if (!value.includes('http')) return true; // Not a URL
+      if (!value.includes('http')) {
+        return true;
+      } // Not a URL
       try {
         new URL(value);
         return true;
@@ -261,13 +290,17 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
         return false;
       }
     },
-    message: 'This URL doesn\'t appear to be valid',
+    message: "This URL doesn't appear to be valid",
     suggestion: 'URLs should start with http:// or https://',
     severity: 'warning',
     autoFixable: true,
     autoFix: (value) => {
-      if (value.startsWith('www.')) return `https://${value}`;
-      if (!value.startsWith('http')) return `https://${value}`;
+      if (value.startsWith('www.')) {
+        return `https://${value}`;
+      }
+      if (!value.startsWith('http')) {
+        return `https://${value}`;
+      }
       return value;
     },
   },
@@ -282,7 +315,7 @@ class AIPatternAnalyzer {
 
   static async analyzeWithAI(value: string, fieldConfig: FieldConfig): Promise<PredictedError[]> {
     // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     const predictions: PredictedError[] = [];
 
@@ -293,8 +326,12 @@ class AIPatternAnalyzer {
           id: `${fieldConfig.id}-${rule.id}`,
           fieldId: fieldConfig.id,
           fieldName: fieldConfig.name,
-          message: rule.message.replace('{minLength}', String(fieldConfig.minLength)).replace('{maxLength}', String(fieldConfig.maxLength)),
-          suggestion: rule.suggestion.replace('{minLength}', String(fieldConfig.minLength)).replace('{maxLength}', String(fieldConfig.maxLength)),
+          message: rule.message
+            .replace('{minLength}', String(fieldConfig.minLength))
+            .replace('{maxLength}', String(fieldConfig.maxLength)),
+          suggestion: rule.suggestion
+            .replace('{minLength}', String(fieldConfig.minLength))
+            .replace('{maxLength}', String(fieldConfig.maxLength)),
           confidence: 0.9,
           severity: rule.severity,
           rule: rule.name,
@@ -334,7 +371,10 @@ class AIPatternAnalyzer {
     });
   }
 
-  private static async runAIPatternAnalysis(value: string, fieldConfig: FieldConfig): Promise<PredictedError[]> {
+  private static async runAIPatternAnalysis(
+    value: string,
+    fieldConfig: FieldConfig,
+  ): Promise<PredictedError[]> {
     const predictions: PredictedError[] = [];
 
     // Simulate AI pattern detection
@@ -347,7 +387,8 @@ class AIPatternAnalyzer {
         fieldId: fieldConfig.id,
         fieldName: fieldConfig.name,
         message: 'Hidden characters detected (possible copy-paste artifact)',
-        suggestion: 'This text may have been copied from elsewhere and contains invisible characters',
+        suggestion:
+          'This text may have been copied from elsewhere and contains invisible characters',
         confidence: 0.75,
         severity: 'info',
         rule: 'AI Pattern: Hidden Characters',
@@ -366,7 +407,7 @@ class AIPatternAnalyzer {
       /xxx+/i,
       /test\s*text/i,
     ];
-    if (placeholderPatterns.some(p => p.test(value))) {
+    if (placeholderPatterns.some((p) => p.test(value))) {
       predictions.push({
         id: `${fieldConfig.id}-placeholder`,
         fieldId: fieldConfig.id,
@@ -399,7 +440,9 @@ class AIPatternAnalyzer {
   }
 
   static calculateQuality(value: string, predictions: PredictedError[]): number {
-    if (!value) return 0;
+    if (!value) {
+      return 0;
+    }
 
     let quality = 100;
 
@@ -455,65 +498,64 @@ export const PredictiveErrorProvider: React.FC<PredictiveErrorProviderProps> = (
   const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const dismissedPredictions = useRef<Set<string>>(new Set());
 
-  const analyzeInput = useCallback(async (
-    fieldId: string,
-    value: string,
-    config: FieldConfig
-  ): Promise<PredictedError[]> => {
-    // Clear existing debounce timer
-    const existingTimer = debounceTimers.current.get(fieldId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
+  const analyzeInput = useCallback(
+    async (fieldId: string, value: string, config: FieldConfig): Promise<PredictedError[]> => {
+      // Clear existing debounce timer
+      const existingTimer = debounceTimers.current.get(fieldId);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
 
-    return new Promise((resolve) => {
-      const timer = setTimeout(async () => {
-        setIsAnalyzing(true);
+      return new Promise((resolve) => {
+        const timer = setTimeout(async () => {
+          setIsAnalyzing(true);
 
-        try {
-          let fieldPredictions = await AIPatternAnalyzer.analyzeWithAI(value, config);
+          try {
+            let fieldPredictions = await AIPatternAnalyzer.analyzeWithAI(value, config);
 
-          // Filter out dismissed predictions
-          fieldPredictions = fieldPredictions.filter(
-            p => !dismissedPredictions.current.has(p.id)
-          );
+            // Filter out dismissed predictions
+            fieldPredictions = fieldPredictions.filter(
+              (p) => !dismissedPredictions.current.has(p.id),
+            );
 
-          // Calculate quality
-          const quality = AIPatternAnalyzer.calculateQuality(value, fieldPredictions);
+            // Calculate quality
+            const quality = AIPatternAnalyzer.calculateQuality(value, fieldPredictions);
 
-          setPredictions(prev => {
-            const updated = new Map(prev);
-            updated.set(fieldId, fieldPredictions);
-            return updated;
-          });
+            setPredictions((prev) => {
+              const updated = new Map(prev);
+              updated.set(fieldId, fieldPredictions);
+              return updated;
+            });
 
-          setFieldQualities(prev => {
-            const updated = new Map(prev);
-            updated.set(fieldId, quality);
-            return updated;
-          });
+            setFieldQualities((prev) => {
+              const updated = new Map(prev);
+              updated.set(fieldId, quality);
+              return updated;
+            });
 
-          resolve(fieldPredictions);
-        } catch (error) {
-          console.error('Error analyzing input:', error);
-          resolve([]);
-        } finally {
-          setIsAnalyzing(false);
-        }
-      }, debounceMs);
+            resolve(fieldPredictions);
+          } catch (error) {
+            console.error('Error analyzing input:', error);
+            resolve([]);
+          } finally {
+            setIsAnalyzing(false);
+          }
+        }, debounceMs);
 
-      debounceTimers.current.set(fieldId, timer);
-    });
-  }, [debounceMs]);
+        debounceTimers.current.set(fieldId, timer);
+      });
+    },
+    [debounceMs],
+  );
 
   const clearPredictions = useCallback((fieldId?: string) => {
     if (fieldId) {
-      setPredictions(prev => {
+      setPredictions((prev) => {
         const updated = new Map(prev);
         updated.delete(fieldId);
         return updated;
       });
-      setFieldQualities(prev => {
+      setFieldQualities((prev) => {
         const updated = new Map(prev);
         updated.delete(fieldId);
         return updated;
@@ -524,44 +566,56 @@ export const PredictiveErrorProvider: React.FC<PredictiveErrorProviderProps> = (
     }
   }, []);
 
-  const applyAutoFix = useCallback((fieldId: string, errorId: string): string | null => {
-    const fieldPredictions = predictions.get(fieldId);
-    const prediction = fieldPredictions?.find(p => p.id === errorId);
+  const applyAutoFix = useCallback(
+    (fieldId: string, errorId: string): string | null => {
+      const fieldPredictions = predictions.get(fieldId);
+      const prediction = fieldPredictions?.find((p) => p.id === errorId);
 
-    if (prediction?.autoFixable && prediction.autoFixValue) {
-      // Remove the prediction after applying fix
-      setPredictions(prev => {
-        const updated = new Map(prev);
-        const existing = updated.get(fieldId) || [];
-        updated.set(fieldId, existing.filter(p => p.id !== errorId));
-        return updated;
-      });
+      if (prediction?.autoFixable && prediction.autoFixValue) {
+        // Remove the prediction after applying fix
+        setPredictions((prev) => {
+          const updated = new Map(prev);
+          const existing = updated.get(fieldId) || [];
+          updated.set(
+            fieldId,
+            existing.filter((p) => p.id !== errorId),
+          );
+          return updated;
+        });
 
-      return prediction.autoFixValue;
-    }
+        return prediction.autoFixValue;
+      }
 
-    return null;
-  }, [predictions]);
+      return null;
+    },
+    [predictions],
+  );
 
   const dismissPrediction = useCallback((fieldId: string, errorId: string) => {
     dismissedPredictions.current.add(errorId);
 
-    setPredictions(prev => {
+    setPredictions((prev) => {
       const updated = new Map(prev);
       const existing = updated.get(fieldId) || [];
-      updated.set(fieldId, existing.filter(p => p.id !== errorId));
+      updated.set(
+        fieldId,
+        existing.filter((p) => p.id !== errorId),
+      );
       return updated;
     });
   }, []);
 
-  const getFieldQuality = useCallback((fieldId: string): number => {
-    return fieldQualities.get(fieldId) ?? 100;
-  }, [fieldQualities]);
+  const getFieldQuality = useCallback(
+    (fieldId: string): number => {
+      return fieldQualities.get(fieldId) ?? 100;
+    },
+    [fieldQualities],
+  );
 
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
-      debounceTimers.current.forEach(timer => clearTimeout(timer));
+      debounceTimers.current.forEach((timer) => clearTimeout(timer));
     };
   }, []);
 
@@ -576,9 +630,7 @@ export const PredictiveErrorProvider: React.FC<PredictiveErrorProviderProps> = (
   };
 
   return (
-    <PredictiveErrorContext.Provider value={value}>
-      {children}
-    </PredictiveErrorContext.Provider>
+    <PredictiveErrorContext.Provider value={value}>{children}</PredictiveErrorContext.Provider>
   );
 };
 
@@ -745,7 +797,8 @@ export const PredictionsPanel: React.FC<PredictionsPanelProps> = ({
   showQuality = true,
   compact = false,
 }) => {
-  const { predictions, isAnalyzing, applyAutoFix, dismissPrediction, getFieldQuality } = usePredictiveErrors();
+  const { predictions, isAnalyzing, applyAutoFix, dismissPrediction, getFieldQuality } =
+    usePredictiveErrors();
   const fieldPredictions = predictions.get(fieldId) || [];
   const quality = getFieldQuality(fieldId);
 
@@ -755,16 +808,25 @@ export const PredictionsPanel: React.FC<PredictionsPanelProps> = ({
 
   const getIconStyle = (severity: PredictedError['severity']) => {
     switch (severity) {
-      case 'error': return styles.predictionIconError;
-      case 'warning': return styles.predictionIconWarning;
-      case 'info': return styles.predictionIconInfo;
+      case 'error':
+        return styles.predictionIconError;
+      case 'warning':
+        return styles.predictionIconWarning;
+      case 'info':
+        return styles.predictionIconInfo;
     }
   };
 
   const getQualityColor = (q: number) => {
-    if (q >= 80) return '#22c55e';
-    if (q >= 60) return '#eab308';
-    if (q >= 40) return '#f97316';
+    if (q >= 80) {
+      return '#22c55e';
+    }
+    if (q >= 60) {
+      return '#eab308';
+    }
+    if (q >= 40) {
+      return '#f97316';
+    }
     return '#ef4444';
   };
 
@@ -781,19 +843,40 @@ export const PredictionsPanel: React.FC<PredictionsPanelProps> = ({
         <div key={prediction.id} style={styles.predictionItem}>
           <div style={{ ...styles.predictionIcon, ...getIconStyle(prediction.severity) }}>
             {prediction.severity === 'error' && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             )}
             {prediction.severity === 'warning' && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+              >
                 <path d="M12 9v4" />
                 <path d="M12 17h.01" />
               </svg>
             )}
             {prediction.severity === 'info' && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4" />
                 <path d="M12 8h.01" />
@@ -804,7 +887,7 @@ export const PredictionsPanel: React.FC<PredictionsPanelProps> = ({
           <div style={styles.predictionContent}>
             <p style={styles.predictionMessage}>{prediction.message}</p>
             {!compact && <p style={styles.predictionSuggestion}>{prediction.suggestion}</p>}
-            
+
             <div style={styles.predictionActions}>
               {prediction.autoFixable && (
                 <button
@@ -862,43 +945,68 @@ interface InlineWarningProps {
   showFirst?: boolean;
 }
 
-export const InlineWarning: React.FC<InlineWarningProps> = ({
-  fieldId,
-  showFirst = true,
-}) => {
+export const InlineWarning: React.FC<InlineWarningProps> = ({ fieldId, showFirst = true }) => {
   const { predictions } = usePredictiveErrors();
   const fieldPredictions = predictions.get(fieldId) || [];
 
-  if (fieldPredictions.length === 0) return null;
+  if (fieldPredictions.length === 0) {
+    return null;
+  }
 
-  const prediction = showFirst ? fieldPredictions[0] : fieldPredictions.find(p => p.severity === 'error') || fieldPredictions[0];
+  const prediction = showFirst
+    ? fieldPredictions[0]
+    : fieldPredictions.find((p) => p.severity === 'error') || fieldPredictions[0];
 
   const getStyle = (severity: PredictedError['severity']) => {
     switch (severity) {
-      case 'error': return styles.inlineWarningError;
-      case 'warning': return styles.inlineWarningWarning;
-      case 'info': return styles.inlineWarningInfo;
+      case 'error':
+        return styles.inlineWarningError;
+      case 'warning':
+        return styles.inlineWarningWarning;
+      case 'info':
+        return styles.inlineWarningInfo;
     }
   };
 
   return (
     <div style={{ ...styles.inlineWarning, ...getStyle(prediction.severity) }}>
       {prediction.severity === 'error' && (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <circle cx="12" cy="12" r="10" />
           <line x1="15" y1="9" x2="9" y2="15" />
           <line x1="9" y1="9" x2="15" y2="15" />
         </svg>
       )}
       {prediction.severity === 'warning' && (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
           <line x1="12" y1="9" x2="12" y2="13" />
           <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
       )}
       {prediction.severity === 'info' && (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <circle cx="12" cy="12" r="10" />
           <path d="M12 16v-4" />
           <path d="M12 8h.01" />
@@ -928,26 +1036,33 @@ export const usePredictiveInput = (options: UsePredictiveInputOptions) => {
   const { analyzeInput, predictions, getFieldQuality, clearPredictions } = usePredictiveErrors();
   const lastValueRef = useRef<string>('');
 
-  const handleChange = useCallback((value: string) => {
-    if (!options.enabled) return;
-    if (value === lastValueRef.current) return;
-    lastValueRef.current = value;
+  const handleChange = useCallback(
+    (value: string) => {
+      if (!options.enabled) {
+        return;
+      }
+      if (value === lastValueRef.current) {
+        return;
+      }
+      lastValueRef.current = value;
 
-    analyzeInput(options.fieldId, value, {
-      id: options.fieldId,
-      name: options.fieldName,
-      type: options.fieldType,
-      required: options.required,
-      minLength: options.minLength,
-      maxLength: options.maxLength,
-      customRules: options.customRules,
-    });
-  }, [analyzeInput, options]);
+      analyzeInput(options.fieldId, value, {
+        id: options.fieldId,
+        name: options.fieldName,
+        type: options.fieldType,
+        required: options.required,
+        minLength: options.minLength,
+        maxLength: options.maxLength,
+        customRules: options.customRules,
+      });
+    },
+    [analyzeInput, options],
+  );
 
   const fieldPredictions = predictions.get(options.fieldId) || [];
   const quality = getFieldQuality(options.fieldId);
-  const hasErrors = fieldPredictions.some(p => p.severity === 'error');
-  const hasWarnings = fieldPredictions.some(p => p.severity === 'warning');
+  const hasErrors = fieldPredictions.some((p) => p.severity === 'error');
+  const hasWarnings = fieldPredictions.some((p) => p.severity === 'warning');
 
   // Listen for auto-fix events
   useEffect(() => {

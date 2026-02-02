@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsInt,
-  MaxLength,
-  Min,
-  IsObject,
-} from 'class-validator';
+import { IsString, IsOptional, IsInt, MaxLength, Min, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSectionDto {
@@ -31,7 +24,10 @@ export class CreateSectionDto {
   @Min(1)
   estimatedTime?: number;
 
-  @ApiPropertyOptional({ example: 0, description: 'Order position (auto-calculated if not provided)' })
+  @ApiPropertyOptional({
+    example: 0,
+    description: 'Order position (auto-calculated if not provided)',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -42,4 +38,3 @@ export class CreateSectionDto {
   @IsObject()
   metadata?: Record<string, unknown>;
 }
-

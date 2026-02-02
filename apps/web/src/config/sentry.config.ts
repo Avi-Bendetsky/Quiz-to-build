@@ -1,6 +1,6 @@
 /**
  * Sentry Configuration for Quiz2Biz Web App
- * 
+ *
  * Provides error tracking and performance monitoring for the React frontend.
  */
 
@@ -25,8 +25,12 @@ export function getSentryConfig(): SentryWebConfig {
     environment: import.meta.env.VITE_NODE_ENV || 'development',
     release: import.meta.env.VITE_SENTRY_RELEASE || 'quiz2biz-web@1.0.0',
     tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.1'),
-    replaysSessionSampleRate: parseFloat(import.meta.env.VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE || '0.1'),
-    replaysOnErrorSampleRate: parseFloat(import.meta.env.VITE_SENTRY_REPLAYS_ERROR_SAMPLE_RATE || '1.0'),
+    replaysSessionSampleRate: parseFloat(
+      import.meta.env.VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE || '0.1',
+    ),
+    replaysOnErrorSampleRate: parseFloat(
+      import.meta.env.VITE_SENTRY_REPLAYS_ERROR_SAMPLE_RATE || '1.0',
+    ),
     debug: import.meta.env.VITE_SENTRY_DEBUG === 'true',
   };
 }
@@ -37,29 +41,29 @@ export function getSentryConfig(): SentryWebConfig {
  */
 export function initializeSentry(): void {
   const config = getSentryConfig();
-  
+
   // Only initialize if DSN is provided
   if (!config.dsn) {
     console.log('Sentry DSN not configured, skipping initialization');
     return;
   }
-  
+
   Sentry.init({
     dsn: config.dsn,
     environment: config.environment,
     release: config.release,
-    
+
     // Performance Monitoring
     tracesSampleRate: config.tracesSampleRate,
-    
+
     // Session Replay
     replaysSessionSampleRate: config.replaysSessionSampleRate,
     replaysOnErrorSampleRate: config.replaysOnErrorSampleRate,
-    
+
     integrations: [
       // Browser tracing for performance
       Sentry.browserTracingIntegration(),
-      
+
       // Session replay for debugging
       Sentry.replayIntegration({
         maskAllText: false,
@@ -68,64 +72,63 @@ export function initializeSentry(): void {
         maskAllInputs: true,
       }),
     ],
-    
+
     // Debug mode for development
     debug: config.debug,
-    
+
     // Filter sensitive data
     beforeSend(event) {
       // Remove sensitive data from user info
       if (event.user) {
         delete event.user.ip_address;
       }
-      
+
       // Filter sensitive breadcrumbs
       if (event.breadcrumbs) {
-        event.breadcrumbs = event.breadcrumbs.filter(breadcrumb => {
+        event.breadcrumbs = event.breadcrumbs.filter((breadcrumb) => {
           // Filter out local storage access
-          if (breadcrumb.category === 'console' && 
-              breadcrumb.message?.includes('localStorage')) {
+          if (breadcrumb.category === 'console' && breadcrumb.message?.includes('localStorage')) {
             return false;
           }
           return true;
         });
       }
-      
+
       return event;
     },
-    
+
     // Ignore certain errors
     ignoreErrors: [
       // Browser extensions
       'top.GLOBALS',
       'ResizeObserver loop',
       'Non-Error promise rejection',
-      
+
       // Network errors that are expected
       'Network request failed',
       'Failed to fetch',
       'Load failed',
-      
+
       // User-initiated navigation
       'Abort',
       'ChunkLoadError',
     ],
-    
+
     // Deny URLs (third-party scripts)
     denyUrls: [
       // Chrome extensions
       /extensions\//i,
       /^chrome:\/\//i,
       /^chrome-extension:\/\//i,
-      
+
       // Firefox extensions
       /^moz-extension:\/\//i,
-      
+
       // Safari extensions
       /^safari-web-extension:\/\//i,
     ],
   });
-  
+
   console.log(`Sentry initialized for environment: ${config.environment}`);
 }
 
@@ -169,7 +172,7 @@ export function addBreadcrumb(
   category: string,
   message: string,
   data?: Record<string, unknown>,
-  level: Sentry.SeverityLevel = 'info'
+  level: Sentry.SeverityLevel = 'info',
 ): void {
   Sentry.addBreadcrumb({
     category,

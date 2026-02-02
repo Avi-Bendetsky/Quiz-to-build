@@ -44,7 +44,10 @@ export function DocumentsPage() {
         {documents.length > 0 ? (
           <ul className="divide-y divide-gray-200" role="list">
             {documents.map((doc) => (
-              <li key={doc.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+              <li
+                key={doc.id}
+                className="px-6 py-4 flex items-center justify-between hover:bg-gray-50"
+              >
                 <div className="flex items-center space-x-4">
                   <div className="bg-blue-100 rounded-lg p-2">
                     <FileText className="h-6 w-6 text-blue-600" aria-hidden="true" />
@@ -91,8 +94,8 @@ export function DocumentsPage() {
       <div className="flex items-center px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg">
         <AlertCircle className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0" aria-hidden="true" />
         <span className="text-yellow-700 text-sm">
-          Document generation will be fully functional after completing assessments. 
-          These are sample documents for preview.
+          Document generation will be fully functional after completing assessments. These are
+          sample documents for preview.
         </span>
       </div>
     </div>

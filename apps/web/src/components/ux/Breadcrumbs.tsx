@@ -1,9 +1,9 @@
 /**
  * Breadcrumb Navigation Component
- * 
+ *
  * Shows hierarchical navigation path.
  * Example: Dashboard > Questionnaires > Security Assessment
- * 
+ *
  * Nielsen Heuristic #3: User Control and Freedom
  */
 
@@ -87,7 +87,11 @@ export const DEFAULT_ROUTE_MAPPINGS: RouteMapping[] = [
       { label: 'Home', href: '/', icon: '🏠' },
       { label: 'Dashboard', href: '/dashboard', icon: '📊' },
       { label: 'Questionnaires', href: '/questionnaires', icon: '📝' },
-      { label: params.assessmentName || 'Assessment', href: `/questionnaires/${params.assessmentId}`, icon: '📋' },
+      {
+        label: params.assessmentName || 'Assessment',
+        href: `/questionnaires/${params.assessmentId}`,
+        icon: '📋',
+      },
       { label: `Question ${params.questionNumber || ''}`, isCurrent: true, icon: '❓' },
     ],
   },
@@ -237,7 +241,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   className = '',
 }) => {
   const context = useContext(BreadcrumbContext);
-  
+
   const items = propItems || context?.items || [];
   const config: BreadcrumbConfig = {
     ...(context?.config || {}),
@@ -253,18 +257,18 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
 
   // Truncate if needed
   const displayItems = useMemo(() => {
-    if (items.length <= maxItems) return items;
+    if (items.length <= maxItems) {
+      return items;
+    }
 
     const first = items.slice(0, 1);
     const last = items.slice(-2);
-    return [
-      ...first,
-      { label: '...', title: `${items.length - 3} more items` },
-      ...last,
-    ];
+    return [...first, { label: '...', title: `${items.length - 3} more items` }, ...last];
   }, [items, maxItems]);
 
-  if (displayItems.length === 0) return null;
+  if (displayItems.length === 0) {
+    return null;
+  }
 
   return (
     <nav aria-label={ariaLabel} className={`breadcrumbs ${className}`}>
@@ -282,12 +286,8 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
                 {separator}
               </span>
             )}
-            
-            <BreadcrumbLink
-              item={item}
-              showIcon={showIcons}
-              position={index + 1}
-            />
+
+            <BreadcrumbLink item={item} showIcon={showIcons} position={index + 1} />
           </li>
         ))}
       </ol>
@@ -439,12 +439,7 @@ const BreadcrumbLink: React.FC<BreadcrumbLinkProps> = ({ item, showIcon, positio
 
   if (item.onClick) {
     return (
-      <button
-        type="button"
-        className={className}
-        onClick={item.onClick}
-        title={item.title}
-      >
+      <button type="button" className={className} onClick={item.onClick} title={item.title}>
         {content}
         {meta}
       </button>
@@ -453,12 +448,7 @@ const BreadcrumbLink: React.FC<BreadcrumbLinkProps> = ({ item, showIcon, positio
 
   if (item.href) {
     return (
-      <a 
-        href={item.href} 
-        className={className} 
-        title={item.title}
-        itemProp="item"
-      >
+      <a href={item.href} className={className} title={item.title} itemProp="item">
         {content}
         {meta}
       </a>
@@ -479,19 +469,19 @@ const BreadcrumbLink: React.FC<BreadcrumbLinkProps> = ({ item, showIcon, positio
 
 export function useSetBreadcrumbs() {
   const { setItems } = useBreadcrumbs();
-  
+
   const setBreadcrumbs = useCallback(
     (items: BreadcrumbItem[]) => {
       setItems(items);
     },
-    [setItems]
+    [setItems],
   );
 
   const addBreadcrumb = useCallback(
     (item: BreadcrumbItem) => {
       setItems((prev: BreadcrumbItem[]) => [...prev, item]);
     },
-    [setItems]
+    [setItems],
   );
 
   const clearBreadcrumbs = useCallback(() => {
@@ -569,11 +559,7 @@ export const StandaloneBreadcrumbs: React.FC<StandaloneBreadcrumbsProps> = ({
   className = '',
 }) => {
   return (
-    <Breadcrumbs
-      items={items}
-      config={{ separator, showIcons, maxItems }}
-      className={className}
-    />
+    <Breadcrumbs items={items} config={{ separator, showIcons, maxItems }} className={className} />
   );
 };
 

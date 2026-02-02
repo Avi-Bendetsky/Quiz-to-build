@@ -44,8 +44,7 @@ export const HISTORICAL_BUG_CATALOG: HistoricalBug[] = [
     title: 'Session Service Null Pointer Exception',
     description:
       'SessionService.getOrCreateSession() threw null pointer when accessing user.id before null check',
-    rootCause:
-      'Premature access to nullable user object properties before defensive null checking',
+    rootCause: 'Premature access to nullable user object properties before defensive null checking',
     fix: 'Added early return with proper null check before accessing user properties',
     affectedFiles: ['apps/api/src/modules/session/session.service.ts'],
     sprintFixed: 18,
@@ -66,8 +65,7 @@ export const HISTORICAL_BUG_CATALOG: HistoricalBug[] = [
     title: 'Web Client Duplicate Import Statements',
     description:
       'apps/web/src/lib/client.ts had duplicate import statements causing module resolution errors',
-    rootCause:
-      'Manual file editing introduced duplicate lines during merge conflict resolution',
+    rootCause: 'Manual file editing introduced duplicate lines during merge conflict resolution',
     fix: 'Removed duplicate import statements, added ESLint rule for duplicate imports',
     affectedFiles: ['apps/web/src/lib/client.ts'],
     sprintFixed: 18,
@@ -88,8 +86,7 @@ export const HISTORICAL_BUG_CATALOG: HistoricalBug[] = [
     title: 'Admin Questionnaire Shallow Copy Mutation',
     description:
       'AdminQuestionnaireService modified original questionnaire object when creating duplicates',
-    rootCause:
-      'Used spread operator for shallow copy instead of deep clone for nested objects',
+    rootCause: 'Used spread operator for shallow copy instead of deep clone for nested objects',
     fix: 'Implemented proper deep clone using structuredClone() for nested question arrays',
     affectedFiles: ['apps/api/src/modules/admin/services/admin-questionnaire.service.ts'],
     sprintFixed: 18,
@@ -177,10 +174,8 @@ export const HISTORICAL_BUG_CATALOG: HistoricalBug[] = [
   {
     id: 'BUG-007',
     title: 'File Upload Validation Only Client-Side',
-    description:
-      'Large file uploads could bypass client-side validation and crash server',
-    rootCause:
-      'File size validation was only implemented in frontend, not in backend',
+    description: 'Large file uploads could bypass client-side validation and crash server',
+    rootCause: 'File size validation was only implemented in frontend, not in backend',
     fix: 'Added server-side file size validation with multer limits and custom middleware',
     affectedFiles: [
       'apps/api/src/modules/evidence-registry/evidence-registry.controller.ts',
@@ -224,10 +219,8 @@ export const HISTORICAL_BUG_CATALOG: HistoricalBug[] = [
   {
     id: 'BUG-009',
     title: 'JWT Token Expiry Calculation Off-By-One',
-    description:
-      'JWT tokens were being rejected 1 second before actual expiry due to rounding',
-    rootCause:
-      'Token expiry used Math.floor() while verification used Math.ceil() for timestamp',
+    description: 'JWT tokens were being rejected 1 second before actual expiry due to rounding',
+    rootCause: 'Token expiry used Math.floor() while verification used Math.ceil() for timestamp',
     fix: 'Standardized timestamp handling to use seconds with consistent rounding',
     affectedFiles: [
       'apps/api/src/modules/auth/auth.service.ts',
@@ -251,8 +244,7 @@ export const HISTORICAL_BUG_CATALOG: HistoricalBug[] = [
     title: 'API Response Missing Required Fields',
     description:
       'Questionnaire API response was missing sectionProgress field expected by frontend',
-    rootCause:
-      'API response DTO was updated but service implementation was not changed',
+    rootCause: 'API response DTO was updated but service implementation was not changed',
     fix: 'Added sectionProgress calculation to service and updated response mapper',
     affectedFiles: [
       'apps/api/src/modules/questionnaire/questionnaire.service.ts',
@@ -294,7 +286,7 @@ export function getBugsBySeverity(severity: HistoricalBug['severity']): Historic
  */
 export function getBugsAffectingFile(filePath: string): HistoricalBug[] {
   return HISTORICAL_BUG_CATALOG.filter((bug) =>
-    bug.affectedFiles.some((f) => f.includes(filePath) || filePath.includes(f))
+    bug.affectedFiles.some((f) => f.includes(filePath) || filePath.includes(f)),
   );
 }
 
@@ -317,8 +309,8 @@ export function generateRegressionSummary(): RegressionSummary {
     'async-race-condition': 0,
     'react-hook': 0,
     'api-contract': 0,
-    'security': 0,
-    'performance': 0,
+    security: 0,
+    performance: 0,
     'logic-error': 0,
   };
 
@@ -339,9 +331,7 @@ export function generateRegressionSummary(): RegressionSummary {
     categoryCounts,
     severityCounts,
     testFiles: HISTORICAL_BUG_CATALOG.map((b) => b.testFile),
-    preventionMeasures: [
-      ...new Set(HISTORICAL_BUG_CATALOG.flatMap((b) => b.preventionMeasures)),
-    ],
+    preventionMeasures: [...new Set(HISTORICAL_BUG_CATALOG.flatMap((b) => b.preventionMeasures))],
   };
 }
 

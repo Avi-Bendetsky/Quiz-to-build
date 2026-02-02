@@ -6,112 +6,115 @@ import { MainLayout } from './MainLayout';
 
 // Mock the auth store
 vi.mock('../../stores/auth', () => ({
-    useAuthStore: () => ({
-        user: {
-            id: 'user-1',
-            name: 'Test User',
-            email: 'test@example.com',
-        },
-        logout: vi.fn(),
-    }),
+  useAuthStore: () => ({
+    user: {
+      id: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+    },
+    logout: vi.fn(),
+  }),
 }));
 
 const renderMainLayout = () => {
-    return render(
-        <MemoryRouter initialEntries={['/dashboard']}>
-            <Routes>
-                <Route path="/*" element={<MainLayout />}>
-                    <Route path="dashboard" element={<div>Dashboard Content</div>} />
-                </Route>
-            </Routes>
-        </MemoryRouter>
-    );
+  return render(
+    <MemoryRouter initialEntries={['/dashboard']}>
+      <Routes>
+        <Route path="/*" element={<MainLayout />}>
+          <Route path="dashboard" element={<div>Dashboard Content</div>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+  );
 };
 
 describe('MainLayout', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders navigation menu', () => {
-        renderMainLayout();
+  it('renders navigation menu', () => {
+    renderMainLayout();
 
-        expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /questionnaires/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /documents/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
-    });
+    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /questionnaires/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /documents/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
+  });
 
-    it('displays user email', () => {
-        renderMainLayout();
+  it('displays user email', () => {
+    renderMainLayout();
 
-        expect(screen.getByText('test@example.com')).toBeInTheDocument();
-    });
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+  });
 
-    it('displays user name', () => {
-        renderMainLayout();
+  it('displays user name', () => {
+    renderMainLayout();
 
-        expect(screen.getByText('Test User')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Test User')).toBeInTheDocument();
+  });
 
-    it('renders logo link', () => {
-        renderMainLayout();
+  it('renders logo link', () => {
+    renderMainLayout();
 
-        expect(screen.getByText('Quiz2Biz')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Quiz2Biz')).toBeInTheDocument();
+  });
 
-    it('renders outlet content', () => {
-        renderMainLayout();
+  it('renders outlet content', () => {
+    renderMainLayout();
 
-        expect(screen.getByText('Dashboard Content')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Dashboard Content')).toBeInTheDocument();
+  });
 
-    it('displays sign out button', () => {
-        renderMainLayout();
+  it('displays sign out button', () => {
+    renderMainLayout();
 
-        expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
-    });
+    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
+  });
 
-    it('toggles sidebar on mobile menu button click', async () => {
-        const user = userEvent.setup();
-        renderMainLayout();
+  it('toggles sidebar on mobile menu button click', async () => {
+    const user = userEvent.setup();
+    renderMainLayout();
 
-        // The Menu button should be present
-        const menuButtons = screen.getAllByRole('button');
-        expect(menuButtons.length).toBeGreaterThan(0);
-    });
+    // The Menu button should be present
+    const menuButtons = screen.getAllByRole('button');
+    expect(menuButtons.length).toBeGreaterThan(0);
+  });
 
-    it('navigates to dashboard from logo', () => {
-        renderMainLayout();
+  it('navigates to dashboard from logo', () => {
+    renderMainLayout();
 
-        const logoLink = screen.getByRole('link', { name: /quiz2biz/i });
-        expect(logoLink).toHaveAttribute('href', '/dashboard');
-    });
+    const logoLink = screen.getByRole('link', { name: /quiz2biz/i });
+    expect(logoLink).toHaveAttribute('href', '/dashboard');
+  });
 
-    it('renders navigation links with correct hrefs', () => {
-        renderMainLayout();
+  it('renders navigation links with correct hrefs', () => {
+    renderMainLayout();
 
-        expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard');
-        expect(screen.getByRole('link', { name: /questionnaires/i })).toHaveAttribute('href', '/questionnaires');
-        expect(screen.getByRole('link', { name: /documents/i })).toHaveAttribute('href', '/documents');
-        expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('href', '/settings');
-    });
+    expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name: /questionnaires/i })).toHaveAttribute(
+      'href',
+      '/questionnaires',
+    );
+    expect(screen.getByRole('link', { name: /documents/i })).toHaveAttribute('href', '/documents');
+    expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('href', '/settings');
+  });
 
-    it('has accessible navigation landmark', () => {
-        renderMainLayout();
+  it('has accessible navigation landmark', () => {
+    renderMainLayout();
 
-        expect(screen.getByRole('navigation')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('navigation')).toBeInTheDocument();
+  });
 
-    it('has accessible main content landmark', () => {
-        renderMainLayout();
+  it('has accessible main content landmark', () => {
+    renderMainLayout();
 
-        expect(screen.getByRole('main')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('main')).toBeInTheDocument();
+  });
 
-    it('has accessible banner landmark', () => {
-        renderMainLayout();
+  it('has accessible banner landmark', () => {
+    renderMainLayout();
 
-        expect(screen.getByRole('banner')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+  });
 });

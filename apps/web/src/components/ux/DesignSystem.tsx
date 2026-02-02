@@ -1,7 +1,7 @@
 /**
  * Design System Documentation Component
  * Sprint 33: UX Polish & Enhancements
- * 
+ *
  * Nielsen Heuristic: Consistency and Standards
  * - Unified design tokens and spacing scale
  * - Color palette documentation
@@ -232,11 +232,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     tokens: designTokens,
   };
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
 // ============================================================================
@@ -249,11 +245,7 @@ export interface ColorSwatchProps {
   textColor?: string;
 }
 
-export const ColorSwatch: React.FC<ColorSwatchProps> = ({
-  name,
-  color,
-  textColor = '#000',
-}) => (
+export const ColorSwatch: React.FC<ColorSwatchProps> = ({ name, color, textColor = '#000' }) => (
   <div style={styles.colorSwatch}>
     <div
       style={{
@@ -273,10 +265,7 @@ export interface ColorPaletteDisplayProps {
   colors: Record<string | number, string>;
 }
 
-export const ColorPaletteDisplay: React.FC<ColorPaletteDisplayProps> = ({
-  name,
-  colors,
-}) => (
+export const ColorPaletteDisplay: React.FC<ColorPaletteDisplayProps> = ({ name, colors }) => (
   <div style={styles.colorPalette}>
     <h4 style={styles.paletteName}>{name}</h4>
     <div style={styles.paletteGrid}>
@@ -324,14 +313,12 @@ export const TypographyScale: React.FC = () => (
     <p style={styles.sectionDesc}>
       Consistent font sizes and weights for readable, accessible text.
     </p>
-    
+
     <h4 style={styles.subsectionTitle}>Font Sizes</h4>
     <div style={styles.typographyList}>
       {Object.entries(TYPOGRAPHY.fontSize).map(([key, value]) => (
         <div key={key} style={styles.typographyItem}>
-          <span style={{ ...styles.typographySample, fontSize: value }}>
-            The quick brown fox
-          </span>
+          <span style={{ ...styles.typographySample, fontSize: value }}>The quick brown fox</span>
           <span style={styles.typographyMeta}>
             {key}: {value}
           </span>
@@ -343,9 +330,7 @@ export const TypographyScale: React.FC = () => (
     <div style={styles.typographyList}>
       {Object.entries(TYPOGRAPHY.fontWeight).map(([key, value]) => (
         <div key={key} style={styles.typographyItem}>
-          <span style={{ ...styles.typographySample, fontWeight: value }}>
-            The quick brown fox
-          </span>
+          <span style={{ ...styles.typographySample, fontWeight: value }}>The quick brown fox</span>
           <span style={styles.typographyMeta}>
             {key}: {value}
           </span>
@@ -488,7 +473,7 @@ export const Button: React.FC<ButtonProps> = ({
 export const ButtonShowcase: React.FC = () => (
   <div style={styles.section}>
     <h3 style={styles.sectionTitle}>Buttons</h3>
-    
+
     <h4 style={styles.subsectionTitle}>Variants</h4>
     <div style={styles.buttonRow}>
       <Button variant="primary">Primary</Button>
@@ -516,7 +501,9 @@ export const ButtonShowcase: React.FC = () => (
     <div style={styles.buttonRow}>
       <Button leftIcon="➕">Add Item</Button>
       <Button rightIcon="→">Next</Button>
-      <Button leftIcon="💾" rightIcon="✓">Save</Button>
+      <Button leftIcon="💾" rightIcon="✓">
+        Save
+      </Button>
     </div>
   </div>
 );
@@ -567,7 +554,9 @@ export const Input: React.FC<InputProps> = ({
           aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
           {...props}
         />
-        {rightAddon && <span style={{ ...styles.inputAddon, right: '12px', left: 'auto' }}>{rightAddon}</span>}
+        {rightAddon && (
+          <span style={{ ...styles.inputAddon, right: '12px', left: 'auto' }}>{rightAddon}</span>
+        )}
       </div>
       {error && (
         <span id={`${inputId}-error`} style={styles.inputErrorText} role="alert">
@@ -586,7 +575,7 @@ export const Input: React.FC<InputProps> = ({
 export const InputShowcase: React.FC = () => (
   <div style={styles.section}>
     <h3 style={styles.sectionTitle}>Inputs</h3>
-    
+
     <div style={styles.inputGrid}>
       <Input label="Default" placeholder="Enter text..." />
       <Input label="With Hint" placeholder="Enter email..." hint="We'll never share your email" />
@@ -608,11 +597,7 @@ export interface BadgeProps {
   size?: 'sm' | 'md';
 }
 
-export const Badge: React.FC<BadgeProps> = ({
-  children,
-  variant = 'default',
-  size = 'md',
-}) => {
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', size = 'md' }) => {
   const variantStyles: Record<string, React.CSSProperties> = {
     default: {
       backgroundColor: COLOR_PALETTE.neutral[100],
@@ -730,7 +715,9 @@ export const CardShowcase: React.FC = () => (
         title="Card with Footer"
         footer={
           <div style={styles.cardFooterActions}>
-            <Button variant="ghost" size="sm">Cancel</Button>
+            <Button variant="ghost" size="sm">
+              Cancel
+            </Button>
             <Button size="sm">Save</Button>
           </div>
         }
@@ -755,12 +742,7 @@ export interface AlertProps {
   onClose?: () => void;
 }
 
-export const Alert: React.FC<AlertProps> = ({
-  children,
-  variant = 'info',
-  title,
-  onClose,
-}) => {
+export const Alert: React.FC<AlertProps> = ({ children, variant = 'info', title, onClose }) => {
   const variantStyles: Record<string, { bg: string; border: string; icon: string }> = {
     info: {
       bg: COLOR_PALETTE.primary[50],
@@ -801,11 +783,7 @@ export const Alert: React.FC<AlertProps> = ({
         <div>{children}</div>
       </div>
       {onClose && (
-        <button
-          onClick={onClose}
-          style={styles.alertClose}
-          aria-label="Dismiss alert"
-        >
+        <button onClick={onClose} style={styles.alertClose} aria-label="Dismiss alert">
           ✕
         </button>
       )}
@@ -859,9 +837,7 @@ export const DesignSystemViewer: React.FC<DesignSystemViewerProps> = ({
     <div style={styles.viewer}>
       <header style={styles.viewerHeader}>
         <h1 style={styles.viewerTitle}>Design System</h1>
-        <p style={styles.viewerDesc}>
-          Quiz2Biz unified design tokens and component library
-        </p>
+        <p style={styles.viewerDesc}>Quiz2Biz unified design tokens and component library</p>
       </header>
 
       <nav style={styles.viewerNav}>

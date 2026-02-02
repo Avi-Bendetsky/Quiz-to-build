@@ -1,20 +1,13 @@
 /**
  * AIErrorDiagnosis.tsx - AI-Powered Error Classification & Resolution
  * Sprint 36 Task 2: ML error classification, suggest fixes, auto-apply safe fixes
- * 
+ *
  * Nielsen Heuristics Addressed:
  * - #9 Help users recover: Intelligent error diagnosis
  * - #10 Help and documentation: Contextual fix suggestions
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-} from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 // ============================================================================
 // Types & Interfaces
@@ -137,7 +130,7 @@ export interface AIErrorDiagnosisContextValue {
   patterns: ErrorPattern[];
   isLearning: boolean;
   autoFixEnabled: boolean;
-  
+
   // Actions
   diagnoseError: (error: Error, context?: ErrorContext) => Promise<ClassifiedError>;
   applyFix: (errorId: string, fixId: string) => Promise<boolean>;
@@ -164,195 +157,196 @@ export interface ErrorStats {
 // Error Patterns Database
 // ============================================================================
 
-const DEFAULT_ERROR_PATTERNS: Omit<ErrorPattern, 'occurrences' | 'lastSeen' | 'successfulFixes'>[] = [
-  {
-    id: 'network_offline',
-    pattern: /network|offline|internet|connection|ERR_NETWORK/i,
-    category: 'network',
-    severity: 'medium',
-    suggestedFixes: [
-      {
-        type: 'retry',
-        description: 'Check your internet connection and try again',
-        confidence: 0.9,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.7,
-        instructions: ['Check WiFi/network connection', 'Wait a moment and retry'],
-      },
-    ],
-  },
-  {
-    id: 'auth_unauthorized',
-    pattern: /401|unauthorized|unauthenticated|not logged in/i,
-    category: 'authentication',
-    severity: 'high',
-    suggestedFixes: [
-      {
-        type: 'refresh_token',
-        description: 'Your session may have expired. Refreshing authentication...',
-        confidence: 0.85,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.8,
-      },
-      {
-        type: 'login',
-        description: 'Please log in again',
-        confidence: 0.75,
-        autoApplicable: false,
-        priority: 2,
-        estimatedSuccess: 0.95,
-      },
-    ],
-  },
-  {
-    id: 'auth_forbidden',
-    pattern: /403|forbidden|access denied|permission/i,
-    category: 'authorization',
-    severity: 'high',
-    suggestedFixes: [
-      {
-        type: 'contact_support',
-        description: 'You don\'t have permission for this action. Contact your administrator.',
-        confidence: 0.8,
-        autoApplicable: false,
-        priority: 1,
-        estimatedSuccess: 0.6,
-      },
-      {
-        type: 'upgrade_plan',
-        description: 'This feature may require a higher subscription tier',
-        confidence: 0.5,
-        autoApplicable: false,
-        priority: 2,
-        estimatedSuccess: 0.7,
-      },
-    ],
-  },
-  {
-    id: 'validation_error',
-    pattern: /400|validation|invalid|required|format/i,
-    category: 'validation',
-    severity: 'low',
-    suggestedFixes: [
-      {
-        type: 'check_input',
-        description: 'Please check your input and correct any errors',
-        confidence: 0.9,
-        autoApplicable: false,
-        priority: 1,
-        estimatedSuccess: 0.85,
-        instructions: ['Review highlighted fields', 'Ensure all required fields are filled'],
-      },
-    ],
-  },
-  {
-    id: 'server_error',
-    pattern: /500|internal server|server error|unexpected/i,
-    category: 'server',
-    severity: 'high',
-    suggestedFixes: [
-      {
-        type: 'retry',
-        description: 'Server encountered an error. Trying again...',
-        confidence: 0.7,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.5,
-      },
-      {
-        type: 'contact_support',
-        description: 'If the problem persists, contact support',
-        confidence: 0.6,
-        autoApplicable: false,
-        priority: 2,
-        estimatedSuccess: 0.8,
-      },
-    ],
-  },
-  {
-    id: 'timeout',
-    pattern: /timeout|timed out|took too long|ETIMEDOUT/i,
-    category: 'timeout',
-    severity: 'medium',
-    suggestedFixes: [
-      {
-        type: 'wait_and_retry',
-        description: 'Request timed out. Waiting and retrying...',
-        confidence: 0.85,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.65,
-      },
-    ],
-  },
-  {
-    id: 'rate_limit',
-    pattern: /429|rate limit|too many requests|throttl/i,
-    category: 'rate_limit',
-    severity: 'medium',
-    suggestedFixes: [
-      {
-        type: 'wait_and_retry',
-        description: 'Too many requests. Please wait a moment...',
-        confidence: 0.95,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.9,
-        instructions: ['Wait 30 seconds before trying again'],
-      },
-    ],
-  },
-  {
-    id: 'not_found',
-    pattern: /404|not found|does not exist|no longer available/i,
-    category: 'resource_not_found',
-    severity: 'medium',
-    suggestedFixes: [
-      {
-        type: 'reload_page',
-        description: 'The requested resource was not found. Refreshing...',
-        confidence: 0.7,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.4,
-      },
-      {
-        type: 'manual',
-        description: 'Navigate to the resource manually',
-        confidence: 0.6,
-        autoApplicable: false,
-        priority: 2,
-        estimatedSuccess: 0.7,
-      },
-    ],
-  },
-  {
-    id: 'conflict',
-    pattern: /409|conflict|already exists|duplicate/i,
-    category: 'conflict',
-    severity: 'medium',
-    suggestedFixes: [
-      {
-        type: 'reload_page',
-        description: 'Data conflict detected. Refreshing to get latest version...',
-        confidence: 0.8,
-        autoApplicable: true,
-        priority: 1,
-        estimatedSuccess: 0.75,
-      },
-      {
-        type: 'manual',
-        description: 'Review conflicting data and resolve manually',
-        confidence: 0.7,
-        autoApplicable: false,
-        priority: 2,
-        estimatedSuccess: 0.85,
-      },
-    ],
-  },
-];
+const DEFAULT_ERROR_PATTERNS: Omit<ErrorPattern, 'occurrences' | 'lastSeen' | 'successfulFixes'>[] =
+  [
+    {
+      id: 'network_offline',
+      pattern: /network|offline|internet|connection|ERR_NETWORK/i,
+      category: 'network',
+      severity: 'medium',
+      suggestedFixes: [
+        {
+          type: 'retry',
+          description: 'Check your internet connection and try again',
+          confidence: 0.9,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.7,
+          instructions: ['Check WiFi/network connection', 'Wait a moment and retry'],
+        },
+      ],
+    },
+    {
+      id: 'auth_unauthorized',
+      pattern: /401|unauthorized|unauthenticated|not logged in/i,
+      category: 'authentication',
+      severity: 'high',
+      suggestedFixes: [
+        {
+          type: 'refresh_token',
+          description: 'Your session may have expired. Refreshing authentication...',
+          confidence: 0.85,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.8,
+        },
+        {
+          type: 'login',
+          description: 'Please log in again',
+          confidence: 0.75,
+          autoApplicable: false,
+          priority: 2,
+          estimatedSuccess: 0.95,
+        },
+      ],
+    },
+    {
+      id: 'auth_forbidden',
+      pattern: /403|forbidden|access denied|permission/i,
+      category: 'authorization',
+      severity: 'high',
+      suggestedFixes: [
+        {
+          type: 'contact_support',
+          description: "You don't have permission for this action. Contact your administrator.",
+          confidence: 0.8,
+          autoApplicable: false,
+          priority: 1,
+          estimatedSuccess: 0.6,
+        },
+        {
+          type: 'upgrade_plan',
+          description: 'This feature may require a higher subscription tier',
+          confidence: 0.5,
+          autoApplicable: false,
+          priority: 2,
+          estimatedSuccess: 0.7,
+        },
+      ],
+    },
+    {
+      id: 'validation_error',
+      pattern: /400|validation|invalid|required|format/i,
+      category: 'validation',
+      severity: 'low',
+      suggestedFixes: [
+        {
+          type: 'check_input',
+          description: 'Please check your input and correct any errors',
+          confidence: 0.9,
+          autoApplicable: false,
+          priority: 1,
+          estimatedSuccess: 0.85,
+          instructions: ['Review highlighted fields', 'Ensure all required fields are filled'],
+        },
+      ],
+    },
+    {
+      id: 'server_error',
+      pattern: /500|internal server|server error|unexpected/i,
+      category: 'server',
+      severity: 'high',
+      suggestedFixes: [
+        {
+          type: 'retry',
+          description: 'Server encountered an error. Trying again...',
+          confidence: 0.7,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.5,
+        },
+        {
+          type: 'contact_support',
+          description: 'If the problem persists, contact support',
+          confidence: 0.6,
+          autoApplicable: false,
+          priority: 2,
+          estimatedSuccess: 0.8,
+        },
+      ],
+    },
+    {
+      id: 'timeout',
+      pattern: /timeout|timed out|took too long|ETIMEDOUT/i,
+      category: 'timeout',
+      severity: 'medium',
+      suggestedFixes: [
+        {
+          type: 'wait_and_retry',
+          description: 'Request timed out. Waiting and retrying...',
+          confidence: 0.85,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.65,
+        },
+      ],
+    },
+    {
+      id: 'rate_limit',
+      pattern: /429|rate limit|too many requests|throttl/i,
+      category: 'rate_limit',
+      severity: 'medium',
+      suggestedFixes: [
+        {
+          type: 'wait_and_retry',
+          description: 'Too many requests. Please wait a moment...',
+          confidence: 0.95,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.9,
+          instructions: ['Wait 30 seconds before trying again'],
+        },
+      ],
+    },
+    {
+      id: 'not_found',
+      pattern: /404|not found|does not exist|no longer available/i,
+      category: 'resource_not_found',
+      severity: 'medium',
+      suggestedFixes: [
+        {
+          type: 'reload_page',
+          description: 'The requested resource was not found. Refreshing...',
+          confidence: 0.7,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.4,
+        },
+        {
+          type: 'manual',
+          description: 'Navigate to the resource manually',
+          confidence: 0.6,
+          autoApplicable: false,
+          priority: 2,
+          estimatedSuccess: 0.7,
+        },
+      ],
+    },
+    {
+      id: 'conflict',
+      pattern: /409|conflict|already exists|duplicate/i,
+      category: 'conflict',
+      severity: 'medium',
+      suggestedFixes: [
+        {
+          type: 'reload_page',
+          description: 'Data conflict detected. Refreshing to get latest version...',
+          confidence: 0.8,
+          autoApplicable: true,
+          priority: 1,
+          estimatedSuccess: 0.75,
+        },
+        {
+          type: 'manual',
+          description: 'Review conflicting data and resolve manually',
+          confidence: 0.7,
+          autoApplicable: false,
+          priority: 2,
+          estimatedSuccess: 0.85,
+        },
+      ],
+    },
+  ];
 
 // ============================================================================
 // Context
@@ -409,7 +403,7 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
       }
 
       // Initialize with default + custom patterns
-      const allPatterns = [...DEFAULT_ERROR_PATTERNS, ...customPatterns].map(p => ({
+      const allPatterns = [...DEFAULT_ERROR_PATTERNS, ...customPatterns].map((p) => ({
         ...p,
         occurrences: 0,
         lastSeen: new Date(),
@@ -425,7 +419,7 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
   useEffect(() => {
     if (patterns.length > 0) {
       try {
-        const serializable = patterns.map(p => ({
+        const serializable = patterns.map((p) => ({
           ...p,
           successfulFixes: Object.fromEntries(p.successfulFixes),
         }));
@@ -437,195 +431,210 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
   }, [patterns]);
 
   // Classify error message
-  const classifyError = useCallback((
-    error: Error,
-    context?: ErrorContext
-  ): { category: ErrorCategory; severity: ErrorSeverity; confidence: number; pattern?: ErrorPattern } => {
-    const errorMessage = error.message.toLowerCase();
-    const errorString = `${error.name} ${error.message} ${context?.statusCode || ''}`;
+  const classifyError = useCallback(
+    (
+      error: Error,
+      context?: ErrorContext,
+    ): {
+      category: ErrorCategory;
+      severity: ErrorSeverity;
+      confidence: number;
+      pattern?: ErrorPattern;
+    } => {
+      const errorMessage = error.message.toLowerCase();
+      const errorString = `${error.name} ${error.message} ${context?.statusCode || ''}`;
 
-    // Find matching pattern
-    for (const pattern of patterns) {
-      const regex = typeof pattern.pattern === 'string' 
-        ? new RegExp(pattern.pattern, 'i')
-        : pattern.pattern;
-      
-      if (regex.test(errorString)) {
-        return {
-          category: pattern.category,
-          severity: pattern.severity,
-          confidence: 0.8 + (pattern.occurrences > 10 ? 0.15 : pattern.occurrences * 0.015),
-          pattern,
-        };
-      }
-    }
+      // Find matching pattern
+      for (const pattern of patterns) {
+        const regex =
+          typeof pattern.pattern === 'string' ? new RegExp(pattern.pattern, 'i') : pattern.pattern;
 
-    // Fallback classification based on status code
-    if (context?.statusCode) {
-      const code = context.statusCode;
-      if (code >= 400 && code < 500) {
-        if (code === 401) return { category: 'authentication', severity: 'high', confidence: 0.9 };
-        if (code === 403) return { category: 'authorization', severity: 'high', confidence: 0.9 };
-        if (code === 404) return { category: 'resource_not_found', severity: 'medium', confidence: 0.9 };
-        if (code === 429) return { category: 'rate_limit', severity: 'medium', confidence: 0.9 };
-        return { category: 'validation', severity: 'low', confidence: 0.7 };
+        if (regex.test(errorString)) {
+          return {
+            category: pattern.category,
+            severity: pattern.severity,
+            confidence: 0.8 + (pattern.occurrences > 10 ? 0.15 : pattern.occurrences * 0.015),
+            pattern,
+          };
+        }
       }
-      if (code >= 500) {
-        return { category: 'server', severity: 'high', confidence: 0.8 };
-      }
-    }
 
-    return { category: 'unknown', severity: 'medium', confidence: 0.3 };
-  }, [patterns]);
+      // Fallback classification based on status code
+      if (context?.statusCode) {
+        const code = context.statusCode;
+        if (code >= 400 && code < 500) {
+          if (code === 401) {
+            return { category: 'authentication', severity: 'high', confidence: 0.9 };
+          }
+          if (code === 403) {
+            return { category: 'authorization', severity: 'high', confidence: 0.9 };
+          }
+          if (code === 404) {
+            return { category: 'resource_not_found', severity: 'medium', confidence: 0.9 };
+          }
+          if (code === 429) {
+            return { category: 'rate_limit', severity: 'medium', confidence: 0.9 };
+          }
+          return { category: 'validation', severity: 'low', confidence: 0.7 };
+        }
+        if (code >= 500) {
+          return { category: 'server', severity: 'high', confidence: 0.8 };
+        }
+      }
+
+      return { category: 'unknown', severity: 'medium', confidence: 0.3 };
+    },
+    [patterns],
+  );
 
   // Generate suggested fixes
-  const generateFixes = useCallback((
-    category: ErrorCategory,
-    pattern?: ErrorPattern
-  ): SuggestedFix[] => {
-    if (pattern?.suggestedFixes) {
-      return pattern.suggestedFixes.map((fix, index) => ({
-        ...fix,
-        id: `fix_${Date.now()}_${index}`,
-      }));
-    }
+  const generateFixes = useCallback(
+    (category: ErrorCategory, pattern?: ErrorPattern): SuggestedFix[] => {
+      if (pattern?.suggestedFixes) {
+        return pattern.suggestedFixes.map((fix, index) => ({
+          ...fix,
+          id: `fix_${Date.now()}_${index}`,
+        }));
+      }
 
-    // Default fixes by category
-    const defaultFixes: Record<ErrorCategory, SuggestedFix[]> = {
-      network: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'retry',
-          description: 'Check your connection and retry',
-          confidence: 0.7,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.6,
-        },
-      ],
-      authentication: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'login',
-          description: 'Please log in again',
-          confidence: 0.85,
-          autoApplicable: false,
-          priority: 1,
-          estimatedSuccess: 0.9,
-        },
-      ],
-      authorization: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'contact_support',
-          description: 'Contact support for access',
-          confidence: 0.7,
-          autoApplicable: false,
-          priority: 1,
-          estimatedSuccess: 0.6,
-        },
-      ],
-      validation: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'check_input',
-          description: 'Check and correct your input',
-          confidence: 0.9,
-          autoApplicable: false,
-          priority: 1,
-          estimatedSuccess: 0.85,
-        },
-      ],
-      server: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'retry',
-          description: 'Server error. Retrying...',
-          confidence: 0.6,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.4,
-        },
-      ],
-      timeout: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'wait_and_retry',
-          description: 'Request timed out. Retrying...',
-          confidence: 0.8,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.6,
-        },
-      ],
-      rate_limit: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'wait_and_retry',
-          description: 'Rate limited. Waiting...',
-          confidence: 0.9,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.85,
-        },
-      ],
-      data_corruption: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'clear_cache',
-          description: 'Clearing local cache...',
-          confidence: 0.7,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.5,
-        },
-      ],
-      resource_not_found: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'reload_page',
-          description: 'Resource not found. Refreshing...',
-          confidence: 0.6,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.3,
-        },
-      ],
-      conflict: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'reload_page',
-          description: 'Data conflict. Refreshing...',
-          confidence: 0.75,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.7,
-        },
-      ],
-      unknown: [
-        {
-          id: `fix_${Date.now()}_0`,
-          type: 'retry',
-          description: 'An error occurred. Retrying...',
-          confidence: 0.5,
-          autoApplicable: true,
-          priority: 1,
-          estimatedSuccess: 0.3,
-        },
-        {
-          id: `fix_${Date.now()}_1`,
-          type: 'contact_support',
-          description: 'If the problem persists, contact support',
-          confidence: 0.6,
-          autoApplicable: false,
-          priority: 2,
-          estimatedSuccess: 0.7,
-        },
-      ],
-    };
+      // Default fixes by category
+      const defaultFixes: Record<ErrorCategory, SuggestedFix[]> = {
+        network: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'retry',
+            description: 'Check your connection and retry',
+            confidence: 0.7,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.6,
+          },
+        ],
+        authentication: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'login',
+            description: 'Please log in again',
+            confidence: 0.85,
+            autoApplicable: false,
+            priority: 1,
+            estimatedSuccess: 0.9,
+          },
+        ],
+        authorization: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'contact_support',
+            description: 'Contact support for access',
+            confidence: 0.7,
+            autoApplicable: false,
+            priority: 1,
+            estimatedSuccess: 0.6,
+          },
+        ],
+        validation: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'check_input',
+            description: 'Check and correct your input',
+            confidence: 0.9,
+            autoApplicable: false,
+            priority: 1,
+            estimatedSuccess: 0.85,
+          },
+        ],
+        server: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'retry',
+            description: 'Server error. Retrying...',
+            confidence: 0.6,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.4,
+          },
+        ],
+        timeout: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'wait_and_retry',
+            description: 'Request timed out. Retrying...',
+            confidence: 0.8,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.6,
+          },
+        ],
+        rate_limit: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'wait_and_retry',
+            description: 'Rate limited. Waiting...',
+            confidence: 0.9,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.85,
+          },
+        ],
+        data_corruption: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'clear_cache',
+            description: 'Clearing local cache...',
+            confidence: 0.7,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.5,
+          },
+        ],
+        resource_not_found: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'reload_page',
+            description: 'Resource not found. Refreshing...',
+            confidence: 0.6,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.3,
+          },
+        ],
+        conflict: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'reload_page',
+            description: 'Data conflict. Refreshing...',
+            confidence: 0.75,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.7,
+          },
+        ],
+        unknown: [
+          {
+            id: `fix_${Date.now()}_0`,
+            type: 'retry',
+            description: 'An error occurred. Retrying...',
+            confidence: 0.5,
+            autoApplicable: true,
+            priority: 1,
+            estimatedSuccess: 0.3,
+          },
+          {
+            id: `fix_${Date.now()}_1`,
+            type: 'contact_support',
+            description: 'If the problem persists, contact support',
+            confidence: 0.6,
+            autoApplicable: false,
+            priority: 2,
+            estimatedSuccess: 0.7,
+          },
+        ],
+      };
 
-    return defaultFixes[category] || defaultFixes.unknown;
-  }, []);
+      return defaultFixes[category] || defaultFixes.unknown;
+    },
+    [],
+  );
 
   // Execute fix action
   const executeFix = useCallback(async (fix: SuggestedFix): Promise<boolean> => {
@@ -633,7 +642,7 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
       case 'retry':
         // Retry is handled by the caller
         return true;
-      
+
       case 'refresh_token':
         // Attempt to refresh auth token
         try {
@@ -643,7 +652,7 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
         } catch {
           return false;
         }
-      
+
       case 'clear_cache':
         try {
           localStorage.clear();
@@ -652,126 +661,137 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
         } catch {
           return false;
         }
-      
+
       case 'reload_page':
         window.location.reload();
         return true;
-      
+
       case 'wait_and_retry':
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         return true;
-      
+
       default:
         return false;
     }
   }, []);
 
   // Main diagnose function
-  const diagnoseError = useCallback(async (
-    error: Error,
-    context?: ErrorContext
-  ): Promise<ClassifiedError> => {
-    const { category, severity, confidence, pattern } = classifyError(error, context);
-    const suggestedFixes = generateFixes(category, pattern);
+  const diagnoseError = useCallback(
+    async (error: Error, context?: ErrorContext): Promise<ClassifiedError> => {
+      const { category, severity, confidence, pattern } = classifyError(error, context);
+      const suggestedFixes = generateFixes(category, pattern);
 
-    const classifiedError: ClassifiedError = {
-      id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      originalError: error,
-      category,
-      severity,
-      confidence,
-      timestamp: new Date(),
-      context: context || {},
-      suggestedFixes,
-      resolved: false,
-    };
+      const classifiedError: ClassifiedError = {
+        id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        originalError: error,
+        category,
+        severity,
+        confidence,
+        timestamp: new Date(),
+        context: context || {},
+        suggestedFixes,
+        resolved: false,
+      };
 
-    // Update pattern occurrence
-    if (pattern) {
-      setPatterns(prev => prev.map(p => 
-        p.id === pattern.id
-          ? { ...p, occurrences: p.occurrences + 1, lastSeen: new Date() }
-          : p
-      ));
-    }
-
-    // Add to errors list
-    setErrors(prev => [classifiedError, ...prev.slice(0, 99)]);
-
-    // Callback
-    onErrorDiagnosed?.(classifiedError);
-
-    // Auto-apply fix if enabled
-    if (autoFixEnabled) {
-      const autoFix = suggestedFixes.find(f => f.autoApplicable && f.estimatedSuccess > 0.5);
-      if (autoFix) {
-        setTimeout(() => {
-          applyFix(classifiedError.id, autoFix.id);
-        }, 500);
+      // Update pattern occurrence
+      if (pattern) {
+        setPatterns((prev) =>
+          prev.map((p) =>
+            p.id === pattern.id
+              ? { ...p, occurrences: p.occurrences + 1, lastSeen: new Date() }
+              : p,
+          ),
+        );
       }
-    }
 
-    return classifiedError;
-  }, [classifyError, generateFixes, autoFixEnabled, onErrorDiagnosed]);
+      // Add to errors list
+      setErrors((prev) => [classifiedError, ...prev.slice(0, 99)]);
+
+      // Callback
+      onErrorDiagnosed?.(classifiedError);
+
+      // Auto-apply fix if enabled
+      if (autoFixEnabled) {
+        const autoFix = suggestedFixes.find((f) => f.autoApplicable && f.estimatedSuccess > 0.5);
+        if (autoFix) {
+          setTimeout(() => {
+            applyFix(classifiedError.id, autoFix.id);
+          }, 500);
+        }
+      }
+
+      return classifiedError;
+    },
+    [classifyError, generateFixes, autoFixEnabled, onErrorDiagnosed],
+  );
 
   // Apply a fix
-  const applyFix = useCallback(async (errorId: string, fixId: string): Promise<boolean> => {
-    const error = errors.find(e => e.id === errorId);
-    if (!error) return false;
+  const applyFix = useCallback(
+    async (errorId: string, fixId: string): Promise<boolean> => {
+      const error = errors.find((e) => e.id === errorId);
+      if (!error) {
+        return false;
+      }
 
-    const fix = error.suggestedFixes.find(f => f.id === fixId);
-    if (!fix) return false;
+      const fix = error.suggestedFixes.find((f) => f.id === fixId);
+      if (!fix) {
+        return false;
+      }
 
-    const success = await executeFix(fix);
+      const success = await executeFix(fix);
 
-    const appliedFix: AppliedFix = {
-      fixId,
-      type: fix.type,
-      appliedAt: new Date(),
-      autoApplied: autoFixEnabled && fix.autoApplicable,
-      success,
-      resultMessage: success ? 'Fix applied successfully' : 'Fix failed',
-    };
+      const appliedFix: AppliedFix = {
+        fixId,
+        type: fix.type,
+        appliedAt: new Date(),
+        autoApplied: autoFixEnabled && fix.autoApplicable,
+        success,
+        resultMessage: success ? 'Fix applied successfully' : 'Fix failed',
+      };
 
-    setErrors(prev => prev.map(e =>
-      e.id === errorId
-        ? { ...e, appliedFix, resolved: success }
-        : e
-    ));
+      setErrors((prev) =>
+        prev.map((e) => (e.id === errorId ? { ...e, appliedFix, resolved: success } : e)),
+      );
 
-    // Update pattern success rate
-    if (success) {
-      setPatterns(prev => prev.map(p => {
-        if (p.category === error.category) {
-          const newSuccessfulFixes = new Map(p.successfulFixes);
-          const current = newSuccessfulFixes.get(fix.type) || 0;
-          newSuccessfulFixes.set(fix.type, current + 1);
-          return { ...p, successfulFixes: newSuccessfulFixes };
-        }
-        return p;
-      }));
-    }
+      // Update pattern success rate
+      if (success) {
+        setPatterns((prev) =>
+          prev.map((p) => {
+            if (p.category === error.category) {
+              const newSuccessfulFixes = new Map(p.successfulFixes);
+              const current = newSuccessfulFixes.get(fix.type) || 0;
+              newSuccessfulFixes.set(fix.type, current + 1);
+              return { ...p, successfulFixes: newSuccessfulFixes };
+            }
+            return p;
+          }),
+        );
+      }
 
-    onFixApplied?.(error, appliedFix);
-    return success;
-  }, [errors, executeFix, autoFixEnabled, onFixApplied]);
+      onFixApplied?.(error, appliedFix);
+      return success;
+    },
+    [errors, executeFix, autoFixEnabled, onFixApplied],
+  );
 
   // Record fix result
   const recordFixResult = useCallback((errorId: string, success: boolean, message?: string) => {
-    setErrors(prev => prev.map(e =>
-      e.id === errorId && e.appliedFix
-        ? {
-            ...e,
-            appliedFix: { ...e.appliedFix, success, resultMessage: message },
-            resolved: success,
-          }
-        : e
-    ));
+    setErrors((prev) =>
+      prev.map((e) =>
+        e.id === errorId && e.appliedFix
+          ? {
+              ...e,
+              appliedFix: { ...e.appliedFix, success, resultMessage: message },
+              resolved: success,
+            }
+          : e,
+      ),
+    );
   }, []);
 
   // Dismiss error
   const dismissError = useCallback((errorId: string) => {
-    setErrors(prev => prev.filter(e => e.id !== errorId));
+    setErrors((prev) => prev.filter((e) => e.id !== errorId));
   }, []);
 
   // Clear all errors
@@ -807,7 +827,7 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
     let totalResolutionTime = 0;
     let resolvedWithTimeCount = 0;
 
-    errors.forEach(error => {
+    errors.forEach((error) => {
       byCategory[error.category]++;
       bySeverity[error.severity]++;
 
@@ -817,7 +837,8 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
           autoFixedCount++;
         }
         if (error.appliedFix) {
-          const time = new Date(error.appliedFix.appliedAt).getTime() - new Date(error.timestamp).getTime();
+          const time =
+            new Date(error.appliedFix.appliedAt).getTime() - new Date(error.timestamp).getTime();
           totalResolutionTime += time;
           resolvedWithTimeCount++;
         }
@@ -830,9 +851,8 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
       bySeverity,
       resolvedCount,
       autoFixedCount,
-      averageResolutionTime: resolvedWithTimeCount > 0 
-        ? totalResolutionTime / resolvedWithTimeCount 
-        : 0,
+      averageResolutionTime:
+        resolvedWithTimeCount > 0 ? totalResolutionTime / resolvedWithTimeCount : 0,
     };
   }, [errors]);
 
@@ -851,9 +871,7 @@ export const AIErrorDiagnosisProvider: React.FC<AIErrorDiagnosisProviderProps> =
   };
 
   return (
-    <AIErrorDiagnosisContext.Provider value={value}>
-      {children}
-    </AIErrorDiagnosisContext.Provider>
+    <AIErrorDiagnosisContext.Provider value={value}>{children}</AIErrorDiagnosisContext.Provider>
   );
 };
 
@@ -1054,10 +1072,14 @@ interface ErrorCardProps {
 export const ErrorCard: React.FC<ErrorCardProps> = ({ error, onApplyFix, onDismiss }) => {
   const getSeverityStyle = () => {
     switch (error.severity) {
-      case 'low': return styles.severityLow;
-      case 'medium': return styles.severityMedium;
-      case 'high': return styles.severityHigh;
-      case 'critical': return styles.severityCritical;
+      case 'low':
+        return styles.severityLow;
+      case 'medium':
+        return styles.severityMedium;
+      case 'high':
+        return styles.severityHigh;
+      case 'critical':
+        return styles.severityCritical;
     }
   };
 
@@ -1080,9 +1102,7 @@ export const ErrorCard: React.FC<ErrorCardProps> = ({ error, onApplyFix, onDismi
         </button>
       </div>
 
-      <div style={styles.errorMessage}>
-        {error.originalError.message}
-      </div>
+      <div style={styles.errorMessage}>{error.originalError.message}</div>
 
       {error.resolved ? (
         <div style={styles.resolvedBadge}>
@@ -1090,12 +1110,18 @@ export const ErrorCard: React.FC<ErrorCardProps> = ({ error, onApplyFix, onDismi
         </div>
       ) : (
         <div style={styles.fixList}>
-          {error.suggestedFixes.map(fix => (
+          {error.suggestedFixes.map((fix) => (
             <div key={fix.id} style={styles.fixItem}>
               <span style={styles.fixDescription}>
                 {fix.description}
                 {fix.autoApplicable && (
-                  <span style={{ ...styles.confidenceBadge, backgroundColor: '#fef3c7', color: '#92400e' }}>
+                  <span
+                    style={{
+                      ...styles.confidenceBadge,
+                      backgroundColor: '#fef3c7',
+                      color: '#92400e',
+                    }}
+                  >
                     Auto-fixable
                   </span>
                 )}
@@ -1130,7 +1156,14 @@ export const ErrorList: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '12px',
+        }}
+      >
         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
           Recent Errors ({errors.length})
         </h3>
@@ -1148,13 +1181,8 @@ export const ErrorList: React.FC = () => {
           Clear All
         </button>
       </div>
-      {errors.slice(0, 5).map(error => (
-        <ErrorCard
-          key={error.id}
-          error={error}
-          onApplyFix={applyFix}
-          onDismiss={dismissError}
-        />
+      {errors.slice(0, 5).map((error) => (
+        <ErrorCard key={error.id} error={error} onApplyFix={applyFix} onDismiss={dismissError} />
       ))}
     </div>
   );
@@ -1170,7 +1198,7 @@ export const ErrorStatsPanel: React.FC = () => {
   return (
     <div style={styles.statsPanel}>
       <h3 style={styles.statsTitle}>Error Diagnosis Statistics</h3>
-      
+
       <div style={styles.autoFixToggle}>
         <span style={{ fontSize: '14px', color: '#333' }}>Auto-fix enabled</span>
         <div
@@ -1207,7 +1235,7 @@ export const ErrorStatsPanel: React.FC = () => {
         </div>
         <div style={styles.statItem}>
           <div style={styles.statValue}>
-            {stats.averageResolutionTime > 0 
+            {stats.averageResolutionTime > 0
               ? `${Math.round(stats.averageResolutionTime / 1000)}s`
               : '-'}
           </div>
@@ -1228,21 +1256,21 @@ export const ErrorStatsPanel: React.FC = () => {
 export function useErrorDiagnosisHandler() {
   const { diagnoseError, applyFix } = useAIErrorDiagnosis();
 
-  const handleError = useCallback(async (
-    error: Error,
-    context?: ErrorContext
-  ) => {
-    const diagnosed = await diagnoseError(error, context);
-    
-    // Return the best auto-applicable fix if available
-    const autoFix = diagnosed.suggestedFixes.find(f => f.autoApplicable);
-    
-    return {
-      diagnosed,
-      autoFix,
-      applyFix: autoFix ? () => applyFix(diagnosed.id, autoFix.id) : undefined,
-    };
-  }, [diagnoseError, applyFix]);
+  const handleError = useCallback(
+    async (error: Error, context?: ErrorContext) => {
+      const diagnosed = await diagnoseError(error, context);
+
+      // Return the best auto-applicable fix if available
+      const autoFix = diagnosed.suggestedFixes.find((f) => f.autoApplicable);
+
+      return {
+        diagnosed,
+        autoFix,
+        applyFix: autoFix ? () => applyFix(diagnosed.id, autoFix.id) : undefined,
+      };
+    },
+    [diagnoseError, applyFix],
+  );
 
   return { handleError };
 }

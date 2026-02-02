@@ -43,9 +43,7 @@ export class StandardsController {
     type: StandardWithMappingsDto,
   })
   @ApiResponse({ status: 404, description: 'Standard category not found' })
-  async findByCategory(
-    @Param('category') category: string,
-  ): Promise<StandardWithMappingsDto> {
+  async findByCategory(@Param('category') category: string): Promise<StandardWithMappingsDto> {
     return this.standardsService.findWithMappings(category as StandardCategory);
   }
 

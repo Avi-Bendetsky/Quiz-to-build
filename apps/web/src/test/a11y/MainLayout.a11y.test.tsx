@@ -119,7 +119,9 @@ function MockMainLayout({
               role="img"
               aria-label="User avatar"
             >
-              <span className="text-blue-600" aria-hidden="true">U</span>
+              <span className="text-blue-600" aria-hidden="true">
+                U
+              </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">Test User</p>
@@ -131,7 +133,9 @@ function MockMainLayout({
             onClick={onLogout}
             className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600"
           >
-            <span className="h-4 w-4 mr-2" aria-hidden="true">[LogOut]</span>
+            <span className="h-4 w-4 mr-2" aria-hidden="true">
+              [LogOut]
+            </span>
             Sign out
           </button>
         </div>
@@ -190,7 +194,7 @@ describe('MainLayout Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockMainLayout />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -200,7 +204,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       expect(screen.getByRole('banner')).toBeInTheDocument();
@@ -212,7 +216,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const sidebar = screen.getByRole('complementary', { name: /main navigation/i });
@@ -225,7 +229,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const skipLink = screen.getByText(/skip to main content/i);
@@ -237,7 +241,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const mainContent = document.getElementById('main-content');
@@ -250,7 +254,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const nav = screen.getByRole('navigation', { name: /primary navigation/i });
@@ -261,7 +265,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       navigation.forEach((item) => {
@@ -275,7 +279,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       // Find the dashboard link in the navigation (not the logo)
@@ -288,7 +292,7 @@ describe('MainLayout Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const decorativeElements = container.querySelectorAll('[aria-hidden="true"]');
@@ -301,7 +305,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={false} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const openButton = screen.getByRole('button', { name: /open sidebar/i });
@@ -314,7 +318,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const closeButton = screen.getByRole('button', { name: /close sidebar/i });
@@ -327,7 +331,7 @@ describe('MainLayout Accessibility', () => {
       const { rerender } = render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={false} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const openButton = screen.getByRole('button', { name: /open sidebar/i });
@@ -336,7 +340,7 @@ describe('MainLayout Accessibility', () => {
       rerender(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const closeButton = screen.getByRole('button', { name: /close sidebar/i });
@@ -347,7 +351,7 @@ describe('MainLayout Accessibility', () => {
       const { container } = render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const backdrop = container.querySelector('.bg-gray-900\\/50');
@@ -360,7 +364,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const avatar = screen.getByRole('img', { name: /user avatar/i });
@@ -371,7 +375,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       expect(screen.getByText('Test User')).toBeInTheDocument();
@@ -383,7 +387,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} onLogout={onLogout} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const logoutButton = screen.getByRole('button', { name: /sign out/i });
@@ -399,7 +403,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={true} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const logoLink = screen.getByRole('link', { name: /quiz2biz.*dashboard/i });
@@ -414,7 +418,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout sidebarOpen={false} onSidebarToggle={onSidebarToggle} />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const openButton = screen.getByRole('button', { name: /open sidebar/i });
@@ -431,7 +435,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const main = screen.getByRole('main');
@@ -442,7 +446,7 @@ describe('MainLayout Accessibility', () => {
       render(
         <BrowserRouter>
           <MockMainLayout />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       const h1 = screen.getByRole('heading', { level: 1 });

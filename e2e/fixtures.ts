@@ -120,7 +120,8 @@ export const testResponses = {
   },
   longText: {
     type: 'LONG_TEXT',
-    value: 'This is a longer response that provides more context and explanation for the E2E testing scenario. It includes multiple sentences and covers various aspects of the question.',
+    value:
+      'This is a longer response that provides more context and explanation for the E2E testing scenario. It includes multiple sentences and covers various aspects of the question.',
   },
   multipleChoice: {
     type: 'MULTIPLE_CHOICE',
@@ -150,9 +151,9 @@ export const testResponses = {
   matrix: {
     type: 'MATRIX',
     value: {
-      'Security': 4,
-      'Performance': 5,
-      'Scalability': 3,
+      Security: 4,
+      Performance: 5,
+      Scalability: 3,
     },
   },
 };
@@ -214,14 +215,25 @@ export const testSubscriptions = {
     tier: 'PROFESSIONAL',
     monthlyPrice: 49,
     yearlyPrice: 470,
-    features: ['Unlimited questionnaires', 'Advanced reports', 'Document generation', 'Priority support'],
+    features: [
+      'Unlimited questionnaires',
+      'Advanced reports',
+      'Document generation',
+      'Priority support',
+    ],
     stripeTestPriceId: 'price_test_professional',
   },
   enterprise: {
     tier: 'ENTERPRISE',
     monthlyPrice: 199,
     yearlyPrice: 1990,
-    features: ['All Professional features', 'Team collaboration', 'API access', 'SSO', 'Dedicated support'],
+    features: [
+      'All Professional features',
+      'Team collaboration',
+      'API access',
+      'SSO',
+      'Dedicated support',
+    ],
     stripeTestPriceId: 'price_test_enterprise',
   },
 };
@@ -469,7 +481,7 @@ export class TestHelpers {
    */
   async waitForApiResponse(endpoint: string) {
     return this.page.waitForResponse(
-      (response) => response.url().includes(endpoint) && response.status() === 200
+      (response) => response.url().includes(endpoint) && response.status() === 200,
     );
   }
 
@@ -613,7 +625,9 @@ export class DataLoader {
    * Generate random test data
    */
   static randomString(length: number = 10): string {
-    return Math.random().toString(36).substring(2, length + 2);
+    return Math.random()
+      .toString(36)
+      .substring(2, length + 2);
   }
 
   static randomEmail(): string {
@@ -648,7 +662,7 @@ export class WaitUtils {
         return el && el.textContent !== orig;
       },
       { sel: selector, orig: originalText },
-      { timeout }
+      { timeout },
     );
   }
 
@@ -668,7 +682,9 @@ export class WaitUtils {
         await action();
         return;
       } catch (error) {
-        if (i === maxRetries - 1) throw error;
+        if (i === maxRetries - 1) {
+          throw error;
+        }
         await this.page.waitForTimeout(delay);
       }
     }

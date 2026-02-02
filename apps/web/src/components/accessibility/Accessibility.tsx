@@ -1,11 +1,11 @@
 /**
  * Advanced Accessibility System
- * 
+ *
  * Sprint 38: Internationalization & Accessibility++
  * Task ux38t5: Voice Navigation - Web Speech API, voice commands, speech-to-text
  * Task ux38t6: Advanced Screen Reader - ARIA live regions, custom announcements
  * Task ux38t7: Cognitive Accessibility - Dyslexia-friendly mode, reading mode, focus mode
- * 
+ *
  * Features:
  * - Voice command recognition and synthesis
  * - Speech-to-text for form inputs
@@ -75,18 +75,18 @@ export interface CognitiveSettings {
   lineHeight: number; // multiplier (1.5 = default)
   letterSpacing: number; // em units (0 = default)
   wordSpacing: number; // em units (0 = default)
-  
+
   // Display
   contrastMode: ContrastMode;
   reduceMotion: boolean;
   reduceTransparency: boolean;
   showFocusRing: boolean;
-  
+
   // Reading
   readingLevel: ReadingLevel;
   readingRuler: boolean;
   highlightLinks: boolean;
-  
+
   // Focus
   focusMode: boolean;
   hideDecorations: boolean;
@@ -104,14 +104,14 @@ export interface AccessibilityState {
     volume: number;
     voice: SpeechSynthesisVoice | null;
   };
-  
+
   // Screen Reader
   announcements: Announcement[];
   liveRegions: LiveRegionConfig[];
-  
+
   // Cognitive
   cognitive: CognitiveSettings;
-  
+
   // General
   isEnabled: boolean;
 }
@@ -127,18 +127,18 @@ type AccessibilityAction =
   | { type: 'REGISTER_COMMAND'; command: VoiceCommand }
   | { type: 'UNREGISTER_COMMAND'; command: string }
   | { type: 'SET_SPEECH_SETTINGS'; settings: Partial<AccessibilityState['speechSynthesis']> }
-  
+
   // Screen Reader actions
   | { type: 'ADD_ANNOUNCEMENT'; announcement: Announcement }
   | { type: 'CLEAR_ANNOUNCEMENTS' }
   | { type: 'ADD_LIVE_REGION'; config: LiveRegionConfig }
   | { type: 'REMOVE_LIVE_REGION'; id: string }
-  
+
   // Cognitive actions
   | { type: 'UPDATE_COGNITIVE'; settings: Partial<CognitiveSettings> }
   | { type: 'RESET_COGNITIVE' }
   | { type: 'SET_FOCUS_MODE'; enabled: boolean }
-  
+
   // General actions
   | { type: 'TOGGLE_ACCESSIBILITY'; enabled: boolean }
   | { type: 'LOAD_STATE'; state: Partial<AccessibilityState> };
@@ -151,14 +151,14 @@ export interface AccessibilityContextType extends AccessibilityState {
   cancelSpeech: () => void;
   registerCommand: (command: VoiceCommand) => void;
   unregisterCommand: (command: string) => void;
-  
+
   // Screen Reader
   announce: (message: string, priority?: 'polite' | 'assertive') => void;
   announceNavigation: (pageName: string) => void;
   announceError: (error: string) => void;
   announceSuccess: (message: string) => void;
   announceProgress: (current: number, total: number, label?: string) => void;
-  
+
   // Cognitive Accessibility
   updateCognitiveSettings: (settings: Partial<CognitiveSettings>) => void;
   resetCognitiveSettings: () => void;
@@ -166,7 +166,7 @@ export interface AccessibilityContextType extends AccessibilityState {
   setFontFamily: (font: FontFamily) => void;
   setFontSize: (size: number) => void;
   setContrastMode: (mode: ContrastMode) => void;
-  
+
   // General
   toggleAccessibility: (enabled?: boolean) => void;
 }
@@ -229,7 +229,7 @@ const STORAGE_KEY = 'quiz2biz_accessibility';
 
 function accessibilityReducer(
   state: AccessibilityState,
-  action: AccessibilityAction
+  action: AccessibilityAction,
 ): AccessibilityState {
   switch (action.type) {
     case 'START_LISTENING':
@@ -254,15 +254,17 @@ function accessibilityReducer(
       return { ...state, voice: { ...state.voice, isSupported: action.supported } };
 
     case 'REGISTER_COMMAND': {
-      const exists = state.voiceCommands.some(c => c.command === action.command.command);
-      if (exists) return state;
+      const exists = state.voiceCommands.some((c) => c.command === action.command.command);
+      if (exists) {
+        return state;
+      }
       return { ...state, voiceCommands: [...state.voiceCommands, action.command] };
     }
 
     case 'UNREGISTER_COMMAND':
       return {
         ...state,
-        voiceCommands: state.voiceCommands.filter(c => c.command !== action.command),
+        voiceCommands: state.voiceCommands.filter((c) => c.command !== action.command),
       };
 
     case 'SET_SPEECH_SETTINGS':
@@ -281,15 +283,17 @@ function accessibilityReducer(
       return { ...state, announcements: [] };
 
     case 'ADD_LIVE_REGION': {
-      const exists = state.liveRegions.some(r => r.id === action.config.id);
-      if (exists) return state;
+      const exists = state.liveRegions.some((r) => r.id === action.config.id);
+      if (exists) {
+        return state;
+      }
       return { ...state, liveRegions: [...state.liveRegions, action.config] };
     }
 
     case 'REMOVE_LIVE_REGION':
       return {
         ...state,
-        liveRegions: state.liveRegions.filter(r => r.id !== action.id),
+        liveRegions: state.liveRegions.filter((r) => r.id !== action.id),
       };
 
     case 'UPDATE_COGNITIVE':
@@ -343,10 +347,12 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
 
   // Initialize speech recognition
   useEffect(() => {
-    if (!enableVoice) return;
+    if (!enableVoice) {
+      return;
+    }
 
-    const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
-                                  (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (SpeechRecognitionAPI) {
       const recognition = new SpeechRecognitionAPI();
@@ -391,7 +397,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
 
   // Register default commands
   useEffect(() => {
-    defaultCommands.forEach(cmd => {
+    defaultCommands.forEach((cmd) => {
       dispatch({ type: 'REGISTER_COMMAND', command: cmd });
     });
   }, [defaultCommands]);
@@ -412,9 +418,12 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
   // Save settings
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        cognitive: state.cognitive,
-      }));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          cognitive: state.cognitive,
+        }),
+      );
     } catch (error) {
       console.error('[Accessibility] Failed to save settings:', error);
     }
@@ -427,7 +436,10 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
     // Font settings
     document.documentElement.style.setProperty('--a11y-font-size', `${cognitive.fontSize}%`);
     document.documentElement.style.setProperty('--a11y-line-height', String(cognitive.lineHeight));
-    document.documentElement.style.setProperty('--a11y-letter-spacing', `${cognitive.letterSpacing}em`);
+    document.documentElement.style.setProperty(
+      '--a11y-letter-spacing',
+      `${cognitive.letterSpacing}em`,
+    );
     document.documentElement.style.setProperty('--a11y-word-spacing', `${cognitive.wordSpacing}em`);
 
     // Font family
@@ -437,7 +449,10 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
       serif: 'Georgia, Times New Roman, serif',
       monospace: 'Consolas, Monaco, monospace',
     };
-    document.documentElement.style.setProperty('--a11y-font-family', fontFamilies[cognitive.fontFamily]);
+    document.documentElement.style.setProperty(
+      '--a11y-font-family',
+      fontFamilies[cognitive.fontFamily],
+    );
 
     // Contrast mode
     document.body.classList.remove('contrast-high', 'contrast-inverted');
@@ -477,23 +492,26 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
   }, [state.cognitive]);
 
   // Process voice command
-  const processVoiceCommand = useCallback((transcript: string) => {
-    for (const cmd of state.voiceCommands) {
-      const allTriggers = [cmd.command.toLowerCase(), ...cmd.aliases.map(a => a.toLowerCase())];
-      
-      for (const trigger of allTriggers) {
-        if (transcript.includes(trigger)) {
-          cmd.action();
-          dispatch({ type: 'SET_LAST_COMMAND', command: cmd.command });
-          speak(`Executing: ${cmd.command}`);
-          return;
+  const processVoiceCommand = useCallback(
+    (transcript: string) => {
+      for (const cmd of state.voiceCommands) {
+        const allTriggers = [cmd.command.toLowerCase(), ...cmd.aliases.map((a) => a.toLowerCase())];
+
+        for (const trigger of allTriggers) {
+          if (transcript.includes(trigger)) {
+            cmd.action();
+            dispatch({ type: 'SET_LAST_COMMAND', command: cmd.command });
+            speak(`Executing: ${cmd.command}`);
+            return;
+          }
         }
       }
-    }
 
-    // No command matched
-    speak("I didn't understand that command. Say 'help' for available commands.");
-  }, [state.voiceCommands]);
+      // No command matched
+      speak("I didn't understand that command. Say 'help' for available commands.");
+    },
+    [state.voiceCommands],
+  );
 
   // Voice Navigation functions
   const startListening = useCallback(() => {
@@ -516,21 +534,26 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
     }
   }, []);
 
-  const speak = useCallback((text: string, options?: { rate?: number; pitch?: number }) => {
-    if (!synthRef.current) return;
+  const speak = useCallback(
+    (text: string, options?: { rate?: number; pitch?: number }) => {
+      if (!synthRef.current) {
+        return;
+      }
 
-    synthRef.current.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = options?.rate ?? state.speechSynthesis.rate;
-    utterance.pitch = options?.pitch ?? state.speechSynthesis.pitch;
-    utterance.volume = state.speechSynthesis.volume;
-    
-    if (state.speechSynthesis.voice) {
-      utterance.voice = state.speechSynthesis.voice;
-    }
+      synthRef.current.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = options?.rate ?? state.speechSynthesis.rate;
+      utterance.pitch = options?.pitch ?? state.speechSynthesis.pitch;
+      utterance.volume = state.speechSynthesis.volume;
 
-    synthRef.current.speak(utterance);
-  }, [state.speechSynthesis]);
+      if (state.speechSynthesis.voice) {
+        utterance.voice = state.speechSynthesis.voice;
+      }
+
+      synthRef.current.speak(utterance);
+    },
+    [state.speechSynthesis],
+  );
 
   const cancelSpeech = useCallback(() => {
     synthRef.current?.cancel();
@@ -559,7 +582,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
     if (announcerRef.current) {
       announcerRef.current.setAttribute('aria-live', priority);
       announcerRef.current.textContent = message;
-      
+
       // Clear after announcement
       setTimeout(() => {
         if (announcerRef.current) {
@@ -569,25 +592,37 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
     }
   }, []);
 
-  const announceNavigation = useCallback((pageName: string) => {
-    announce(`Navigated to ${pageName}`, 'polite');
-  }, [announce]);
+  const announceNavigation = useCallback(
+    (pageName: string) => {
+      announce(`Navigated to ${pageName}`, 'polite');
+    },
+    [announce],
+  );
 
-  const announceError = useCallback((error: string) => {
-    announce(`Error: ${error}`, 'assertive');
-  }, [announce]);
+  const announceError = useCallback(
+    (error: string) => {
+      announce(`Error: ${error}`, 'assertive');
+    },
+    [announce],
+  );
 
-  const announceSuccess = useCallback((message: string) => {
-    announce(`Success: ${message}`, 'polite');
-  }, [announce]);
+  const announceSuccess = useCallback(
+    (message: string) => {
+      announce(`Success: ${message}`, 'polite');
+    },
+    [announce],
+  );
 
-  const announceProgress = useCallback((current: number, total: number, label?: string) => {
-    const percentage = Math.round((current / total) * 100);
-    const message = label
-      ? `${label}: ${percentage}% complete, ${current} of ${total}`
-      : `Progress: ${percentage}% complete, ${current} of ${total}`;
-    announce(message, 'polite');
-  }, [announce]);
+  const announceProgress = useCallback(
+    (current: number, total: number, label?: string) => {
+      const percentage = Math.round((current / total) * 100);
+      const message = label
+        ? `${label}: ${percentage}% complete, ${current} of ${total}`
+        : `Progress: ${percentage}% complete, ${current} of ${total}`;
+      announce(message, 'polite');
+    },
+    [announce],
+  );
 
   // Cognitive Accessibility functions
   const updateCognitiveSettings = useCallback((settings: Partial<CognitiveSettings>) => {
@@ -615,9 +650,12 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
   }, []);
 
   // General functions
-  const toggleAccessibility = useCallback((enabled?: boolean) => {
-    dispatch({ type: 'TOGGLE_ACCESSIBILITY', enabled: enabled ?? !state.isEnabled });
-  }, [state.isEnabled]);
+  const toggleAccessibility = useCallback(
+    (enabled?: boolean) => {
+      dispatch({ type: 'TOGGLE_ACCESSIBILITY', enabled: enabled ?? !state.isEnabled });
+    },
+    [state.isEnabled],
+  );
 
   const contextValue: AccessibilityContextType = {
     ...state,
@@ -834,7 +872,7 @@ export const AccessibilitySettingsPanel: React.FC = () => {
       {/* Voice Navigation */}
       <div style={styles.section}>
         <h3 style={styles.sectionTitle}>Voice Navigation</h3>
-        
+
         {voice.isSupported ? (
           <>
             <button
@@ -860,7 +898,7 @@ export const AccessibilitySettingsPanel: React.FC = () => {
                 Available Commands:
               </p>
               <div style={styles.commandList}>
-                {voiceCommands.map(cmd => (
+                {voiceCommands.map((cmd) => (
                   <div key={cmd.command} style={styles.commandItem}>
                     <span>"{cmd.command}"</span>
                     <span style={{ color: '#6b7280' }}>{cmd.description}</span>
@@ -920,7 +958,9 @@ export const AccessibilitySettingsPanel: React.FC = () => {
         </div>
 
         <div style={styles.option}>
-          <span style={styles.optionLabel}>Letter Spacing ({cognitive.letterSpacing.toFixed(2)}em)</span>
+          <span style={styles.optionLabel}>
+            Letter Spacing ({cognitive.letterSpacing.toFixed(2)}em)
+          </span>
           <input
             type="range"
             min="0"
@@ -942,7 +982,9 @@ export const AccessibilitySettingsPanel: React.FC = () => {
           <select
             style={styles.select}
             value={cognitive.contrastMode}
-            onChange={(e) => updateCognitiveSettings({ contrastMode: e.target.value as ContrastMode })}
+            onChange={(e) =>
+              updateCognitiveSettings({ contrastMode: e.target.value as ContrastMode })
+            }
           >
             <option value="normal">Normal</option>
             <option value="high">High Contrast</option>
@@ -1022,7 +1064,9 @@ export const AccessibilitySettingsPanel: React.FC = () => {
 export const VoiceNavigationButton: React.FC = () => {
   const { voice, startListening, stopListening } = useAccessibility();
 
-  if (!voice.isSupported) return null;
+  if (!voice.isSupported) {
+    return null;
+  }
 
   return (
     <button
@@ -1113,12 +1157,7 @@ export const LiveRegion: React.FC<LiveRegionProps> = ({
   ariaLive = 'polite',
   ariaAtomic = true,
 }) => (
-  <div
-    id={id}
-    role="status"
-    aria-live={ariaLive}
-    aria-atomic={ariaAtomic}
-  >
+  <div id={id} role="status" aria-live={ariaLive} aria-atomic={ariaAtomic}>
     {children}
   </div>
 );
@@ -1129,29 +1168,34 @@ export interface FocusTrapProps {
   active?: boolean;
 }
 
-export const FocusTrap: React.FC<FocusTrapProps> = ({
-  children,
-  active = true,
-}) => {
+export const FocusTrap: React.FC<FocusTrapProps> = ({ children, active = true }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
 
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const focusableElements = container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
-    if (focusableElements.length === 0) return;
+    if (focusableElements.length === 0) {
+      return;
+    }
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== 'Tab') {
+        return;
+      }
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {

@@ -9,7 +9,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
   // Simulate the questionnaire duplication logic
   function duplicateQuestionnaire(
     original: { id: string; title: string; questions: Array<{ id: string; text: string }> },
-    newId: string
+    newId: string,
   ) {
     // The bug was: using spread operator for shallow copy
     // const clone = { ...original, id: newId }; // BUG: questions array still references original
@@ -26,10 +26,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
       const original = deepFreeze(testData.validQuestionnaire);
       const originalCopy = JSON.stringify(original);
 
-      const duplicate = duplicateQuestionnaire(
-        JSON.parse(JSON.stringify(original)),
-        'new-id'
-      );
+      const duplicate = duplicateQuestionnaire(JSON.parse(JSON.stringify(original)), 'new-id');
 
       expect(JSON.stringify(original)).toBe(originalCopy);
     });
@@ -55,10 +52,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
 
     it('should create new array reference for questions', () => {
       const original = testData.validQuestionnaire;
-      const duplicate = duplicateQuestionnaire(
-        JSON.parse(JSON.stringify(original)),
-        'dup-2'
-      );
+      const duplicate = duplicateQuestionnaire(JSON.parse(JSON.stringify(original)), 'dup-2');
 
       // Arrays should be different references
       expect(duplicate.questions).not.toBe(original.questions);
@@ -66,10 +60,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
 
     it('should create new object references for each question', () => {
       const original = testData.validQuestionnaire;
-      const duplicate = duplicateQuestionnaire(
-        JSON.parse(JSON.stringify(original)),
-        'dup-3'
-      );
+      const duplicate = duplicateQuestionnaire(JSON.parse(JSON.stringify(original)), 'dup-3');
 
       // Each question object should be a different reference
       for (let i = 0; i < original.questions.length; i++) {
@@ -83,7 +74,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
       const original = testData.validQuestionnaire;
       const duplicate = duplicateQuestionnaire(
         JSON.parse(JSON.stringify(original)),
-        'new-unique-id'
+        'new-unique-id',
       );
 
       expect(duplicate.id).toBe('new-unique-id');
@@ -99,10 +90,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
 
     it('should preserve all question content', () => {
       const original = testData.validQuestionnaire;
-      const duplicate = duplicateQuestionnaire(
-        JSON.parse(JSON.stringify(original)),
-        'dup-4'
-      );
+      const duplicate = duplicateQuestionnaire(JSON.parse(JSON.stringify(original)), 'dup-4');
 
       expect(duplicate.questions.length).toBe(original.questions.length);
       for (let i = 0; i < original.questions.length; i++) {
@@ -131,7 +119,7 @@ describe('@regression:BUG-003 Admin Questionnaire Deep Clone', () => {
       const duplicate = duplicateQuestionnaire(originalWithMeta as any, '2');
 
       // Modify duplicate's nested data
-      (duplicate.questions[0] as any).metadata.tags.push('new-tag');
+      duplicate.questions[0].metadata.tags.push('new-tag');
 
       // Original should be unchanged
       expect((originalWithMeta.questions[0] as any).metadata.tags).toHaveLength(2);

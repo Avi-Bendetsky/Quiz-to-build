@@ -21,7 +21,7 @@ test.describe('Admin Dashboard', () => {
 
       // Verify admin dashboard is displayed
       await expect(page.locator('[data-testid="admin-dashboard"]')).toBeVisible();
-      
+
       // Verify statistics cards
       await expect(page.locator('[data-testid="total-users-card"]')).toBeVisible();
       await expect(page.locator('[data-testid="active-sessions-card"]')).toBeVisible();
@@ -72,9 +72,11 @@ test.describe('Admin Dashboard', () => {
       // Verify filtered results
       const sessionRows = page.locator('[data-testid="session-row"]');
       const count = await sessionRows.count();
-      
+
       for (let i = 0; i < Math.min(count, 5); i++) {
-        await expect(sessionRows.nth(i).locator('[data-testid="session-status"]')).toContainText('In Progress');
+        await expect(sessionRows.nth(i).locator('[data-testid="session-status"]')).toContainText(
+          'In Progress',
+        );
       }
     });
 
@@ -86,8 +88,8 @@ test.describe('Admin Dashboard', () => {
       await page.click('[data-testid="search-button"]');
 
       // Wait for search results
-      await page.waitForResponse((response) => 
-        response.url().includes('/api/admin/sessions') && response.status() === 200
+      await page.waitForResponse(
+        (response) => response.url().includes('/api/admin/sessions') && response.status() === 200,
       );
     });
 
@@ -152,7 +154,10 @@ test.describe('Admin Dashboard', () => {
         await approvalItem.click();
 
         // Add approval comment
-        await page.fill('[data-testid="approval-comment"]', 'Approved by admin - meets requirements');
+        await page.fill(
+          '[data-testid="approval-comment"]',
+          'Approved by admin - meets requirements',
+        );
 
         // Click approve
         await page.click('[data-testid="approve-button"]');
@@ -190,9 +195,11 @@ test.describe('Admin Dashboard', () => {
       // Verify filtered results
       const approvalItems = page.locator('[data-testid="approval-item"]');
       const count = await approvalItems.count();
-      
+
       for (let i = 0; i < Math.min(count, 5); i++) {
-        await expect(approvalItems.nth(i).locator('[data-testid="approval-type"]')).toContainText('Policy Lock');
+        await expect(approvalItems.nth(i).locator('[data-testid="approval-type"]')).toContainText(
+          'Policy Lock',
+        );
       }
     });
   });
@@ -252,7 +259,7 @@ test.describe('Admin Dashboard', () => {
 
       // Deactivate
       await page.click('[data-testid="deactivate-user-button"]');
-      
+
       // Confirm dialog
       await page.click('[data-testid="confirm-deactivate-button"]');
 
@@ -269,9 +276,11 @@ test.describe('Admin Dashboard', () => {
       // Verify filtered results
       const userRows = page.locator('[data-testid="user-row"]');
       const count = await userRows.count();
-      
+
       for (let i = 0; i < Math.min(count, 5); i++) {
-        await expect(userRows.nth(i).locator('[data-testid="user-role-badge"]')).toContainText('Admin');
+        await expect(userRows.nth(i).locator('[data-testid="user-role-badge"]')).toContainText(
+          'Admin',
+        );
       }
     });
   });
@@ -294,9 +303,11 @@ test.describe('Admin Dashboard', () => {
       // Verify filtered results
       const auditEntries = page.locator('[data-testid="audit-entry"]');
       const count = await auditEntries.count();
-      
+
       for (let i = 0; i < Math.min(count, 5); i++) {
-        await expect(auditEntries.nth(i).locator('[data-testid="audit-action"]')).toContainText('Login');
+        await expect(auditEntries.nth(i).locator('[data-testid="audit-action"]')).toContainText(
+          'Login',
+        );
       }
     });
 
@@ -357,7 +368,9 @@ test.describe('Admin Dashboard', () => {
       await page.click('[data-testid="send-test-email-button"]');
 
       // Verify test result
-      await expect(page.locator('[data-testid="test-email-result"]')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="test-email-result"]')).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 

@@ -25,4 +25,3 @@ export class RequestGenerationDto {
   @IsEnum(['DOCX'])
   format?: 'DOCX' = 'DOCX';
 }
-

@@ -1,9 +1,9 @@
 /**
  * User Preferences Learning System
- * 
+ *
  * Sprint 37: Adaptive UI & Personalization
  * Task ux37t1: Track UI interaction patterns (sidebar usage, shortcut usage, question skip patterns)
- * 
+ *
  * Features:
  * - Interaction pattern tracking (clicks, navigation, shortcuts)
  * - Learning algorithm for user preferences
@@ -107,20 +107,20 @@ export interface UserPreferences {
   colorTheme: 'light' | 'dark' | 'system';
   fontSize: 'small' | 'medium' | 'large';
   animationsEnabled: boolean;
-  
+
   // Behavior Preferences
   autoSaveEnabled: boolean;
   autoAdvanceQuestions: boolean;
   showTooltips: boolean;
   showHelpHints: boolean;
   notificationPreferences: NotificationPreference[];
-  
+
   // Learned Preferences
   preferredShortcuts: string[];
   frequentPages: string[];
   preferredFeatures: string[];
   workingHours: TimeRange[];
-  
+
   // Session Preferences
   sessionDuration: number;
   breakReminders: boolean;
@@ -203,23 +203,27 @@ export interface UserPreferencesContextType extends UserPreferencesState {
   trackNavigation: (from: string, to: string) => void;
   trackShortcut: (shortcut: string, success: boolean) => void;
   trackFeatureUsage: (featureId: string) => void;
-  trackQuestionBehavior: (questionId: string, action: 'view' | 'answer' | 'skip' | 'edit', duration?: number) => void;
-  
+  trackQuestionBehavior: (
+    questionId: string,
+    action: 'view' | 'answer' | 'skip' | 'edit',
+    duration?: number,
+  ) => void;
+
   // Preference management
   updatePreference: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
   resetPreferences: () => void;
-  
+
   // Insights
   getInsights: () => LearnedInsight[];
   dismissInsight: (insightId: string) => void;
-  
+
   // Analytics
   getTopFeatures: (limit?: number) => FeatureUsage[];
   getFrequentPaths: (limit?: number) => NavigationPattern[];
   getPreferredShortcuts: () => ShortcutUsage[];
   getQuestionDifficulties: () => { easy: string[]; medium: string[]; hard: string[] };
-  
+
   // Learning
   startLearning: () => void;
   stopLearning: () => void;
@@ -283,7 +287,7 @@ const STORAGE_KEYS = {
 
 function userPreferencesReducer(
   state: UserPreferencesState,
-  action: UserPreferencesAction
+  action: UserPreferencesAction,
 ): UserPreferencesState {
   switch (action.type) {
     case 'TRACK_INTERACTION': {
@@ -304,24 +308,24 @@ function userPreferencesReducer(
       };
 
     case 'ADD_USAGE_PATTERN': {
-      const patterns = state.usagePatterns.filter(p => p.id !== action.pattern.id);
+      const patterns = state.usagePatterns.filter((p) => p.id !== action.pattern.id);
       return { ...state, usagePatterns: [...patterns, action.pattern] };
     }
 
     case 'UPDATE_FEATURE_USAGE': {
-      const features = state.featureUsage.filter(f => f.featureId !== action.feature.featureId);
+      const features = state.featureUsage.filter((f) => f.featureId !== action.feature.featureId);
       return { ...state, featureUsage: [...features, action.feature] };
     }
 
     case 'ADD_NAVIGATION_PATTERN': {
       const existing = state.navigationPatterns.find(
-        p => p.from === action.pattern.from && p.to === action.pattern.to
+        (p) => p.from === action.pattern.from && p.to === action.pattern.to,
       );
       if (existing) {
-        const updated = state.navigationPatterns.map(p =>
+        const updated = state.navigationPatterns.map((p) =>
           p.from === action.pattern.from && p.to === action.pattern.to
             ? { ...p, count: p.count + 1 }
-            : p
+            : p,
         );
         return { ...state, navigationPatterns: updated };
       }
@@ -329,7 +333,7 @@ function userPreferencesReducer(
     }
 
     case 'UPDATE_SHORTCUT_USAGE': {
-      const shortcuts = state.shortcutUsage.filter(s => s.shortcut !== action.usage.shortcut);
+      const shortcuts = state.shortcutUsage.filter((s) => s.shortcut !== action.usage.shortcut);
       return { ...state, shortcutUsage: [...shortcuts, action.usage] };
     }
 
@@ -345,7 +349,7 @@ function userPreferencesReducer(
     case 'DISMISS_INSIGHT':
       return {
         ...state,
-        insights: state.insights.filter(i => i.id !== action.insightId),
+        insights: state.insights.filter((i) => i.id !== action.insightId),
       };
 
     case 'SET_LEARNING':
@@ -390,12 +394,16 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
 }) => {
   const [state, dispatch] = useReducer(userPreferencesReducer, initialState);
   const sessionIdRef = useRef<string>(generateSessionId());
-  const currentPageRef = useRef<string>(typeof window !== 'undefined' ? window.location.pathname : '/');
+  const currentPageRef = useRef<string>(
+    typeof window !== 'undefined' ? window.location.pathname : '/',
+  );
   const pageStartTimeRef = useRef<Date>(new Date());
 
   // Load saved state on mount
   useEffect(() => {
-    if (!enablePersistence) return;
+    if (!enablePersistence) {
+      return;
+    }
 
     try {
       const savedPreferences = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
@@ -428,17 +436,22 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
 
   // Persist state changes
   useEffect(() => {
-    if (!enablePersistence) return;
+    if (!enablePersistence) {
+      return;
+    }
 
     const saveTimeout = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(state.preferences));
-        localStorage.setItem(STORAGE_KEYS.PATTERNS, JSON.stringify({
-          usagePatterns: state.usagePatterns,
-          featureUsage: state.featureUsage,
-          navigationPatterns: state.navigationPatterns,
-          shortcutUsage: state.shortcutUsage,
-        }));
+        localStorage.setItem(
+          STORAGE_KEYS.PATTERNS,
+          JSON.stringify({
+            usagePatterns: state.usagePatterns,
+            featureUsage: state.featureUsage,
+            navigationPatterns: state.navigationPatterns,
+            shortcutUsage: state.shortcutUsage,
+          }),
+        );
         localStorage.setItem(STORAGE_KEYS.INSIGHTS, JSON.stringify(state.insights));
         dispatch({ type: 'SYNC_COMPLETE', timestamp: new Date() });
       } catch (error) {
@@ -447,11 +460,21 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
     }, 1000);
 
     return () => clearTimeout(saveTimeout);
-  }, [state.preferences, state.usagePatterns, state.featureUsage, state.navigationPatterns, state.shortcutUsage, state.insights, enablePersistence]);
+  }, [
+    state.preferences,
+    state.usagePatterns,
+    state.featureUsage,
+    state.navigationPatterns,
+    state.shortcutUsage,
+    state.insights,
+    enablePersistence,
+  ]);
 
   // Track page navigation
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     const handlePopState = () => {
       const newPage = window.location.pathname;
@@ -468,7 +491,9 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
 
   // Analyze patterns periodically
   useEffect(() => {
-    if (!enableLearning) return;
+    if (!enableLearning) {
+      return;
+    }
 
     const analysisInterval = setInterval(() => {
       analyzePatterns();
@@ -495,146 +520,161 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   }
 
   // Track interaction
-  const trackInteraction = useCallback((
-    event: Omit<InteractionEvent, 'id' | 'timestamp' | 'context'>
-  ) => {
-    if (!state.isLearning) return;
+  const trackInteraction = useCallback(
+    (event: Omit<InteractionEvent, 'id' | 'timestamp' | 'context'>) => {
+      if (!state.isLearning) {
+        return;
+      }
 
-    const fullEvent: InteractionEvent = {
-      ...event,
-      id: generateId(),
-      timestamp: new Date(),
-      context: getInteractionContext(),
-    };
+      const fullEvent: InteractionEvent = {
+        ...event,
+        id: generateId(),
+        timestamp: new Date(),
+        context: getInteractionContext(),
+      };
 
-    dispatch({ type: 'TRACK_INTERACTION', event: fullEvent });
-  }, [state.isLearning]);
+      dispatch({ type: 'TRACK_INTERACTION', event: fullEvent });
+    },
+    [state.isLearning],
+  );
 
   // Track click
-  const trackClick = useCallback((target: string, metadata?: Record<string, unknown>) => {
-    trackInteraction({
-      type: 'click',
-      target,
-      metadata,
-    });
-  }, [trackInteraction]);
+  const trackClick = useCallback(
+    (target: string, metadata?: Record<string, unknown>) => {
+      trackInteraction({
+        type: 'click',
+        target,
+        metadata,
+      });
+    },
+    [trackInteraction],
+  );
 
   // Track navigation
-  const trackNavigation = useCallback((from: string, to: string) => {
-    trackInteraction({
-      type: 'navigation',
-      target: to,
-      metadata: { from },
-    });
+  const trackNavigation = useCallback(
+    (from: string, to: string) => {
+      trackInteraction({
+        type: 'navigation',
+        target: to,
+        metadata: { from },
+      });
 
-    dispatch({
-      type: 'ADD_NAVIGATION_PATTERN',
-      pattern: {
-        from,
-        to,
-        count: 1,
-        avgTimeOnSource: Date.now() - pageStartTimeRef.current.getTime(),
-        conversions: 0,
-      },
-    });
-  }, [trackInteraction]);
+      dispatch({
+        type: 'ADD_NAVIGATION_PATTERN',
+        pattern: {
+          from,
+          to,
+          count: 1,
+          avgTimeOnSource: Date.now() - pageStartTimeRef.current.getTime(),
+          conversions: 0,
+        },
+      });
+    },
+    [trackInteraction],
+  );
 
   // Track shortcut usage
-  const trackShortcut = useCallback((shortcut: string, success: boolean) => {
-    trackInteraction({
-      type: 'shortcut',
-      target: shortcut,
-      metadata: { success },
-    });
+  const trackShortcut = useCallback(
+    (shortcut: string, success: boolean) => {
+      trackInteraction({
+        type: 'shortcut',
+        target: shortcut,
+        metadata: { success },
+      });
 
-    const existing = state.shortcutUsage.find(s => s.shortcut === shortcut);
-    const successCount = existing ? (existing.successRate * existing.usageCount) : 0;
+      const existing = state.shortcutUsage.find((s) => s.shortcut === shortcut);
+      const successCount = existing ? existing.successRate * existing.usageCount : 0;
 
-    dispatch({
-      type: 'UPDATE_SHORTCUT_USAGE',
-      usage: {
-        shortcut,
-        usageCount: (existing?.usageCount || 0) + 1,
-        lastUsed: new Date(),
-        successRate: (successCount + (success ? 1 : 0)) / ((existing?.usageCount || 0) + 1),
-      },
-    });
-  }, [trackInteraction, state.shortcutUsage]);
+      dispatch({
+        type: 'UPDATE_SHORTCUT_USAGE',
+        usage: {
+          shortcut,
+          usageCount: (existing?.usageCount || 0) + 1,
+          lastUsed: new Date(),
+          successRate: (successCount + (success ? 1 : 0)) / ((existing?.usageCount || 0) + 1),
+        },
+      });
+    },
+    [trackInteraction, state.shortcutUsage],
+  );
 
   // Track feature usage
-  const trackFeatureUsage = useCallback((featureId: string) => {
-    trackInteraction({
-      type: 'feature_usage',
-      target: featureId,
-    });
+  const trackFeatureUsage = useCallback(
+    (featureId: string) => {
+      trackInteraction({
+        type: 'feature_usage',
+        target: featureId,
+      });
 
-    const existing = state.featureUsage.find(f => f.featureId === featureId);
-    const newCount = (existing?.usageCount || 0) + 1;
+      const existing = state.featureUsage.find((f) => f.featureId === featureId);
+      const newCount = (existing?.usageCount || 0) + 1;
 
-    dispatch({
-      type: 'UPDATE_FEATURE_USAGE',
-      feature: {
-        featureId,
-        usageCount: newCount,
-        lastUsed: new Date(),
-        avgSessionUsage: newCount, // Simplified calculation
-        trend: newCount > (existing?.usageCount || 0) ? 'increasing' : 'stable',
-      },
-    });
-  }, [trackInteraction, state.featureUsage]);
+      dispatch({
+        type: 'UPDATE_FEATURE_USAGE',
+        feature: {
+          featureId,
+          usageCount: newCount,
+          lastUsed: new Date(),
+          avgSessionUsage: newCount, // Simplified calculation
+          trend: newCount > (existing?.usageCount || 0) ? 'increasing' : 'stable',
+        },
+      });
+    },
+    [trackInteraction, state.featureUsage],
+  );
 
   // Track question behavior
-  const trackQuestionBehavior = useCallback((
-    questionId: string,
-    action: 'view' | 'answer' | 'skip' | 'edit',
-    duration?: number
-  ) => {
-    trackInteraction({
-      type: action === 'skip' ? 'question_skip' : 'question_answer',
-      target: questionId,
-      metadata: { action, duration },
-    });
+  const trackQuestionBehavior = useCallback(
+    (questionId: string, action: 'view' | 'answer' | 'skip' | 'edit', duration?: number) => {
+      trackInteraction({
+        type: action === 'skip' ? 'question_skip' : 'question_answer',
+        target: questionId,
+        metadata: { action, duration },
+      });
 
-    const existing = state.questionBehavior.get(questionId) || {
-      questionId,
-      timesViewed: 0,
-      timesAnswered: 0,
-      timesSkipped: 0,
-      avgTimeToAnswer: 0,
-      editCount: 0,
-    };
+      const existing = state.questionBehavior.get(questionId) || {
+        questionId,
+        timesViewed: 0,
+        timesAnswered: 0,
+        timesSkipped: 0,
+        avgTimeToAnswer: 0,
+        editCount: 0,
+      };
 
-    const updated: QuestionBehavior = { ...existing };
+      const updated: QuestionBehavior = { ...existing };
 
-    switch (action) {
-      case 'view':
-        updated.timesViewed++;
-        break;
-      case 'answer':
-        updated.timesAnswered++;
-        if (duration) {
-          updated.avgTimeToAnswer = 
-            (updated.avgTimeToAnswer * (updated.timesAnswered - 1) + duration) / updated.timesAnswered;
-        }
-        break;
-      case 'skip':
-        updated.timesSkipped++;
-        break;
-      case 'edit':
-        updated.editCount++;
-        break;
-    }
+      switch (action) {
+        case 'view':
+          updated.timesViewed++;
+          break;
+        case 'answer':
+          updated.timesAnswered++;
+          if (duration) {
+            updated.avgTimeToAnswer =
+              (updated.avgTimeToAnswer * (updated.timesAnswered - 1) + duration) /
+              updated.timesAnswered;
+          }
+          break;
+        case 'skip':
+          updated.timesSkipped++;
+          break;
+        case 'edit':
+          updated.editCount++;
+          break;
+      }
 
-    dispatch({ type: 'UPDATE_QUESTION_BEHAVIOR', behavior: updated });
-  }, [trackInteraction, state.questionBehavior]);
+      dispatch({ type: 'UPDATE_QUESTION_BEHAVIOR', behavior: updated });
+    },
+    [trackInteraction, state.questionBehavior],
+  );
 
   // Update preference
-  const updatePreference = useCallback(<K extends keyof UserPreferences>(
-    key: K,
-    value: UserPreferences[K]
-  ) => {
-    dispatch({ type: 'UPDATE_PREFERENCE', key, value });
-  }, []);
+  const updatePreference = useCallback(
+    <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
+      dispatch({ type: 'UPDATE_PREFERENCE', key, value });
+    },
+    [],
+  );
 
   // Update multiple preferences
   const updatePreferences = useCallback((preferences: Partial<UserPreferences>) => {
@@ -644,14 +684,14 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   // Reset preferences
   const resetPreferences = useCallback(() => {
     dispatch({ type: 'RESET' });
-    Object.values(STORAGE_KEYS).forEach(key => {
+    Object.values(STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key);
     });
   }, []);
 
   // Get insights
   const getInsights = useCallback((): LearnedInsight[] => {
-    return state.insights.filter(i => !i.actionable || i.confidence > 0.7);
+    return state.insights.filter((i) => !i.actionable || i.confidence > 0.7);
   }, [state.insights]);
 
   // Dismiss insight
@@ -660,23 +700,25 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   }, []);
 
   // Get top features
-  const getTopFeatures = useCallback((limit: number = 5): FeatureUsage[] => {
-    return [...state.featureUsage]
-      .sort((a, b) => b.usageCount - a.usageCount)
-      .slice(0, limit);
-  }, [state.featureUsage]);
+  const getTopFeatures = useCallback(
+    (limit: number = 5): FeatureUsage[] => {
+      return [...state.featureUsage].sort((a, b) => b.usageCount - a.usageCount).slice(0, limit);
+    },
+    [state.featureUsage],
+  );
 
   // Get frequent paths
-  const getFrequentPaths = useCallback((limit: number = 5): NavigationPattern[] => {
-    return [...state.navigationPatterns]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-  }, [state.navigationPatterns]);
+  const getFrequentPaths = useCallback(
+    (limit: number = 5): NavigationPattern[] => {
+      return [...state.navigationPatterns].sort((a, b) => b.count - a.count).slice(0, limit);
+    },
+    [state.navigationPatterns],
+  );
 
   // Get preferred shortcuts
   const getPreferredShortcuts = useCallback((): ShortcutUsage[] => {
     return [...state.shortcutUsage]
-      .filter(s => s.usageCount >= 3 && s.successRate > 0.8)
+      .filter((s) => s.usageCount >= 3 && s.successRate > 0.8)
       .sort((a, b) => b.usageCount - a.usageCount);
   }, [state.shortcutUsage]);
 
@@ -714,14 +756,16 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
 
   // Analyze patterns
   const analyzePatterns = useCallback(() => {
-    if (!enableLearning || state.interactions.length < 10) return;
+    if (!enableLearning || state.interactions.length < 10) {
+      return;
+    }
 
     // Analyze navigation patterns for shortcuts
     const frequentPaths = getFrequentPaths(3);
-    frequentPaths.forEach(path => {
+    frequentPaths.forEach((path) => {
       if (path.count >= 5) {
         const existingInsight = state.insights.find(
-          i => i.type === 'navigation_shortcut' && i.description.includes(path.to)
+          (i) => i.type === 'navigation_shortcut' && i.description.includes(path.to),
         );
 
         if (!existingInsight) {
@@ -743,9 +787,9 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
 
     // Analyze feature usage for personalization
     const topFeatures = getTopFeatures(3);
-    const underusedFeatures = state.featureUsage.filter(f => f.usageCount === 1);
+    const underusedFeatures = state.featureUsage.filter((f) => f.usageCount === 1);
 
-    underusedFeatures.forEach(feature => {
+    underusedFeatures.forEach((feature) => {
       if (feature.lastUsed.getTime() < Date.now() - 7 * 24 * 60 * 60 * 1000) {
         dispatch({
           type: 'ADD_INSIGHT',
@@ -778,7 +822,14 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
         },
       });
     }
-  }, [enableLearning, state.interactions, state.insights, getFrequentPaths, getTopFeatures, getQuestionDifficulties]);
+  }, [
+    enableLearning,
+    state.interactions,
+    state.insights,
+    getFrequentPaths,
+    getTopFeatures,
+    getQuestionDifficulties,
+  ]);
 
   const contextValue: UserPreferencesContextType = {
     ...state,
@@ -993,13 +1044,15 @@ export const PreferencesPanel: React.FC = () => {
 
       <div style={styles.section}>
         <h3 style={styles.sectionTitle}>Display</h3>
-        
+
         <div style={styles.toggle}>
           <span style={styles.toggleLabel}>Theme</span>
           <select
             style={styles.select}
             value={preferences.colorTheme}
-            onChange={(e) => updatePreference('colorTheme', e.target.value as 'light' | 'dark' | 'system')}
+            onChange={(e) =>
+              updatePreference('colorTheme', e.target.value as 'light' | 'dark' | 'system')
+            }
           >
             <option value="light">Light</option>
             <option value="dark">Dark</option>
@@ -1012,7 +1065,9 @@ export const PreferencesPanel: React.FC = () => {
           <select
             style={styles.select}
             value={preferences.fontSize}
-            onChange={(e) => updatePreference('fontSize', e.target.value as 'small' | 'medium' | 'large')}
+            onChange={(e) =>
+              updatePreference('fontSize', e.target.value as 'small' | 'medium' | 'large')
+            }
           >
             <option value="small">Small</option>
             <option value="medium">Medium</option>
@@ -1025,7 +1080,9 @@ export const PreferencesPanel: React.FC = () => {
           <select
             style={styles.select}
             value={preferences.preferredView}
-            onChange={(e) => updatePreference('preferredView', e.target.value as 'grid' | 'list' | 'compact')}
+            onChange={(e) =>
+              updatePreference('preferredView', e.target.value as 'grid' | 'list' | 'compact')
+            }
           >
             <option value="grid">Grid</option>
             <option value="list">List</option>
@@ -1042,7 +1099,7 @@ export const PreferencesPanel: React.FC = () => {
 
       <div style={styles.section}>
         <h3 style={styles.sectionTitle}>Behavior</h3>
-        
+
         <ToggleSwitch
           label="Auto-save Responses"
           checked={preferences.autoSaveEnabled}
@@ -1082,7 +1139,7 @@ export const PreferencesPanel: React.FC = () => {
 
       <div style={styles.section}>
         <h3 style={styles.sectionTitle}>Sidebar</h3>
-        
+
         <ToggleSwitch
           label="Collapse Sidebar"
           checked={preferences.sidebarCollapsed}
@@ -1125,25 +1182,24 @@ export const InsightsPanel: React.FC = () => {
         Personalized Insights
       </h2>
 
-      {insights.map(insight => (
+      {insights.map((insight) => (
         <div key={insight.id} style={styles.insight}>
           <span style={styles.insightIcon}>
-            {insight.type === 'navigation_shortcut' ? '🚀' : 
-             insight.type === 'feature_discovery' ? '🔍' :
-             insight.type === 'workflow_optimization' ? '⚡' : '💡'}
+            {insight.type === 'navigation_shortcut'
+              ? '🚀'
+              : insight.type === 'feature_discovery'
+                ? '🔍'
+                : insight.type === 'workflow_optimization'
+                  ? '⚡'
+                  : '💡'}
           </span>
           <div style={styles.insightContent}>
             <p style={styles.insightText}>{insight.description}</p>
             <div>
               {insight.suggestedAction && (
-                <button style={styles.insightAction}>
-                  {insight.suggestedAction}
-                </button>
+                <button style={styles.insightAction}>{insight.suggestedAction}</button>
               )}
-              <button
-                style={styles.dismissButton}
-                onClick={() => dismissInsight(insight.id)}
-              >
+              <button style={styles.dismissButton} onClick={() => dismissInsight(insight.id)}>
                 Dismiss
               </button>
             </div>
@@ -1156,7 +1212,8 @@ export const InsightsPanel: React.FC = () => {
 
 // Usage Stats Panel Component
 export const UsageStatsPanel: React.FC = () => {
-  const { getTopFeatures, getFrequentPaths, getPreferredShortcuts, interactions } = useUserPreferences();
+  const { getTopFeatures, getFrequentPaths, getPreferredShortcuts, interactions } =
+    useUserPreferences();
 
   const topFeatures = getTopFeatures(5);
   const frequentPaths = getFrequentPaths(5);
@@ -1182,7 +1239,7 @@ export const UsageStatsPanel: React.FC = () => {
         {topFeatures.length === 0 ? (
           <p style={{ color: '#6b7280', fontSize: '14px' }}>No data yet</p>
         ) : (
-          topFeatures.map(feature => (
+          topFeatures.map((feature) => (
             <div key={feature.featureId} style={styles.stat}>
               <span style={styles.statLabel}>{feature.featureId}</span>
               <span style={styles.statValue}>{feature.usageCount} uses</span>
@@ -1198,7 +1255,9 @@ export const UsageStatsPanel: React.FC = () => {
         ) : (
           frequentPaths.map((path, i) => (
             <div key={i} style={styles.stat}>
-              <span style={styles.statLabel}>{path.from} → {path.to}</span>
+              <span style={styles.statLabel}>
+                {path.from} → {path.to}
+              </span>
               <span style={styles.statValue}>{path.count}x</span>
             </div>
           ))
@@ -1210,10 +1269,12 @@ export const UsageStatsPanel: React.FC = () => {
         {shortcuts.length === 0 ? (
           <p style={{ color: '#6b7280', fontSize: '14px' }}>No shortcuts used yet</p>
         ) : (
-          shortcuts.map(shortcut => (
+          shortcuts.map((shortcut) => (
             <div key={shortcut.shortcut} style={styles.stat}>
               <span style={styles.statLabel}>{shortcut.shortcut}</span>
-              <span style={styles.statValue}>{shortcut.usageCount}x ({Math.round(shortcut.successRate * 100)}%)</span>
+              <span style={styles.statValue}>
+                {shortcut.usageCount}x ({Math.round(shortcut.successRate * 100)}%)
+              </span>
             </div>
           ))
         )}
@@ -1233,10 +1294,13 @@ export const useInteractionTracking = (componentName: string) => {
   const { trackClick, trackFeatureUsage } = useUserPreferences();
 
   return {
-    trackClick: useCallback((target: string, metadata?: Record<string, unknown>) => {
-      trackClick(`${componentName}.${target}`, metadata);
-    }, [componentName, trackClick]),
-    
+    trackClick: useCallback(
+      (target: string, metadata?: Record<string, unknown>) => {
+        trackClick(`${componentName}.${target}`, metadata);
+      },
+      [componentName, trackClick],
+    ),
+
     trackFeature: useCallback(() => {
       trackFeatureUsage(componentName);
     }, [componentName, trackFeatureUsage]),
@@ -1260,11 +1324,11 @@ export const useQuestionTracking = (questionId: string) => {
       const duration = Date.now() - startTimeRef.current;
       trackQuestionBehavior(questionId, 'answer', duration);
     }, [questionId, trackQuestionBehavior]),
-    
+
     trackSkip: useCallback(() => {
       trackQuestionBehavior(questionId, 'skip');
     }, [questionId, trackQuestionBehavior]),
-    
+
     trackEdit: useCallback(() => {
       trackQuestionBehavior(questionId, 'edit');
     }, [questionId, trackQuestionBehavior]),

@@ -1,7 +1,7 @@
 /**
  * Bulk File Operations Component
  * Sprint 33: UX Polish & Enhancements
- * 
+ *
  * Nielsen Heuristic: User Control and Freedom
  * - Select All checkbox for batch operations
  * - Bulk delete with confirmation
@@ -86,7 +86,9 @@ function generateFileId(): string {
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -94,15 +96,33 @@ function formatFileSize(bytes: number): string {
 }
 
 function getFileIcon(type: string): string {
-  if (type.startsWith('image/')) return '🖼️';
-  if (type.startsWith('video/')) return '🎬';
-  if (type.startsWith('audio/')) return '🎵';
-  if (type.includes('pdf')) return '📄';
-  if (type.includes('word') || type.includes('document')) return '📝';
-  if (type.includes('sheet') || type.includes('excel')) return '📊';
-  if (type.includes('presentation') || type.includes('powerpoint')) return '📽️';
-  if (type.includes('zip') || type.includes('archive')) return '📦';
-  if (type.includes('text')) return '📃';
+  if (type.startsWith('image/')) {
+    return '🖼️';
+  }
+  if (type.startsWith('video/')) {
+    return '🎬';
+  }
+  if (type.startsWith('audio/')) {
+    return '🎵';
+  }
+  if (type.includes('pdf')) {
+    return '📄';
+  }
+  if (type.includes('word') || type.includes('document')) {
+    return '📝';
+  }
+  if (type.includes('sheet') || type.includes('excel')) {
+    return '📊';
+  }
+  if (type.includes('presentation') || type.includes('powerpoint')) {
+    return '📽️';
+  }
+  if (type.includes('zip') || type.includes('archive')) {
+    return '📦';
+  }
+  if (type.includes('text')) {
+    return '📃';
+  }
   return '📎';
 }
 
@@ -124,87 +144,91 @@ export const BulkFileProvider: React.FC<BulkFileProviderProps> = ({
 
   const isAllSelected = useMemo(
     () => files.length > 0 && selectedIds.size === files.length,
-    [files.length, selectedIds.size]
+    [files.length, selectedIds.size],
   );
 
   const hasSelection = selectedIds.size > 0;
   const selectionCount = selectedIds.size;
 
-  const addFiles = useCallback((newFiles: File[]) => {
-    const bulkFiles: BulkFile[] = [];
-    const currentCount = files.length;
-    const availableSlots = maxFiles - currentCount;
+  const addFiles = useCallback(
+    (newFiles: File[]) => {
+      const bulkFiles: BulkFile[] = [];
+      const currentCount = files.length;
+      const availableSlots = maxFiles - currentCount;
 
-    if (availableSlots <= 0) {
-      console.warn(`Maximum file limit (${maxFiles}) reached`);
-      return;
-    }
-
-    const filesToAdd = newFiles.slice(0, availableSlots);
-
-    filesToAdd.forEach((file) => {
-      // Validate file size
-      if (file.size > maxFileSize) {
-        console.warn(`File ${file.name} exceeds maximum size`);
+      if (availableSlots <= 0) {
+        console.warn(`Maximum file limit (${maxFiles}) reached`);
         return;
       }
 
-      // Validate file type
-      if (acceptedTypes && acceptedTypes.length > 0) {
-        const isAccepted = acceptedTypes.some(
-          (type) => file.type.startsWith(type) || file.name.endsWith(type)
-        );
-        if (!isAccepted) {
-          console.warn(`File ${file.name} type not accepted`);
+      const filesToAdd = newFiles.slice(0, availableSlots);
+
+      filesToAdd.forEach((file) => {
+        // Validate file size
+        if (file.size > maxFileSize) {
+          console.warn(`File ${file.name} exceeds maximum size`);
           return;
         }
-      }
 
-      const bulkFile: BulkFile = {
-        id: generateFileId(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        status: 'pending',
-        uploadedAt: new Date(),
-      };
-
-      // Generate thumbnail for images
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === bulkFile.id ? { ...f, thumbnailUrl: e.target?.result as string } : f
-            )
+        // Validate file type
+        if (acceptedTypes && acceptedTypes.length > 0) {
+          const isAccepted = acceptedTypes.some(
+            (type) => file.type.startsWith(type) || file.name.endsWith(type),
           );
+          if (!isAccepted) {
+            console.warn(`File ${file.name} type not accepted`);
+            return;
+          }
+        }
+
+        const bulkFile: BulkFile = {
+          id: generateFileId(),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          status: 'pending',
+          uploadedAt: new Date(),
         };
-        reader.readAsDataURL(file);
+
+        // Generate thumbnail for images
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === bulkFile.id ? { ...f, thumbnailUrl: e.target?.result as string } : f,
+              ),
+            );
+          };
+          reader.readAsDataURL(file);
+        }
+
+        bulkFiles.push(bulkFile);
+      });
+
+      if (bulkFiles.length > 0) {
+        setFiles((prev) => [...prev, ...bulkFiles]);
+        onFilesAdded?.(bulkFiles);
       }
+    },
+    [files.length, maxFiles, maxFileSize, acceptedTypes, onFilesAdded],
+  );
 
-      bulkFiles.push(bulkFile);
-    });
-
-    if (bulkFiles.length > 0) {
-      setFiles((prev) => [...prev, ...bulkFiles]);
-      onFilesAdded?.(bulkFiles);
-    }
-  }, [files.length, maxFiles, maxFileSize, acceptedTypes, onFilesAdded]);
-
-  const removeFiles = useCallback((ids: string[]) => {
-    setFiles((prev) => prev.filter((f) => !ids.includes(f.id)));
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.delete(id));
-      return next;
-    });
-    onFilesRemoved?.(ids);
-  }, [onFilesRemoved]);
+  const removeFiles = useCallback(
+    (ids: string[]) => {
+      setFiles((prev) => prev.filter((f) => !ids.includes(f.id)));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      });
+      onFilesRemoved?.(ids);
+    },
+    [onFilesRemoved],
+  );
 
   const updateFile = useCallback((id: string, updates: Partial<BulkFile>) => {
-    setFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
-    );
+    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   }, []);
 
   const selectFile = useCallback((id: string) => {
@@ -249,13 +273,13 @@ export const BulkFileProvider: React.FC<BulkFileProviderProps> = ({
 
   const deleteSelected = useCallback(async (): Promise<BulkOperationResult> => {
     const idsToDelete = Array.from(selectedIds);
-    
+
     if (onDeleteFiles) {
       const result = await onDeleteFiles(idsToDelete);
       removeFiles(result.success);
       return result;
     }
-    
+
     // Default behavior: remove locally
     removeFiles(idsToDelete);
     return { success: idsToDelete, failed: [] };
@@ -290,11 +314,7 @@ export const BulkFileProvider: React.FC<BulkFileProviderProps> = ({
     getSelectedFiles,
   };
 
-  return (
-    <BulkFileContext.Provider value={value}>
-      {children}
-    </BulkFileContext.Provider>
-  );
+  return <BulkFileContext.Provider value={value}>{children}</BulkFileContext.Provider>;
 };
 
 // ============================================================================
@@ -324,7 +344,9 @@ export const SelectAllCheckbox: React.FC<SelectAllCheckboxProps> = ({
     }
   }, [isIndeterminate]);
 
-  if (files.length === 0) return null;
+  if (files.length === 0) {
+    return null;
+  }
 
   return (
     <label className={`bulk-select-all ${className}`} style={styles.selectAllLabel}>
@@ -369,7 +391,8 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   showDeleteConfirm = true,
   deleteConfirmMessage = 'Are you sure you want to delete the selected files? This action cannot be undone.',
 }) => {
-  const { hasSelection, selectionCount, deleteSelected, deselectAll, getSelectedFiles } = useBulkFiles();
+  const { hasSelection, selectionCount, deleteSelected, deselectAll, getSelectedFiles } =
+    useBulkFiles();
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -408,7 +431,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
     });
   };
 
-  if (!hasSelection) return null;
+  if (!hasSelection) {
+    return null;
+  }
 
   return (
     <>
@@ -418,11 +443,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
         </span>
 
         <div style={styles.actionButtons}>
-          <button
-            onClick={deselectAll}
-            style={styles.actionButton}
-            aria-label="Clear selection"
-          >
+          <button onClick={deselectAll} style={styles.actionButton} aria-label="Clear selection">
             ✕ Clear
           </button>
 
@@ -437,11 +458,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
           )}
 
           {onMove && (
-            <button
-              onClick={onMove}
-              style={styles.actionButton}
-              aria-label="Move selected files"
-            >
+            <button onClick={onMove} style={styles.actionButton} aria-label="Move selected files">
               📁 Move
             </button>
           )}
@@ -459,7 +476,12 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
       {/* Delete Confirmation Modal */}
       {showConfirm && (
-        <div style={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+        <div
+          style={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-confirm-title"
+        >
           <div style={styles.modalContent}>
             <h3 id="delete-confirm-title" style={styles.modalTitle}>
               Confirm Delete
@@ -469,11 +491,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
               {selectionCount} file{selectionCount !== 1 ? 's' : ''} will be deleted.
             </p>
             <div style={styles.modalActions}>
-              <button
-                onClick={() => setShowConfirm(false)}
-                style={styles.cancelButton}
-                autoFocus
-              >
+              <button onClick={() => setShowConfirm(false)} style={styles.cancelButton} autoFocus>
                 Cancel
               </button>
               <button
@@ -667,13 +685,16 @@ export const MultiFileDropzone: React.FC<MultiFileDropzoneProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) {
-      setIsDragging(true);
-    }
-  }, [disabled]);
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!disabled) {
+        setIsDragging(true);
+      }
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -686,25 +707,33 @@ export const MultiFileDropzone: React.FC<MultiFileDropzoneProps> = ({
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    if (disabled) return;
+      if (disabled) {
+        return;
+      }
 
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    addFiles(droppedFiles);
-  }, [disabled, addFiles]);
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      addFiles(droppedFiles);
+    },
+    [disabled, addFiles],
+  );
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    addFiles(selectedFiles);
-    // Reset input
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  }, [addFiles]);
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFiles = Array.from(e.target.files || []);
+      addFiles(selectedFiles);
+      // Reset input
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    },
+    [addFiles],
+  );
 
   const handleClick = () => {
     if (!disabled) {
@@ -753,13 +782,9 @@ export const MultiFileDropzone: React.FC<MultiFileDropzoneProps> = ({
 
       {children || (
         <div style={styles.dropzoneContent}>
-          <span style={styles.dropzoneIcon}>
-            {isDragging ? '📥' : '📤'}
-          </span>
+          <span style={styles.dropzoneIcon}>{isDragging ? '📥' : '📤'}</span>
           <p style={styles.dropzoneText}>
-            {isDragging
-              ? 'Drop files here'
-              : 'Drag & drop files here, or click to browse'}
+            {isDragging ? 'Drop files here' : 'Drag & drop files here, or click to browse'}
           </p>
           {remainingSlots !== undefined && (
             <p style={styles.dropzoneHint}>
@@ -768,11 +793,7 @@ export const MultiFileDropzone: React.FC<MultiFileDropzoneProps> = ({
                 : 'Maximum files reached'}
             </p>
           )}
-          {maxSize && (
-            <p style={styles.dropzoneHint}>
-              Max file size: {formatFileSize(maxSize)}
-            </p>
-          )}
+          {maxSize && <p style={styles.dropzoneHint}>Max file size: {formatFileSize(maxSize)}</p>}
         </div>
       )}
     </div>

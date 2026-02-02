@@ -1,13 +1,13 @@
 /**
  * Contextual Tooltips Component
- * 
+ *
  * Wrapper around Tippy.js for consistent tooltip styling.
  * Provides tooltips for complex UI elements:
  * - Dimension names
  * - Residual risk
  * - Coverage levels
  * - Score indicators
- * 
+ *
  * Nielsen Heuristic #10: Help and Documentation
  */
 
@@ -17,11 +17,19 @@ import React, { useCallback, useState, useEffect, createContext, useContext } fr
 // Types & Interfaces
 // ============================================================================
 
-export type TooltipPlacement = 
-  | 'top' | 'top-start' | 'top-end'
-  | 'bottom' | 'bottom-start' | 'bottom-end'
-  | 'left' | 'left-start' | 'left-end'
-  | 'right' | 'right-start' | 'right-end';
+export type TooltipPlacement =
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end'
+  | 'left'
+  | 'left-start'
+  | 'left-end'
+  | 'right'
+  | 'right-start'
+  | 'right-end';
 
 export type TooltipTheme = 'light' | 'dark' | 'info' | 'warning' | 'error' | 'success';
 
@@ -81,12 +89,7 @@ export const TooltipProvider: React.FC<{
   defaultDelay?: number | [number, number];
   defaultTheme?: TooltipTheme;
   initialEnabled?: boolean;
-}> = ({ 
-  children, 
-  defaultDelay = 200, 
-  defaultTheme = 'dark',
-  initialEnabled = true,
-}) => {
+}> = ({ children, defaultDelay = 200, defaultTheme = 'dark', initialEnabled = true }) => {
   const [tooltipsEnabled, setTooltipsEnabled] = useState(initialEnabled);
 
   // Persist setting
@@ -103,10 +106,10 @@ export const TooltipProvider: React.FC<{
   }, []);
 
   return (
-    <TooltipContext.Provider 
-      value={{ 
-        defaultDelay, 
-        defaultTheme, 
+    <TooltipContext.Provider
+      value={{
+        defaultDelay,
+        defaultTheme,
         tooltipsEnabled,
         setTooltipsEnabled: handleSetEnabled,
       }}
@@ -319,7 +322,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const { defaultTheme, tooltipsEnabled } = useTooltipSettings();
   const [internalVisible, setInternalVisible] = useState(false);
   const [delayTimeout, setDelayTimeout] = useState<NodeJS.Timeout | null>(null);
-  
+
   const effectiveTheme = theme || defaultTheme;
   const isControlled = controlledVisible !== undefined;
   const isVisible = isControlled ? controlledVisible : internalVisible;
@@ -329,10 +332,14 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const hideDelay = Array.isArray(delay) ? delay[1] : 0;
 
   const show = useCallback(() => {
-    if (disabled || !tooltipsEnabled) return;
-    
-    if (delayTimeout) clearTimeout(delayTimeout);
-    
+    if (disabled || !tooltipsEnabled) {
+      return;
+    }
+
+    if (delayTimeout) {
+      clearTimeout(delayTimeout);
+    }
+
     const timeout = setTimeout(() => {
       if (isControlled) {
         onVisibleChange?.(true);
@@ -340,13 +347,15 @@ export const Tooltip: React.FC<TooltipProps> = ({
         setInternalVisible(true);
       }
     }, showDelay);
-    
+
     setDelayTimeout(timeout);
   }, [disabled, tooltipsEnabled, showDelay, isControlled, onVisibleChange, delayTimeout]);
 
   const hide = useCallback(() => {
-    if (delayTimeout) clearTimeout(delayTimeout);
-    
+    if (delayTimeout) {
+      clearTimeout(delayTimeout);
+    }
+
     const timeout = setTimeout(() => {
       if (isControlled) {
         onVisibleChange?.(false);
@@ -354,20 +363,22 @@ export const Tooltip: React.FC<TooltipProps> = ({
         setInternalVisible(false);
       }
     }, hideDelay);
-    
+
     setDelayTimeout(timeout);
   }, [hideDelay, isControlled, onVisibleChange, delayTimeout]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (delayTimeout) clearTimeout(delayTimeout);
+      if (delayTimeout) {
+        clearTimeout(delayTimeout);
+      }
     };
   }, [delayTimeout]);
 
   // Event handlers based on trigger type
   const triggerProps: React.HTMLAttributes<HTMLElement> = {};
-  
+
   if (trigger === 'mouseenter') {
     triggerProps.onMouseEnter = show;
     triggerProps.onMouseLeave = hide;
@@ -386,8 +397,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   return (
     <div className={`tooltip-wrapper ${className}`}>
-      <div 
-        className="tooltip-trigger" 
+      <div
+        className="tooltip-trigger"
         {...triggerProps}
         aria-describedby={isVisible ? 'tooltip-content' : undefined}
       >
@@ -423,23 +434,28 @@ export const TOOLTIP_CONTENT = {
   dimensions: {
     TECHNICAL_ARCHITECTURE: {
       title: 'Technical Architecture',
-      description: 'Evaluates system design, scalability, modularity, and technical debt management.',
+      description:
+        'Evaluates system design, scalability, modularity, and technical debt management.',
     },
     SECURITY_POSTURE: {
       title: 'Security Posture',
-      description: 'Measures protection mechanisms including authentication, encryption, and vulnerability management.',
+      description:
+        'Measures protection mechanisms including authentication, encryption, and vulnerability management.',
     },
     COMPLIANCE: {
       title: 'Compliance',
-      description: 'Assesses adherence to regulatory standards like ISO 27001, NIST CSF, GDPR, and SOC 2.',
+      description:
+        'Assesses adherence to regulatory standards like ISO 27001, NIST CSF, GDPR, and SOC 2.',
     },
     OPERATIONS: {
       title: 'Operations',
-      description: 'Evaluates monitoring, incident response, backup procedures, and disaster recovery capabilities.',
+      description:
+        'Evaluates monitoring, incident response, backup procedures, and disaster recovery capabilities.',
     },
     DOCUMENTATION: {
       title: 'Documentation',
-      description: 'Measures completeness and quality of technical docs, runbooks, and architectural decision records.',
+      description:
+        'Measures completeness and quality of technical docs, runbooks, and architectural decision records.',
     },
     DATA_MANAGEMENT: {
       title: 'Data Management',
@@ -447,7 +463,8 @@ export const TOOLTIP_CONTENT = {
     },
     TEAM_CAPABILITY: {
       title: 'Team Capability',
-      description: 'Evaluates team skills, knowledge sharing, training programs, and succession planning.',
+      description:
+        'Evaluates team skills, knowledge sharing, training programs, and succession planning.',
     },
     PROCESS_MATURITY: {
       title: 'Process Maturity',
@@ -455,7 +472,8 @@ export const TOOLTIP_CONTENT = {
     },
     VENDOR_MANAGEMENT: {
       title: 'Vendor Management',
-      description: 'Assesses third-party risk, vendor security assessments, and contract management.',
+      description:
+        'Assesses third-party risk, vendor security assessments, and contract management.',
     },
     BUSINESS_CONTINUITY: {
       title: 'Business Continuity',
@@ -499,7 +517,8 @@ Formula: Severity × (1 - Coverage)`,
     },
     CONFIDENCE: {
       title: 'Confidence Level',
-      description: 'How certain we are about this score based on evidence quality and verification status.',
+      description:
+        'How certain we are about this score based on evidence quality and verification status.',
     },
   },
 
@@ -507,23 +526,28 @@ Formula: Severity × (1 - Coverage)`,
   ui: {
     AUTOSAVE: {
       title: 'Auto-save Active',
-      description: 'Your answers are automatically saved every 30 seconds. Look for the green checkmark to confirm.',
+      description:
+        'Your answers are automatically saved every 30 seconds. Look for the green checkmark to confirm.',
     },
     DRAFT_RECOVERY: {
       title: 'Draft Recovery',
-      description: 'We found unsaved work from your last session. Click "Resume" to continue where you left off.',
+      description:
+        'We found unsaved work from your last session. Click "Resume" to continue where you left off.',
     },
     PROGRESS_BAR: {
       title: 'Section Progress',
-      description: 'Shows your completion progress for the current section. Questions with ✓ have been answered.',
+      description:
+        'Shows your completion progress for the current section. Questions with ✓ have been answered.',
     },
     EVIDENCE_REQUIRED: {
       title: 'Evidence Recommended',
-      description: 'Attaching supporting documents (screenshots, policies, configs) increases your confidence score.',
+      description:
+        'Attaching supporting documents (screenshots, policies, configs) increases your confidence score.',
     },
     SKIP_BUTTON: {
       title: 'Skip Question',
-      description: 'Skip this question for now. You can return to it anytime using the sidebar navigation.',
+      description:
+        'Skip this question for now. You can return to it anytime using the sidebar navigation.',
     },
   },
 };
@@ -538,8 +562,8 @@ interface InfoTooltipProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const InfoTooltip: React.FC<InfoTooltipProps> = ({ 
-  content, 
+export const InfoTooltip: React.FC<InfoTooltipProps> = ({
+  content,
   placement = 'top',
   size = 'md',
 }) => {
@@ -551,7 +575,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
 
   return (
     <Tooltip content={content} placement={placement} theme="info">
-      <button 
+      <button
         type="button"
         className={`info-tooltip ${sizeClasses[size]}`}
         aria-label="More information"
@@ -582,20 +606,17 @@ interface DimensionTooltipProps {
   children: React.ReactElement;
 }
 
-export const DimensionTooltip: React.FC<DimensionTooltipProps> = ({ 
-  dimensionKey, 
-  children,
-}) => {
+export const DimensionTooltip: React.FC<DimensionTooltipProps> = ({ dimensionKey, children }) => {
   const content = TOOLTIP_CONTENT.dimensions[dimensionKey];
-  if (!content) return children;
+  if (!content) {
+    return children;
+  }
 
   return (
     <Tooltip
       content={
         <div style={{ padding: 4 }}>
-          <strong style={{ display: 'block', marginBottom: 4 }}>
-            {content.title}
-          </strong>
+          <strong style={{ display: 'block', marginBottom: 4 }}>{content.title}</strong>
           <span style={{ opacity: 0.9 }}>{content.description}</span>
         </div>
       }
@@ -615,13 +636,15 @@ interface MetricTooltipProps {
   currentValue?: number;
 }
 
-export const MetricTooltip: React.FC<MetricTooltipProps> = ({ 
-  metricKey, 
+export const MetricTooltip: React.FC<MetricTooltipProps> = ({
+  metricKey,
   children,
   currentValue,
 }) => {
   const content = TOOLTIP_CONTENT.metrics[metricKey];
-  if (!content) return children;
+  if (!content) {
+    return children;
+  }
 
   return (
     <Tooltip
@@ -635,9 +658,7 @@ export const MetricTooltip: React.FC<MetricTooltipProps> = ({
               </span>
             )}
           </strong>
-          <span style={{ whiteSpace: 'pre-line', opacity: 0.9 }}>
-            {content.description}
-          </span>
+          <span style={{ whiteSpace: 'pre-line', opacity: 0.9 }}>{content.description}</span>
         </div>
       }
       placement="top"

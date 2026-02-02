@@ -1,7 +1,7 @@
 /**
  * AI Answer Suggestions Component
  * Sprint 34: AI Help Assistant
- * 
+ *
  * Nielsen Heuristic: Recognition over Recall
  * - Smart suggestions based on question patterns
  * - Industry best practice recommendations
@@ -60,7 +60,7 @@ export interface AISuggestionsContextValue {
 
 const TEMPLATE_SUGGESTIONS: Record<string, AnswerSuggestion[]> = {
   // Security dimension templates
-  'security': [
+  security: [
     {
       id: 'sec-1',
       text: 'We implement defense-in-depth with multiple security layers including network segmentation, endpoint protection, and application-level security controls.',
@@ -79,7 +79,7 @@ const TEMPLATE_SUGGESTIONS: Record<string, AnswerSuggestion[]> = {
     },
   ],
   // Architecture dimension templates
-  'architecture': [
+  architecture: [
     {
       id: 'arch-1',
       text: 'Our architecture follows microservices patterns with clear service boundaries, API contracts, and event-driven communication for loose coupling.',
@@ -91,25 +91,25 @@ const TEMPLATE_SUGGESTIONS: Record<string, AnswerSuggestion[]> = {
     {
       id: 'arch-2',
       text: 'We maintain Architecture Decision Records (ADRs) for all significant technical decisions, reviewed by the architecture review board.',
-      confidence: 0.80,
+      confidence: 0.8,
       source: 'template',
       reasoning: 'Documentation best practice',
       standardRefs: ['IEEE 42010'],
     },
   ],
   // Compliance dimension templates
-  'compliance': [
+  compliance: [
     {
       id: 'comp-1',
       text: 'We maintain a comprehensive compliance matrix mapping controls to ISO 27001, SOC 2 Type II, and GDPR requirements, with quarterly attestation reviews.',
-      confidence: 0.90,
+      confidence: 0.9,
       source: 'template',
       reasoning: 'Multi-framework compliance approach',
       standardRefs: ['ISO 27001', 'SOC 2', 'GDPR'],
     },
   ],
   // Data protection templates
-  'data': [
+  data: [
     {
       id: 'data-1',
       text: 'Personal data is encrypted at rest (AES-256) and in transit (TLS 1.3), with key management via Azure Key Vault with automatic rotation.',
@@ -169,86 +169,97 @@ export const AISuggestionsProvider: React.FC<AISuggestionsProviderProps> = ({
 
   const config = { ...DEFAULT_CONFIG, ...initialConfig };
 
-  const getTemplateSuggestions = useCallback((context: QuestionContext): AnswerSuggestion[] => {
-    if (!config.enableTemplates) return [];
-
-    const dimensionKey = context.dimensionName?.toLowerCase() || '';
-    const templates = TEMPLATE_SUGGESTIONS[dimensionKey] || [];
-
-    return templates.filter((s) => s.confidence >= (config.minConfidence || 0.7));
-  }, [config.enableTemplates, config.minConfidence]);
-
-  const fetchSuggestions = useCallback(async (context: QuestionContext) => {
-    setIsLoading(true);
-    setError(null);
-    setCurrentContext(context);
-
-    try {
-      // Get template suggestions first
-      const templateSuggestions = getTemplateSuggestions(context);
-
-      // Fetch AI suggestions
-      const response = await fetch(config.apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-        },
-        body: JSON.stringify({
-          question: context.questionText,
-          questionType: context.questionType,
-          dimension: context.dimensionName,
-          options: context.options,
-          previousAnswers: context.previousAnswers,
-          industry: context.industryContext,
-          maxSuggestions: config.maxSuggestions,
-        }),
-      });
-
-      if (!response.ok) {
-        // Fall back to templates only
-        setSuggestions(templateSuggestions.slice(0, config.maxSuggestions || 3));
-        return;
+  const getTemplateSuggestions = useCallback(
+    (context: QuestionContext): AnswerSuggestion[] => {
+      if (!config.enableTemplates) {
+        return [];
       }
 
-      const data = await response.json();
-      const aiSuggestions: AnswerSuggestion[] = (data.suggestions || []).map(
-        (s: Partial<AnswerSuggestion>, idx: number) => ({
-          id: `ai-${idx}`,
-          text: s.text || '',
-          confidence: s.confidence || 0.75,
-          source: 'ai' as const,
-          reasoning: s.reasoning,
-          standardRefs: s.standardRefs,
-        })
-      );
+      const dimensionKey = context.dimensionName?.toLowerCase() || '';
+      const templates = TEMPLATE_SUGGESTIONS[dimensionKey] || [];
 
-      // Combine and deduplicate
-      const allSuggestions = [...aiSuggestions, ...templateSuggestions]
-        .filter((s) => s.confidence >= (config.minConfidence || 0.7))
-        .slice(0, config.maxSuggestions || 3);
+      return templates.filter((s) => s.confidence >= (config.minConfidence || 0.7));
+    },
+    [config.enableTemplates, config.minConfidence],
+  );
 
-      setSuggestions(allSuggestions);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch suggestions');
-      // Fall back to templates on error
-      const templateSuggestions = getTemplateSuggestions(context);
-      setSuggestions(templateSuggestions.slice(0, config.maxSuggestions || 3));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [config, getTemplateSuggestions]);
+  const fetchSuggestions = useCallback(
+    async (context: QuestionContext) => {
+      setIsLoading(true);
+      setError(null);
+      setCurrentContext(context);
+
+      try {
+        // Get template suggestions first
+        const templateSuggestions = getTemplateSuggestions(context);
+
+        // Fetch AI suggestions
+        const response = await fetch(config.apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+          },
+          body: JSON.stringify({
+            question: context.questionText,
+            questionType: context.questionType,
+            dimension: context.dimensionName,
+            options: context.options,
+            previousAnswers: context.previousAnswers,
+            industry: context.industryContext,
+            maxSuggestions: config.maxSuggestions,
+          }),
+        });
+
+        if (!response.ok) {
+          // Fall back to templates only
+          setSuggestions(templateSuggestions.slice(0, config.maxSuggestions || 3));
+          return;
+        }
+
+        const data = await response.json();
+        const aiSuggestions: AnswerSuggestion[] = (data.suggestions || []).map(
+          (s: Partial<AnswerSuggestion>, idx: number) => ({
+            id: `ai-${idx}`,
+            text: s.text || '',
+            confidence: s.confidence || 0.75,
+            source: 'ai' as const,
+            reasoning: s.reasoning,
+            standardRefs: s.standardRefs,
+          }),
+        );
+
+        // Combine and deduplicate
+        const allSuggestions = [...aiSuggestions, ...templateSuggestions]
+          .filter((s) => s.confidence >= (config.minConfidence || 0.7))
+          .slice(0, config.maxSuggestions || 3);
+
+        setSuggestions(allSuggestions);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch suggestions');
+        // Fall back to templates on error
+        const templateSuggestions = getTemplateSuggestions(context);
+        setSuggestions(templateSuggestions.slice(0, config.maxSuggestions || 3));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [config, getTemplateSuggestions],
+  );
 
   const clearSuggestions = useCallback(() => {
     setSuggestions([]);
     setCurrentContext(null);
   }, []);
 
-  const acceptSuggestion = useCallback((suggestion: AnswerSuggestion) => {
-    if (currentContext && onSuggestionAccepted) {
-      onSuggestionAccepted(suggestion, currentContext);
-    }
-  }, [currentContext, onSuggestionAccepted]);
+  const acceptSuggestion = useCallback(
+    (suggestion: AnswerSuggestion) => {
+      if (currentContext && onSuggestionAccepted) {
+        onSuggestionAccepted(suggestion, currentContext);
+      }
+    },
+    [currentContext, onSuggestionAccepted],
+  );
 
   const dismissSuggestion = useCallback((suggestionId: string) => {
     setSuggestions((prev) => prev.filter((s) => s.id !== suggestionId));
@@ -265,11 +276,7 @@ export const AISuggestionsProvider: React.FC<AISuggestionsProviderProps> = ({
     config,
   };
 
-  return (
-    <AISuggestionsContext.Provider value={value}>
-      {children}
-    </AISuggestionsContext.Provider>
-  );
+  return <AISuggestionsContext.Provider value={value}>{children}</AISuggestionsContext.Provider>;
 };
 
 // ============================================================================
@@ -291,11 +298,12 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
   showReasoning = true,
   showStandardRefs = true,
 }) => {
-  const confidenceColor = suggestion.confidence >= 0.85
-    ? '#22C55E'
-    : suggestion.confidence >= 0.75
-    ? '#F59E0B'
-    : '#6B7280';
+  const confidenceColor =
+    suggestion.confidence >= 0.85
+      ? '#22C55E'
+      : suggestion.confidence >= 0.75
+        ? '#F59E0B'
+        : '#6B7280';
 
   const sourceLabel = {
     ai: '🤖 AI Suggestion',
@@ -314,8 +322,8 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
     <div style={styles.card}>
       <div style={styles.cardHeader}>
         <span style={styles.sourceLabel}>
-          <span aria-hidden="true">{sourceIcon[suggestion.source]}</span>
-          {' '}{sourceLabel[suggestion.source].split(' ').slice(1).join(' ')}
+          <span aria-hidden="true">{sourceIcon[suggestion.source]}</span>{' '}
+          {sourceLabel[suggestion.source].split(' ').slice(1).join(' ')}
         </span>
         <div style={styles.confidenceContainer}>
           <span style={styles.confidenceLabel}>Confidence:</span>
@@ -330,7 +338,9 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
 
         {showReasoning && suggestion.reasoning && (
           <div style={styles.reasoning}>
-            <span style={styles.reasoningIcon} aria-hidden="true">💡</span>
+            <span style={styles.reasoningIcon} aria-hidden="true">
+              💡
+            </span>
             <span style={styles.reasoningText}>{suggestion.reasoning}</span>
           </div>
         )}
@@ -384,11 +394,15 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
     return (
       <div className={className} style={styles.panel}>
         <div style={styles.panelHeader}>
-          <span style={styles.panelIcon} aria-hidden="true">✨</span>
+          <span style={styles.panelIcon} aria-hidden="true">
+            ✨
+          </span>
           <span style={styles.panelTitle}>{title}</span>
         </div>
         <div style={styles.loading}>
-          <span style={styles.loadingSpinner} aria-hidden="true">⏳</span>
+          <span style={styles.loadingSpinner} aria-hidden="true">
+            ⏳
+          </span>
           <span>Generating suggestions...</span>
         </div>
       </div>
@@ -398,11 +412,11 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
   return (
     <div className={className} style={styles.panel}>
       <div style={styles.panelHeader}>
-        <span style={styles.panelIcon} aria-hidden="true">✨</span>
+        <span style={styles.panelIcon} aria-hidden="true">
+          ✨
+        </span>
         <span style={styles.panelTitle}>{title}</span>
-        {suggestions.length > 0 && (
-          <span style={styles.suggestionCount}>{suggestions.length}</span>
-        )}
+        {suggestions.length > 0 && <span style={styles.suggestionCount}>{suggestions.length}</span>}
       </div>
 
       {error && (
@@ -413,7 +427,9 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
 
       {suggestions.length === 0 ? (
         <div style={styles.emptyState}>
-          <span style={styles.emptyIcon} aria-hidden="true">💭</span>
+          <span style={styles.emptyIcon} aria-hidden="true">
+            💭
+          </span>
           <span style={styles.emptyText}>{emptyMessage}</span>
         </div>
       ) : (
@@ -451,7 +467,9 @@ export const InlineSuggestion: React.FC<InlineSuggestionProps> = ({
 }) => (
   <div style={compact ? styles.inlineCompact : styles.inline}>
     <div style={styles.inlineContent}>
-      <span style={styles.inlineIcon} aria-hidden="true">💡</span>
+      <span style={styles.inlineIcon} aria-hidden="true">
+        💡
+      </span>
       <span style={styles.inlineText}>
         {compact ? suggestion.text.slice(0, 100) + '...' : suggestion.text}
       </span>

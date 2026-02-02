@@ -107,11 +107,13 @@ export function deepFreeze<T extends object>(obj: T): T {
 export async function waitForCondition(
   condition: () => boolean,
   timeoutMs = 5000,
-  intervalMs = 100
+  intervalMs = 100,
 ): Promise<boolean> {
   const startTime = Date.now();
   while (Date.now() - startTime < timeoutMs) {
-    if (condition()) return true;
+    if (condition()) {
+      return true;
+    }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
   return false;

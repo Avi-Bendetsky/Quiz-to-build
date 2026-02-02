@@ -54,7 +54,11 @@ const MockLoginPage = () => (
         <span aria-hidden="true">G</span>
         <span>Google</span>
       </button>
-      <button type="button" aria-label="Sign in with Microsoft" data-testid="microsoft-oauth-button">
+      <button
+        type="button"
+        aria-label="Sign in with Microsoft"
+        data-testid="microsoft-oauth-button"
+      >
         <span aria-hidden="true">M</span>
         <span>Microsoft</span>
       </button>
@@ -67,7 +71,7 @@ describe('LoginPage Accessibility', () => {
     const { container } = render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const results = await axe(container);
@@ -78,7 +82,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const h1 = screen.getByRole('heading', { level: 1 });
@@ -90,7 +94,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByLabelText(/email/i);
@@ -104,7 +108,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByTestId('email-input');
@@ -119,7 +123,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const googleButton = screen.getByRole('button', { name: /sign in with google/i });
@@ -133,7 +137,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const main = screen.getByRole('main');
@@ -144,7 +148,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const forgotLink = screen.getByRole('link', { name: /forgot password/i });
@@ -158,7 +162,7 @@ describe('LoginPage Accessibility', () => {
     render(
       <BrowserRouter>
         <MockLoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByTestId('email-input');

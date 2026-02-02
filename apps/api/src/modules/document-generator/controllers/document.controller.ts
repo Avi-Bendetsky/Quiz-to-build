@@ -8,13 +8,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../../auth/auth.service';
@@ -31,13 +25,15 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class DocumentController {
-  constructor(
-    private readonly documentGeneratorService: DocumentGeneratorService,
-  ) {}
+  constructor(private readonly documentGeneratorService: DocumentGeneratorService) {}
 
   @Post('generate')
   @ApiOperation({ summary: 'Request document generation for a session' })
-  @ApiResponse({ status: 201, description: 'Document generation started', type: DocumentResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Document generation started',
+    type: DocumentResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Session not completed or missing required questions' })
   @ApiResponse({ status: 404, description: 'Session or document type not found' })
   async generateDocument(
@@ -55,7 +51,11 @@ export class DocumentController {
 
   @Get('types')
   @ApiOperation({ summary: 'List available document types' })
-  @ApiResponse({ status: 200, description: 'List of document types', type: [DocumentTypeResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of document types',
+    type: [DocumentTypeResponseDto],
+  })
   async listDocumentTypes(): Promise<DocumentTypeResponseDto[]> {
     return this.documentGeneratorService.listDocumentTypes();
   }
@@ -68,10 +68,7 @@ export class DocumentController {
     @Param('sessionId', ParseUUIDPipe) sessionId: string,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<DocumentResponseDto[]> {
-    const documents = await this.documentGeneratorService.getSessionDocuments(
-      sessionId,
-      user.id,
-    );
+    const documents = await this.documentGeneratorService.getSessionDocuments(sessionId, user.id);
 
     return documents.map((doc) => this.mapToResponse(doc));
   }
@@ -90,7 +87,11 @@ export class DocumentController {
 
   @Get(':id/download')
   @ApiOperation({ summary: 'Get secure download URL for document' })
-  @ApiQuery({ name: 'expiresIn', required: false, description: 'URL expiration in minutes (default: 60)' })
+  @ApiQuery({
+    name: 'expiresIn',
+    required: false,
+    description: 'URL expiration in minutes (default: 60)',
+  })
   @ApiResponse({ status: 200, description: 'Download URL', type: DownloadUrlResponseDto })
   @ApiResponse({ status: 400, description: 'Document not available for download' })
   @ApiResponse({ status: 404, description: 'Document not found' })
@@ -100,11 +101,7 @@ export class DocumentController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<DownloadUrlResponseDto> {
     const expiresInMinutes = expiresIn ? parseInt(expiresIn, 10) : 60;
-    const url = await this.documentGeneratorService.getDownloadUrl(
-      id,
-      user.id,
-      expiresInMinutes,
-    );
+    const url = await this.documentGeneratorService.getDownloadUrl(id, user.id, expiresInMinutes);
 
     return {
       url,
@@ -160,4 +157,3 @@ export class DocumentController {
     };
   }
 }
-

@@ -1,4 +1,14 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Req, Res, UseGuards, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Req,
+  Res,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
@@ -122,8 +132,8 @@ export class AuthController {
   @Get('csrf-token')
   @SkipCsrf()
   @ApiOperation({ summary: 'Get CSRF token for state-changing requests' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'CSRF token generated and set in cookie',
     schema: {
       type: 'object',
@@ -133,18 +143,20 @@ export class AuthController {
       },
     },
   })
-  getCsrfToken(
-    @Res({ passthrough: true }) response: Response,
-  ): { csrfToken: string; message: string } {
+  getCsrfToken(@Res({ passthrough: true }) response: Response): {
+    csrfToken: string;
+    message: string;
+  } {
     const token = this.csrfService.generateToken();
     const cookieOptions = this.csrfService.getCookieOptions();
-    
+
     // Set CSRF token in cookie
     response.cookie(CSRF_TOKEN_COOKIE, token, cookieOptions);
-    
+
     return {
       csrfToken: token,
-      message: 'Include this token in the X-CSRF-Token header for all state-changing requests (POST, PUT, DELETE, PATCH)',
+      message:
+        'Include this token in the X-CSRF-Token header for all state-changing requests (POST, PUT, DELETE, PATCH)',
     };
   }
 }

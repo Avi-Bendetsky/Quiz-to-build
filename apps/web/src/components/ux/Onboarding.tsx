@@ -1,9 +1,9 @@
 /**
  * First-Time Onboarding Component
- * 
+ *
  * Interactive product tour shown on first login.
  * Highlights key features step-by-step.
- * 
+ *
  * Nielsen Heuristic #10: Help and Documentation
  */
 
@@ -84,7 +84,7 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'welcome',
         target: '[data-tour="dashboard"]',
         title: 'Welcome to Quiz2Biz! 👋',
-        content: 'This is your command center. Let\'s take a quick tour to help you get started.',
+        content: "This is your command center. Let's take a quick tour to help you get started.",
         placement: 'bottom',
         highlightStyle: 'spotlight',
         image: '/images/tour/welcome.gif',
@@ -93,7 +93,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'score-overview',
         target: '[data-tour="readiness-score"]',
         title: 'Your Readiness Score',
-        content: 'This shows your overall production readiness. Our goal is to get you to 95%+ by completing assessments.',
+        content:
+          'This shows your overall production readiness. Our goal is to get you to 95%+ by completing assessments.',
         placement: 'bottom',
         highlightStyle: 'pulse',
       },
@@ -101,7 +102,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'start-assessment',
         target: '[data-tour="new-assessment"]',
         title: 'Start Your First Assessment',
-        content: 'Click here to begin a new assessment. Choose from Security, Technology, or Business templates.',
+        content:
+          'Click here to begin a new assessment. Choose from Security, Technology, or Business templates.',
         placement: 'left',
         highlightStyle: 'border',
         actionText: 'Try it now',
@@ -110,7 +112,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'heatmap',
         target: '[data-tour="heatmap"]',
         title: 'Visual Progress Heatmap',
-        content: 'The heatmap shows gaps at a glance. Red cells need attention, green cells are on track.',
+        content:
+          'The heatmap shows gaps at a glance. Red cells need attention, green cells are on track.',
         placement: 'top',
         highlightStyle: 'spotlight',
       },
@@ -126,15 +129,17 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'help-shortcut',
         target: '[data-tour="help-button"]',
         title: 'Need Help? Press ?',
-        content: 'Press the ? key anytime to see keyboard shortcuts, or click the help icon for FAQs.',
+        content:
+          'Press the ? key anytime to see keyboard shortcuts, or click the help icon for FAQs.',
         placement: 'left',
         highlightStyle: 'pulse',
       },
       {
         id: 'complete',
         target: '[data-tour="dashboard"]',
-        title: 'You\'re Ready! 🎉',
-        content: 'That\'s the basics! Start your first assessment when you\'re ready. We\'re here to help.',
+        title: "You're Ready! 🎉",
+        content:
+          "That's the basics! Start your first assessment when you're ready. We're here to help.",
         placement: 'bottom',
         highlightStyle: 'spotlight',
         actionText: 'Get Started',
@@ -151,7 +156,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'question-types',
         target: '[data-tour="question-card"]',
         title: 'Answering Questions',
-        content: 'Questions come in different formats: multiple choice, text, scales, and file uploads.',
+        content:
+          'Questions come in different formats: multiple choice, text, scales, and file uploads.',
         placement: 'bottom',
         highlightStyle: 'spotlight',
       },
@@ -159,7 +165,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'progress-tracker',
         target: '[data-tour="progress-sidebar"]',
         title: 'Track Your Progress',
-        content: 'The sidebar shows all sections and questions. Completed items have a green checkmark.',
+        content:
+          'The sidebar shows all sections and questions. Completed items have a green checkmark.',
         placement: 'right',
         highlightStyle: 'border',
       },
@@ -167,7 +174,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'evidence-upload',
         target: '[data-tour="evidence-upload"]',
         title: 'Attach Evidence',
-        content: 'Upload documents, screenshots, or links to boost your confidence score. Evidence is optional but recommended.',
+        content:
+          'Upload documents, screenshots, or links to boost your confidence score. Evidence is optional but recommended.',
         placement: 'top',
         highlightStyle: 'pulse',
       },
@@ -175,7 +183,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'autosave',
         target: '[data-tour="autosave-indicator"]',
         title: 'Auto-Save Active',
-        content: 'Your work is saved automatically every 30 seconds. No need to worry about losing progress!',
+        content:
+          'Your work is saved automatically every 30 seconds. No need to worry about losing progress!',
         placement: 'bottom',
         highlightStyle: 'border',
       },
@@ -183,7 +192,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'skip-return',
         target: '[data-tour="skip-button"]',
         title: 'Skip & Return',
-        content: 'Not sure about a question? Skip it and come back later. Skipped questions are highlighted in yellow.',
+        content:
+          'Not sure about a question? Skip it and come back later. Skipped questions are highlighted in yellow.',
         placement: 'top',
         highlightStyle: 'spotlight',
       },
@@ -207,7 +217,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'upgrade',
         target: '[data-tour="upgrade-button"]',
         title: 'Upgrade for More',
-        content: 'Unlock unlimited assessments, advanced reports, and priority support by upgrading.',
+        content:
+          'Unlock unlimited assessments, advanced reports, and priority support by upgrading.',
         placement: 'left',
         highlightStyle: 'pulse',
       },
@@ -215,7 +226,8 @@ export const ONBOARDING_TOURS: OnboardingTour[] = [
         id: 'invoices',
         target: '[data-tour="invoices"]',
         title: 'Invoice History',
-        content: 'Download past invoices for your records. All payments are processed securely via Stripe.',
+        content:
+          'Download past invoices for your records. All payments are processed securely via Stripe.',
         placement: 'top',
         highlightStyle: 'border',
       },
@@ -255,7 +267,9 @@ export const useOnboarding = () => {
 const STORAGE_KEY = 'quiz2biz_onboarding_state';
 
 function loadOnboardingState(): Partial<OnboardingState> {
-  if (typeof window === 'undefined') return {};
+  if (typeof window === 'undefined') {
+    return {};
+  }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : {};
@@ -265,7 +279,9 @@ function loadOnboardingState(): Partial<OnboardingState> {
 }
 
 function saveOnboardingState(state: Partial<OnboardingState>): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
@@ -301,8 +317,10 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({
 
   // Auto-start welcome tour for new users
   useEffect(() => {
-    if (!autoStart) return;
-    
+    if (!autoStart) {
+      return;
+    }
+
     const welcomeTour = tours.find((t) => t.id === 'welcome-tour');
     if (
       welcomeTour &&
@@ -319,28 +337,35 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({
     }
   }, [autoStart, tours, state.completedTours, state.dismissedTours, state.isActive]);
 
-  const startTour = useCallback((tourId: string) => {
-    const tour = tours.find((t) => t.id === tourId);
-    if (!tour) return;
+  const startTour = useCallback(
+    (tourId: string) => {
+      const tour = tours.find((t) => t.id === tourId);
+      if (!tour) {
+        return;
+      }
 
-    setState((prev) => ({
-      ...prev,
-      activeTour: tour,
-      currentStep: 0,
-      isActive: true,
-    }));
-  }, [tours]);
+      setState((prev) => ({
+        ...prev,
+        activeTour: tour,
+        currentStep: 0,
+        isActive: true,
+      }));
+    },
+    [tours],
+  );
 
   const nextStep = useCallback(() => {
     setState((prev) => {
-      if (!prev.activeTour) return prev;
-      
+      if (!prev.activeTour) {
+        return prev;
+      }
+
       const nextIndex = prev.currentStep + 1;
       if (nextIndex >= prev.activeTour.steps.length) {
         // Tour complete
         const newCompleted = [...prev.completedTours, prev.activeTour.id];
-        saveOnboardingState({ 
-          completedTours: newCompleted, 
+        saveOnboardingState({
+          completedTours: newCompleted,
           dismissedTours: prev.dismissedTours,
         });
         return {
@@ -351,7 +376,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({
           completedTours: newCompleted,
         };
       }
-      
+
       return {
         ...prev,
         currentStep: nextIndex,
@@ -372,21 +397,19 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({
 
   const endTour = useCallback((complete = false) => {
     setState((prev) => {
-      if (!prev.activeTour) return prev;
-      
+      if (!prev.activeTour) {
+        return prev;
+      }
+
       const tourId = prev.activeTour.id;
-      const newCompleted = complete 
-        ? [...prev.completedTours, tourId]
-        : prev.completedTours;
-      const newDismissed = !complete
-        ? [...prev.dismissedTours, tourId]
-        : prev.dismissedTours;
-      
-      saveOnboardingState({ 
-        completedTours: newCompleted, 
+      const newCompleted = complete ? [...prev.completedTours, tourId] : prev.completedTours;
+      const newDismissed = !complete ? [...prev.dismissedTours, tourId] : prev.dismissedTours;
+
+      saveOnboardingState({
+        completedTours: newCompleted,
         dismissedTours: newDismissed,
       });
-      
+
       return {
         ...prev,
         activeTour: null,
@@ -402,8 +425,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({
     setState((prev) => {
       const newCompleted = prev.completedTours.filter((id) => id !== tourId);
       const newDismissed = prev.dismissedTours.filter((id) => id !== tourId);
-      saveOnboardingState({ 
-        completedTours: newCompleted, 
+      saveOnboardingState({
+        completedTours: newCompleted,
         dismissedTours: newDismissed,
       });
       return {
@@ -480,7 +503,9 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
 
   // Find target element and calculate position
   useEffect(() => {
-    if (!step) return;
+    if (!step) {
+      return;
+    }
 
     const findTarget = () => {
       const target = document.querySelector(step.target);
@@ -531,7 +556,9 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onNext, onPrev, onClose]);
 
-  if (!step) return null;
+  if (!step) {
+    return null;
+  }
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === tour.steps.length - 1;
@@ -590,7 +617,12 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
   };
 
   return (
-    <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="tour-step-title">
+    <div
+      className="onboarding-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tour-step-title"
+    >
       {/* Backdrop */}
       <div className="onboarding-backdrop" onClick={onClose} />
 
@@ -649,28 +681,20 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
       )}
 
       {/* Tooltip */}
-      <div
-        ref={tooltipRef}
-        className="onboarding-tooltip"
-        style={getTooltipStyle()}
-      >
+      <div ref={tooltipRef} className="onboarding-tooltip" style={getTooltipStyle()}>
         <div className="onboarding-tooltip__header">
           <h2 id="tour-step-title" className="onboarding-tooltip__title">
             {step.title}
           </h2>
-          <button
-            className="onboarding-tooltip__close"
-            onClick={onClose}
-            aria-label="Close tour"
-          >
+          <button className="onboarding-tooltip__close" onClick={onClose} aria-label="Close tour">
             ✕
           </button>
         </div>
 
         {step.image && (
-          <img 
-            src={step.image} 
-            alt="" 
+          <img
+            src={step.image}
+            alt=""
             className="onboarding-tooltip__image"
             style={{ width: '100%', borderRadius: 8, marginBottom: 12 }}
           />
@@ -679,7 +703,9 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
         <p className="onboarding-tooltip__content">{step.content}</p>
 
         <div className="onboarding-tooltip__progress">
-          <span>Step {currentStep + 1} of {tour.steps.length}</span>
+          <span>
+            Step {currentStep + 1} of {tour.steps.length}
+          </span>
           <div className="onboarding-tooltip__dots">
             {tour.steps.map((_, idx) => (
               <span
@@ -881,7 +907,7 @@ interface TourTriggerProps {
 
 export const TourTrigger: React.FC<TourTriggerProps> = ({ tourId, children }) => {
   const { startTour, state } = useOnboarding();
-  
+
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     startTour(tourId);
@@ -903,15 +929,17 @@ interface TourButtonProps {
   children?: React.ReactNode;
 }
 
-export const TourButton: React.FC<TourButtonProps> = ({ 
-  tourId, 
+export const TourButton: React.FC<TourButtonProps> = ({
+  tourId,
   className = '',
   children = 'Take the Tour',
 }) => {
   const { startTour, state } = useOnboarding();
   const tour = ONBOARDING_TOURS.find((t) => t.id === tourId);
 
-  if (!tour) return null;
+  if (!tour) {
+    return null;
+  }
 
   const isCompleted = state.completedTours.includes(tourId);
 

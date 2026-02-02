@@ -22,7 +22,7 @@ describe('@regression:BUG-005 Enum String Comparison', () => {
   // Safe comparison function (the fix)
   function isDimensionEqual(
     cellDimension: Dimension | string,
-    targetDimension: Dimension
+    targetDimension: Dimension,
   ): boolean {
     // Convert both to string for safe comparison
     return String(cellDimension) === String(targetDimension);
@@ -31,7 +31,7 @@ describe('@regression:BUG-005 Enum String Comparison', () => {
   // Unsafe comparison (the bug)
   function isDimensionEqualUnsafe(
     cellDimension: Dimension | string,
-    targetDimension: Dimension
+    targetDimension: Dimension,
   ): boolean {
     // This can fail if cellDimension is actually a string from DB
     return cellDimension === targetDimension;
@@ -91,7 +91,7 @@ describe('@regression:BUG-005 Enum String Comparison', () => {
 
     it('should filter cells by dimension correctly', () => {
       const securityCells = mockCells.filter((cell) =>
-        isDimensionEqual(cell.dimension, Dimension.SECURITY)
+        isDimensionEqual(cell.dimension, Dimension.SECURITY),
       );
 
       expect(securityCells).toHaveLength(2);
@@ -100,7 +100,7 @@ describe('@regression:BUG-005 Enum String Comparison', () => {
 
     it('should return empty array for non-existent dimension', () => {
       const operationsCells = mockCells.filter((cell) =>
-        isDimensionEqual(cell.dimension, Dimension.OPERATIONS)
+        isDimensionEqual(cell.dimension, Dimension.OPERATIONS),
       );
 
       expect(operationsCells).toHaveLength(0);

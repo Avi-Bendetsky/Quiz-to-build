@@ -12,7 +12,7 @@ expect.extend(toHaveNoViolations);
 
 // Cleanup after each test
 afterEach(() => {
-    cleanup();
+  cleanup();
 });
 
 // Custom matcher type declaration for jest-axe

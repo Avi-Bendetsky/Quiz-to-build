@@ -1,10 +1,10 @@
 /**
  * File Type Preview & Validation
- * 
+ *
  * Shows file type icons before upload.
  * Validates on selection (not after upload).
  * Clear error messaging.
- * 
+ *
  * Nielsen Heuristic #5: Error Prevention
  */
 
@@ -155,14 +155,24 @@ export function getFileTypeConfig(file: File): FileTypeConfig | null {
 
 export function getFileIcon(file: File): string {
   const config = getFileTypeConfig(file);
-  if (config) return config.icon;
+  if (config) {
+    return config.icon;
+  }
 
   // Fallback based on MIME type category
-  if (file.type.startsWith('image/')) return '🖼️';
-  if (file.type.startsWith('video/')) return '🎬';
-  if (file.type.startsWith('audio/')) return '🎵';
-  if (file.type.startsWith('text/')) return '📝';
-  
+  if (file.type.startsWith('image/')) {
+    return '🖼️';
+  }
+  if (file.type.startsWith('video/')) {
+    return '🎬';
+  }
+  if (file.type.startsWith('audio/')) {
+    return '🎵';
+  }
+  if (file.type.startsWith('text/')) {
+    return '📝';
+  }
+
   return '📎';
 }
 
@@ -172,7 +182,9 @@ export function getFileLabel(file: File): string {
 }
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -197,10 +209,10 @@ export function validateFile(file: File, options: ValidationOptions = {}): Valid
   // Type validation
   if (options.allowedTypes && options.allowedTypes.length > 0) {
     const fileTypeConfig = getFileTypeConfig(file);
-    const fileTypeName = fileTypeConfig 
+    const fileTypeName = fileTypeConfig
       ? Object.entries(FILE_TYPES).find(([_, config]) => config === fileTypeConfig)?.[0]
       : null;
-    
+
     if (!fileTypeName || !options.allowedTypes.includes(fileTypeName)) {
       const allowedLabels = options.allowedTypes
         .map((type) => FILE_TYPES[type]?.label || type)
@@ -321,8 +333,8 @@ export function useFilePreview(options: UseFilePreviewOptions = {}): UseFilePrev
           reader.onload = (e) => {
             setFiles((prev) =>
               prev.map((f) =>
-                f.id === preview.id ? { ...f, preview: e.target?.result as string } : f
-              )
+                f.id === preview.id ? { ...f, preview: e.target?.result as string } : f,
+              ),
             );
           };
           reader.readAsDataURL(file);
@@ -333,7 +345,7 @@ export function useFilePreview(options: UseFilePreviewOptions = {}): UseFilePrev
 
       setFiles((prev) => [...prev, ...previews]);
     },
-    [generateThumbnails, validationOptions]
+    [generateThumbnails, validationOptions],
   );
 
   const removeFile = useCallback((id: string) => {
@@ -546,7 +558,9 @@ export const FileTypePicker: React.FC<FileTypePickerProps> = ({
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       {allowedTypes.map((type) => {
         const config = FILE_TYPES[type];
-        if (!config) return null;
+        if (!config) {
+          return null;
+        }
 
         const isSelected = selected.includes(type);
 
@@ -567,9 +581,7 @@ export const FileTypePicker: React.FC<FileTypePickerProps> = ({
             }}
           >
             <span style={{ fontSize: 18 }}>{config.icon}</span>
-            <span style={{ fontSize: 13, fontWeight: isSelected ? 600 : 400 }}>
-              {config.label}
-            </span>
+            <span style={{ fontSize: 13, fontWeight: isSelected ? 600 : 400 }}>{config.label}</span>
           </button>
         );
       })}
@@ -622,7 +634,7 @@ export const ValidatedDropzone: React.FC<ValidatedDropzoneProps> = ({
 
       const files = Array.from(e.dataTransfer.files);
       const result = validateFiles(files, validationOptions);
-      
+
       if (!result.valid) {
         setErrors(result.errors);
         // Only pass valid files
@@ -638,14 +650,14 @@ export const ValidatedDropzone: React.FC<ValidatedDropzoneProps> = ({
         onFilesSelected(files);
       }
     },
-    [validationOptions, onFilesSelected]
+    [validationOptions, onFilesSelected],
   );
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []);
       const result = validateFiles(files, validationOptions);
-      
+
       if (!result.valid) {
         setErrors(result.errors);
         const validFiles = files.filter((file) => {
@@ -663,13 +675,17 @@ export const ValidatedDropzone: React.FC<ValidatedDropzoneProps> = ({
       // Reset input
       e.target.value = '';
     },
-    [validationOptions, onFilesSelected]
+    [validationOptions, onFilesSelected],
   );
 
   // Build accept string from allowed types
   const acceptString = useMemo(() => {
-    if (accept) return accept;
-    if (!validationOptions.allowedTypes) return undefined;
+    if (accept) {
+      return accept;
+    }
+    if (!validationOptions.allowedTypes) {
+      return undefined;
+    }
 
     const extensions: string[] = [];
     for (const type of validationOptions.allowedTypes) {
@@ -710,13 +726,16 @@ export const ValidatedDropzone: React.FC<ValidatedDropzoneProps> = ({
 
       {children || (
         <>
-          <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }} aria-hidden="true">📁</span>
+          <span style={{ fontSize: 48, display: 'block', marginBottom: 12 }} aria-hidden="true">
+            📁
+          </span>
           <p style={{ margin: 0, fontSize: 16, fontWeight: 500, color: '#2d3748' }}>
             {isDragging ? 'Drop files here' : 'Drag and drop files, or click to select'}
           </p>
           {validationOptions.allowedTypes && (
             <p style={{ margin: '8px 0 0', fontSize: 13, color: '#718096' }}>
-              Allowed: {validationOptions.allowedTypes.map((t) => FILE_TYPES[t]?.label || t).join(', ')}
+              Allowed:{' '}
+              {validationOptions.allowedTypes.map((t) => FILE_TYPES[t]?.label || t).join(', ')}
             </p>
           )}
           {validationOptions.maxFileSize && (

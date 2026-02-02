@@ -67,7 +67,11 @@ export interface RealTimeContextValue {
   broadcastCursor: (x: number, y: number, elementId?: string) => void;
   acquireLock: (fieldId: string) => boolean;
   releaseLock: (fieldId: string) => void;
-  resolveConflict: (conflictId: string, resolution: 'local' | 'remote' | 'merged', mergedValue?: string) => void;
+  resolveConflict: (
+    conflictId: string,
+    resolution: 'local' | 'remote' | 'merged',
+    mergedValue?: string,
+  ) => void;
   sendEdit: (fieldId: string, value: string) => void;
 }
 
@@ -129,11 +133,13 @@ class MockWebSocketService {
   }
 
   emit(event: string, data: any): void {
-    this.listeners.get(event)?.forEach(cb => cb(data));
+    this.listeners.get(event)?.forEach((cb) => cb(data));
   }
 
   send(message: CollaborationMessage): void {
-    if (!this.isConnected) return;
+    if (!this.isConnected) {
+      return;
+    }
     // Simulate broadcast to other users
     setTimeout(() => {
       this.emit('message', message);
@@ -175,7 +181,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
   const [cursors, setCursors] = useState<Map<string, CursorPosition>>(new Map());
   const [locks, setLocks] = useState<Map<string, EditLock>>(new Map());
   const [conflicts, setConflicts] = useState<ConflictEvent[]>([]);
-  
+
   const userIdRef = useRef<string>('');
   const userNameRef = useRef<string>('');
   const cursorThrottle = useRef<NodeJS.Timeout>();
@@ -189,14 +195,16 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
     setIsConnected(true);
 
     // Add self to collaborators
-    setCollaborators([{
-      userId,
-      userName,
-      color: getCollaboratorColor(0),
-      joinedAt: new Date(),
-      lastActiveAt: new Date(),
-      isOnline: true,
-    }]);
+    setCollaborators([
+      {
+        userId,
+        userName,
+        color: getCollaboratorColor(0),
+        joinedAt: new Date(),
+        lastActiveAt: new Date(),
+        isOnline: true,
+      },
+    ]);
 
     // Broadcast join
     wsService.send({
@@ -239,41 +247,44 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
   }, []);
 
   // Acquire lock on a field
-  const acquireLock = useCallback((fieldId: string): boolean => {
-    const existingLock = locks.get(fieldId);
-    
-    if (existingLock && existingLock.userId !== userIdRef.current) {
-      // Field is locked by another user
-      return false;
-    }
+  const acquireLock = useCallback(
+    (fieldId: string): boolean => {
+      const existingLock = locks.get(fieldId);
 
-    const newLock: EditLock = {
-      fieldId,
-      userId: userIdRef.current,
-      userName: userNameRef.current,
-      acquiredAt: new Date(),
-      expiresAt: new Date(Date.now() + 30000), // 30 second lock
-    };
+      if (existingLock && existingLock.userId !== userIdRef.current) {
+        // Field is locked by another user
+        return false;
+      }
 
-    setLocks(prev => {
-      const updated = new Map(prev);
-      updated.set(fieldId, newLock);
-      return updated;
-    });
+      const newLock: EditLock = {
+        fieldId,
+        userId: userIdRef.current,
+        userName: userNameRef.current,
+        acquiredAt: new Date(),
+        expiresAt: new Date(Date.now() + 30000), // 30 second lock
+      };
 
-    wsService.send({
-      type: 'lock',
-      userId: userIdRef.current,
-      payload: { fieldId, userName: userNameRef.current },
-      timestamp: Date.now(),
-    });
+      setLocks((prev) => {
+        const updated = new Map(prev);
+        updated.set(fieldId, newLock);
+        return updated;
+      });
 
-    return true;
-  }, [locks]);
+      wsService.send({
+        type: 'lock',
+        userId: userIdRef.current,
+        payload: { fieldId, userName: userNameRef.current },
+        timestamp: Date.now(),
+      });
+
+      return true;
+    },
+    [locks],
+  );
 
   // Release lock on a field
   const releaseLock = useCallback((fieldId: string) => {
-    setLocks(prev => {
+    setLocks((prev) => {
       const updated = new Map(prev);
       updated.delete(fieldId);
       return updated;
@@ -298,43 +309,49 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
   }, []);
 
   // Resolve conflict
-  const resolveConflict = useCallback((
-    conflictId: string,
-    resolution: 'local' | 'remote' | 'merged',
-    mergedValue?: string
-  ) => {
-    setConflicts(prev => prev.map(c => 
-      c.id === conflictId
-        ? { ...c, resolved: true, resolution, mergedValue }
-        : c
-    ));
-  }, []);
+  const resolveConflict = useCallback(
+    (conflictId: string, resolution: 'local' | 'remote' | 'merged', mergedValue?: string) => {
+      setConflicts((prev) =>
+        prev.map((c) =>
+          c.id === conflictId ? { ...c, resolved: true, resolution, mergedValue } : c,
+        ),
+      );
+    },
+    [],
+  );
 
   // Handle incoming messages
   useEffect(() => {
     const handleMessage = (message: CollaborationMessage) => {
-      if (message.userId === userIdRef.current) return;
+      if (message.userId === userIdRef.current) {
+        return;
+      }
 
       switch (message.type) {
         case 'join':
-          setCollaborators(prev => {
-            if (prev.find(c => c.userId === message.userId)) return prev;
-            return [...prev, {
-              userId: message.userId,
-              userName: message.payload.userName as string,
-              color: getCollaboratorColor(prev.length),
-              joinedAt: new Date(message.timestamp),
-              lastActiveAt: new Date(message.timestamp),
-              isOnline: true,
-            }];
+          setCollaborators((prev) => {
+            if (prev.find((c) => c.userId === message.userId)) {
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                userId: message.userId,
+                userName: message.payload.userName as string,
+                color: getCollaboratorColor(prev.length),
+                joinedAt: new Date(message.timestamp),
+                lastActiveAt: new Date(message.timestamp),
+                isOnline: true,
+              },
+            ];
           });
           break;
 
         case 'leave':
-          setCollaborators(prev => 
-            prev.map(c => c.userId === message.userId ? { ...c, isOnline: false } : c)
+          setCollaborators((prev) =>
+            prev.map((c) => (c.userId === message.userId ? { ...c, isOnline: false } : c)),
           );
-          setCursors(prev => {
+          setCursors((prev) => {
             const updated = new Map(prev);
             updated.delete(message.userId);
             return updated;
@@ -342,7 +359,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
           break;
 
         case 'cursor':
-          setCursors(prev => {
+          setCursors((prev) => {
             const updated = new Map(prev);
             updated.set(message.userId, {
               userId: message.userId,
@@ -356,7 +373,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
           break;
 
         case 'lock':
-          setLocks(prev => {
+          setLocks((prev) => {
             const updated = new Map(prev);
             updated.set(message.payload.fieldId as string, {
               fieldId: message.payload.fieldId as string,
@@ -370,7 +387,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
           break;
 
         case 'unlock':
-          setLocks(prev => {
+          setLocks((prev) => {
             const updated = new Map(prev);
             updated.delete(message.payload.fieldId as string);
             return updated;
@@ -387,7 +404,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      setCursors(prev => {
+      setCursors((prev) => {
         const updated = new Map(prev);
         updated.forEach((cursor, id) => {
           if (now - cursor.timestamp > 5000) {
@@ -416,11 +433,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({
     sendEdit,
   };
 
-  return (
-    <RealTimeContext.Provider value={value}>
-      {children}
-    </RealTimeContext.Provider>
-  );
+  return <RealTimeContext.Provider value={value}>{children}</RealTimeContext.Provider>;
 };
 
 // ============================================================================
@@ -653,21 +666,26 @@ export const PresenceBar: React.FC<PresenceBarProps> = ({ maxVisible = 5 }) => {
   const { collaborators, isConnected } = useRealTime();
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
 
-  const onlineUsers = collaborators.filter(c => c.isOnline);
+  const onlineUsers = collaborators.filter((c) => c.isOnline);
   const visibleUsers = onlineUsers.slice(0, maxVisible);
   const remainingCount = onlineUsers.length - maxVisible;
 
-  if (!isConnected) return null;
+  if (!isConnected) {
+    return null;
+  }
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
     <div style={styles.presenceBar}>
-      <span style={styles.presenceLabel}>
-        {onlineUsers.length} online
-      </span>
+      <span style={styles.presenceLabel}>{onlineUsers.length} online</span>
       <div style={styles.avatarStack}>
         {visibleUsers.map((user, index) => (
           <div
@@ -690,28 +708,28 @@ export const PresenceBar: React.FC<PresenceBarProps> = ({ maxVisible = 5 }) => {
               }}
             />
             {hoveredUser === user.userId && (
-              <div style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                marginBottom: '8px',
-                padding: '4px 8px',
-                backgroundColor: '#1e293b',
-                color: '#fff',
-                fontSize: '12px',
-                borderRadius: '4px',
-                whiteSpace: 'nowrap',
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginBottom: '8px',
+                  padding: '4px 8px',
+                  backgroundColor: '#1e293b',
+                  color: '#fff',
+                  fontSize: '12px',
+                  borderRadius: '4px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {user.userName}
               </div>
             )}
           </div>
         ))}
         {remainingCount > 0 && (
-          <div style={{ ...styles.avatar, ...styles.moreAvatars }}>
-            +{remainingCount}
-          </div>
+          <div style={{ ...styles.avatar, ...styles.moreAvatars }}>+{remainingCount}</div>
         )}
       </div>
     </div>
@@ -722,14 +740,16 @@ export const RemoteCursors: React.FC = () => {
   const { cursors, collaborators } = useRealTime();
 
   const getCollaboratorInfo = (userId: string) => {
-    return collaborators.find(c => c.userId === userId);
+    return collaborators.find((c) => c.userId === userId);
   };
 
   return (
     <>
       {Array.from(cursors.entries()).map(([userId, position]) => {
         const user = getCollaboratorInfo(userId);
-        if (!user) return null;
+        if (!user) {
+          return null;
+        }
 
         return (
           <div
@@ -768,11 +788,20 @@ export const FieldLockIndicator: React.FC<FieldLockIndicatorProps> = ({ fieldId 
   const { locks } = useRealTime();
   const lock = locks.get(fieldId);
 
-  if (!lock) return null;
+  if (!lock) {
+    return null;
+  }
 
   return (
     <div style={styles.lockBadge}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
         <path d="M7 11V7a5 5 0 0110 0v4" />
       </svg>
@@ -797,10 +826,17 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
 
   return (
     <div style={styles.conflictModal} onClick={onDismiss}>
-      <div style={styles.conflictContent} onClick={e => e.stopPropagation()}>
+      <div style={styles.conflictContent} onClick={(e) => e.stopPropagation()}>
         <div style={styles.conflictHeader}>
           <h3 style={styles.conflictTitle}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -815,32 +851,26 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
         <div style={styles.conflictBody}>
           <div style={styles.conflictVersions}>
             <div style={styles.conflictVersion}>
-              <div style={styles.conflictVersionHeader}>
-                Your Version ({conflict.localUser})
-              </div>
-              <div style={styles.conflictVersionContent}>
-                {conflict.localValue}
-              </div>
+              <div style={styles.conflictVersionHeader}>Your Version ({conflict.localUser})</div>
+              <div style={styles.conflictVersionContent}>{conflict.localValue}</div>
             </div>
             <div style={styles.conflictVersion}>
-              <div style={styles.conflictVersionHeader}>
-                Their Version ({conflict.remoteUser})
-              </div>
-              <div style={styles.conflictVersionContent}>
-                {conflict.remoteValue}
-              </div>
+              <div style={styles.conflictVersionHeader}>Their Version ({conflict.remoteUser})</div>
+              <div style={styles.conflictVersionContent}>{conflict.remoteValue}</div>
             </div>
           </div>
 
           {showMerge && (
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>
+              <label
+                style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}
+              >
                 Merged Version
               </label>
               <textarea
                 style={styles.mergeTextarea}
                 value={mergedValue}
-                onChange={e => setMergedValue(e.target.value)}
+                onChange={(e) => setMergedValue(e.target.value)}
                 placeholder="Combine both versions..."
               />
             </div>
@@ -850,16 +880,16 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
             <button
               style={{ ...styles.conflictButton, ...styles.conflictButtonLocal }}
               onClick={() => onResolve('local')}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#bfdbfe')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dbeafe')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#bfdbfe')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dbeafe')}
             >
               Keep Mine
             </button>
             <button
               style={{ ...styles.conflictButton, ...styles.conflictButtonRemote }}
               onClick={() => onResolve('remote')}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#bbf7d0')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dcfce7')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#bbf7d0')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dcfce7')}
             >
               Use Theirs
             </button>
@@ -867,8 +897,8 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
               <button
                 style={{ ...styles.conflictButton, ...styles.conflictButtonMerge }}
                 onClick={() => setShowMerge(true)}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#334155')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#334155')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
               >
                 Merge...
               </button>
@@ -876,8 +906,8 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
               <button
                 style={{ ...styles.conflictButton, ...styles.conflictButtonMerge }}
                 onClick={() => onResolve('merged', mergedValue)}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#334155')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1e293b')}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#334155')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
               >
                 Save Merged
               </button>
@@ -897,10 +927,14 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ fieldId }) => 
   const { locks, collaborators } = useRealTime();
   const lock = locks.get(fieldId);
 
-  if (!lock) return null;
+  if (!lock) {
+    return null;
+  }
 
-  const user = collaborators.find(c => c.userId === lock.userId);
-  if (!user) return null;
+  const user = collaborators.find((c) => c.userId === lock.userId);
+  if (!user) {
+    return null;
+  }
 
   return (
     <div style={styles.typingIndicator}>
@@ -938,10 +972,13 @@ export const useCollaborativeInput = (options: UseCollaborativeInputOptions) => 
     setIsLocked(false);
   }, [releaseLock, options.fieldId]);
 
-  const handleChange = useCallback((newValue: string) => {
-    options.onChange(newValue);
-    sendEdit(options.fieldId, newValue);
-  }, [options, sendEdit]);
+  const handleChange = useCallback(
+    (newValue: string) => {
+      options.onChange(newValue);
+      sendEdit(options.fieldId, newValue);
+    },
+    [options, sendEdit],
+  );
 
   const lock = locks.get(options.fieldId);
   const isLockedByOther = lock && lock.userId !== 'current-user';

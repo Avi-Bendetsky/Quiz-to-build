@@ -41,7 +41,7 @@ test.describe('Document Generation Flow', () => {
 
       // Select Technology Roadmap template
       await page.click('[data-testid="template-technology-roadmap"]');
-      
+
       // Configure generation options
       await page.click('[data-testid="include-diagrams-checkbox"]');
       await page.click('[data-testid="include-timeline-checkbox"]');
@@ -51,7 +51,9 @@ test.describe('Document Generation Flow', () => {
 
       // Wait for generation to complete
       await expect(page.locator('[data-testid="generation-progress"]')).toBeVisible();
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Verify download button is available
       await expect(page.locator('[data-testid="download-document-button"]')).toBeVisible();
@@ -63,7 +65,9 @@ test.describe('Document Generation Flow', () => {
       // Select and generate Technology Roadmap
       await page.click('[data-testid="template-technology-roadmap"]');
       await page.click('[data-testid="generate-document-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Setup download handler
       const downloadPromise = page.waitForEvent('download');
@@ -91,7 +95,9 @@ test.describe('Document Generation Flow', () => {
       await page.click('[data-testid="generate-document-button"]');
 
       // Wait for generation to complete
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
     });
 
     test('should include financial projections in Business Plan', async ({ page }) => {
@@ -102,7 +108,9 @@ test.describe('Document Generation Flow', () => {
       await page.click('[data-testid="include-financial-projections-checkbox"]');
       await page.click('[data-testid="generate-document-button"]');
 
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Preview document should include financial section
       await page.click('[data-testid="preview-document-button"]');
@@ -141,7 +149,9 @@ test.describe('Document Generation Flow', () => {
       await page.click('[data-testid="generate-document-button"]');
 
       // Wait for generation to complete
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 60000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 60000,
+      });
     });
 
     test('should select individual policies for generation', async ({ page }) => {
@@ -156,11 +166,15 @@ test.describe('Document Generation Flow', () => {
       await page.click('[data-testid="policy-access-control"]');
 
       // Verify selection count
-      await expect(page.locator('[data-testid="selected-count"]')).toContainText('3 policies selected');
+      await expect(page.locator('[data-testid="selected-count"]')).toContainText(
+        '3 policies selected',
+      );
 
       // Generate
       await page.click('[data-testid="generate-document-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
     });
 
     test('should include control mappings in Policy Pack', async ({ page }) => {
@@ -172,7 +186,9 @@ test.describe('Document Generation Flow', () => {
       await page.click('[data-testid="include-control-mappings-checkbox"]');
       await page.click('[data-testid="generate-document-button"]');
 
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Preview should include control mappings
       await page.click('[data-testid="preview-document-button"]');
@@ -190,14 +206,18 @@ test.describe('Document Generation Flow', () => {
 
       // Verify confirmation dialog
       await expect(page.locator('[data-testid="deliverables-confirmation-dialog"]')).toBeVisible();
-      await expect(page.locator('[data-testid="deliverables-confirmation-dialog"]')).toContainText('Generate all documents');
+      await expect(page.locator('[data-testid="deliverables-confirmation-dialog"]')).toContainText(
+        'Generate all documents',
+      );
 
       // Confirm generation
       await page.click('[data-testid="confirm-generate-button"]');
 
       // Wait for generation (longer timeout for full package)
       await expect(page.locator('[data-testid="generation-progress"]')).toBeVisible();
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 120000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 120000,
+      });
     });
 
     test('should download full deliverables as ZIP', async ({ page }) => {
@@ -206,7 +226,9 @@ test.describe('Document Generation Flow', () => {
       // Generate full deliverables
       await page.click('[data-testid="generate-full-deliverables-button"]');
       await page.click('[data-testid="confirm-generate-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 120000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 120000,
+      });
 
       // Download ZIP
       const downloadPromise = page.waitForEvent('download');
@@ -224,17 +246,23 @@ test.describe('Document Generation Flow', () => {
       // Generate full deliverables
       await page.click('[data-testid="generate-full-deliverables-button"]');
       await page.click('[data-testid="confirm-generate-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 120000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 120000,
+      });
 
       // View contents
       await page.click('[data-testid="view-contents-button"]');
-      
+
       // Verify contents list
       await expect(page.locator('[data-testid="contents-list"]')).toBeVisible();
-      await expect(page.locator('[data-testid="contents-list"]')).toContainText('Technology Roadmap');
+      await expect(page.locator('[data-testid="contents-list"]')).toContainText(
+        'Technology Roadmap',
+      );
       await expect(page.locator('[data-testid="contents-list"]')).toContainText('Business Plan');
       await expect(page.locator('[data-testid="contents-list"]')).toContainText('Policy Pack');
-      await expect(page.locator('[data-testid="contents-list"]')).toContainText('Architecture Dossier');
+      await expect(page.locator('[data-testid="contents-list"]')).toContainText(
+        'Architecture Dossier',
+      );
     });
 
     test('should customize deliverables package contents', async ({ page }) => {
@@ -253,7 +281,9 @@ test.describe('Document Generation Flow', () => {
 
       // Generate custom package
       await page.click('[data-testid="confirm-generate-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 120000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 120000,
+      });
     });
   });
 
@@ -264,7 +294,9 @@ test.describe('Document Generation Flow', () => {
       // Generate a document
       await page.click('[data-testid="template-technology-roadmap"]');
       await page.click('[data-testid="generate-document-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Open preview
       await page.click('[data-testid="preview-document-button"]');
@@ -280,7 +312,9 @@ test.describe('Document Generation Flow', () => {
       // Generate a document
       await page.click('[data-testid="template-business-plan"]');
       await page.click('[data-testid="generate-document-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Open preview
       await page.click('[data-testid="preview-document-button"]');
@@ -302,7 +336,9 @@ test.describe('Document Generation Flow', () => {
       // Generate a document
       await page.click('[data-testid="template-technology-roadmap"]');
       await page.click('[data-testid="generate-document-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Open preview
       await page.click('[data-testid="preview-document-button"]');
@@ -353,7 +389,7 @@ test.describe('Document Generation Flow', () => {
       // Verify filtered results
       const historyItems = page.locator('[data-testid="history-item"]');
       const count = await historyItems.count();
-      
+
       for (let i = 0; i < count; i++) {
         await expect(historyItems.nth(i)).toContainText('Technology Roadmap');
       }
@@ -369,8 +405,12 @@ test.describe('Document Generation Flow', () => {
       const initialCount = await page.locator('[data-testid="history-item"]').count();
 
       // Delete first item
-      await page.locator('[data-testid="history-item"]').first().locator('[data-testid="delete-history-button"]').click();
-      
+      await page
+        .locator('[data-testid="history-item"]')
+        .first()
+        .locator('[data-testid="delete-history-button"]')
+        .click();
+
       // Confirm deletion
       await page.click('[data-testid="confirm-delete-button"]');
 
@@ -385,7 +425,7 @@ test.describe('Document Generation Flow', () => {
 
       // Try to generate without required data
       await page.click('[data-testid="template-technology-roadmap"]');
-      
+
       // Simulate API error by navigating to invalid session
       await page.evaluate(() => {
         localStorage.setItem('forceGenerationError', 'true');
@@ -394,8 +434,12 @@ test.describe('Document Generation Flow', () => {
       await page.click('[data-testid="generate-document-button"]');
 
       // Verify error message is displayed
-      await expect(page.locator('[data-testid="generation-error"]')).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('[data-testid="generation-error"]')).toContainText('Failed to generate');
+      await expect(page.locator('[data-testid="generation-error"]')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.locator('[data-testid="generation-error"]')).toContainText(
+        'Failed to generate',
+      );
     });
 
     test('should allow retry after generation failure', async ({ page }) => {
@@ -439,11 +483,15 @@ test.describe('Document Generation Flow', () => {
 
       // Generate
       await page.click('[data-testid="generate-document-button"]');
-      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="generation-complete"]')).toBeVisible({
+        timeout: 30000,
+      });
 
       // Preview should show custom title
       await page.click('[data-testid="preview-document-button"]');
-      await expect(page.locator('[data-testid="document-preview-content"]')).toContainText('Custom Technology Roadmap 2026');
+      await expect(page.locator('[data-testid="document-preview-content"]')).toContainText(
+        'Custom Technology Roadmap 2026',
+      );
     });
 
     test('should add custom sections to document', async ({ page }) => {
@@ -455,11 +503,16 @@ test.describe('Document Generation Flow', () => {
       // Add custom section
       await page.click('[data-testid="add-custom-section-button"]');
       await page.fill('[data-testid="custom-section-title"]', 'Executive Summary');
-      await page.fill('[data-testid="custom-section-content"]', 'This is the executive summary for 2026.');
+      await page.fill(
+        '[data-testid="custom-section-content"]',
+        'This is the executive summary for 2026.',
+      );
       await page.click('[data-testid="save-custom-section-button"]');
 
       // Verify section is added
-      await expect(page.locator('[data-testid="custom-sections-list"]')).toContainText('Executive Summary');
+      await expect(page.locator('[data-testid="custom-sections-list"]')).toContainText(
+        'Executive Summary',
+      );
     });
 
     test('should select document branding options', async ({ page }) => {

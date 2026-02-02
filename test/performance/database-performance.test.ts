@@ -1,9 +1,9 @@
 /**
  * Database Performance Tests
- * 
+ *
  * Tests database query performance with various record counts
  * to identify N+1 queries and slow operations.
- * 
+ *
  * Run: npm run test:db:perf
  */
 
@@ -35,23 +35,23 @@ const THRESHOLDS = {
   // Single record operations
   singleRead: 50,
   singleWrite: 100,
-  
+
   // List operations (1k records)
   list1k: 200,
-  
+
   // List operations (10k records)
   list10k: 500,
-  
+
   // List operations (100k records)
   list100k: 2000,
-  
+
   // Aggregate queries
   aggregate: 300,
-  
+
   // Join queries
   simpleJoin: 200,
   complexJoin: 500,
-  
+
   // N+1 detection threshold
   n1Threshold: 10, // Max queries per operation
 };
@@ -78,7 +78,7 @@ const queryScenarios = {
       sql: `SELECT s.*, q.*, sec.* FROM sessions s JOIN questionnaires q ON q.id = s.questionnaire_id LEFT JOIN sections sec ON sec.questionnaire_id = q.id WHERE s.id = $1`,
     },
   },
-  
+
   // Response queries
   responses: {
     findBySession: {
@@ -97,7 +97,7 @@ const queryScenarios = {
       sql: `SELECT AVG(coverage) as avg_coverage, COUNT(*) as total FROM responses WHERE session_id = $1`,
     },
   },
-  
+
   // Heatmap queries
   heatmap: {
     dimensionScores: {
@@ -106,7 +106,7 @@ const queryScenarios = {
       sql: `SELECT dc.key, dc.display_name, dc.weight, AVG(r.coverage) as avg_coverage FROM dimension_catalog dc LEFT JOIN questions q ON q.dimension_key = dc.key LEFT JOIN responses r ON r.question_id = q.id WHERE r.session_id = $1 GROUP BY dc.key, dc.display_name, dc.weight`,
     },
   },
-  
+
   // Evidence queries
   evidence: {
     findBySession: {
@@ -129,10 +129,10 @@ describe('N+1 Query Detection', () => {
   it('should not have N+1 queries when fetching session with responses', () => {
     // This test detects if fetching a session executes O(n) queries
     // where n is the number of responses
-    
+
     const scenario = queryScenarios.sessions.findWithResponses;
     const actualQueries = scenario.expectedQueries;
-    
+
     expect(actualQueries).toBeLessThanOrEqual(THRESHOLDS.n1Threshold);
     expect(actualQueries).toBe(scenario.expectedQueries);
   });
@@ -213,25 +213,25 @@ describe('Index Usage', () => {
     { table: 'sessions', columns: ['status'] },
     { table: 'sessions', columns: ['user_id', 'status'] },
     { table: 'sessions', columns: ['readiness_score'] },
-    
+
     // Response indexes
     { table: 'responses', columns: ['session_id'] },
     { table: 'responses', columns: ['question_id'] },
     { table: 'responses', columns: ['session_id', 'question_id'] }, // unique
     { table: 'responses', columns: ['coverage'] },
     { table: 'responses', columns: ['coverage_level'] },
-    
+
     // Question indexes
     { table: 'questions', columns: ['section_id'] },
     { table: 'questions', columns: ['section_id', 'order_index'] },
     { table: 'questions', columns: ['persona'] },
     { table: 'questions', columns: ['dimension_key'] },
-    
+
     // Evidence indexes
     { table: 'evidence_registry', columns: ['session_id'] },
     { table: 'evidence_registry', columns: ['question_id'] },
     { table: 'evidence_registry', columns: ['verified'] },
-    
+
     // User indexes
     { table: 'users', columns: ['email'] },
     { table: 'users', columns: ['organization_id'] },
@@ -239,19 +239,19 @@ describe('Index Usage', () => {
   ];
 
   it('should have all required indexes defined', () => {
-    requiredIndexes.forEach(index => {
+    requiredIndexes.forEach((index) => {
       // This would check against actual schema in real test
       expect(index.table).toBeTruthy();
       expect(index.columns.length).toBeGreaterThan(0);
     });
-    
+
     expect(requiredIndexes.length).toBeGreaterThanOrEqual(20);
   });
 });
 
 /**
  * Query Explain Analysis
- * 
+ *
  * These tests would use EXPLAIN ANALYZE in a real database
  * to verify query plans are using indexes properly.
  */
@@ -296,7 +296,7 @@ describe('Concurrent Write Performance', () => {
     const concurrentWrites = 100;
     const maxDuration = 5000; // 5 seconds
     const simulatedDuration = 1200; // Mock result
-    
+
     expect(simulatedDuration).toBeLessThan(maxDuration);
   });
 
@@ -304,7 +304,7 @@ describe('Concurrent Write Performance', () => {
     const concurrentCreates = 50;
     const maxDuration = 3000; // 3 seconds
     const simulatedDuration = 800; // Mock result
-    
+
     expect(simulatedDuration).toBeLessThan(maxDuration);
   });
 });
@@ -330,7 +330,7 @@ describe('Connection Pool', () => {
   it('should not exhaust connection pool under load', () => {
     const maxConcurrentQueries = 100;
     const availableConnections = poolConfig.max;
-    
+
     // With proper connection reuse, should handle more queries than connections
     expect(maxConcurrentQueries / availableConnections).toBeLessThanOrEqual(10);
   });
@@ -340,9 +340,9 @@ describe('Connection Pool', () => {
  * Performance Summary Generator
  */
 export function generatePerformanceSummary(results: PerformanceTestResult[]): string {
-  const passed = results.filter(r => r.passed).length;
+  const passed = results.filter((r) => r.passed).length;
   const failed = results.length - passed;
-  
+
   let summary = `
 ╔══════════════════════════════════════════════════════════════════╗
 ║                 DATABASE PERFORMANCE SUMMARY                      ║
@@ -353,14 +353,14 @@ export function generatePerformanceSummary(results: PerformanceTestResult[]): st
 ╠══════════════════════════════════════════════════════════════════╣
 `;
 
-  results.forEach(result => {
+  results.forEach((result) => {
     const status = result.passed ? '✓' : '✗';
     const color = result.passed ? '' : '';
     summary += `║  ${status} ${result.testName.padEnd(50)} ${result.totalDuration.toFixed(0).padStart(6)}ms ║\n`;
   });
 
   summary += `╚══════════════════════════════════════════════════════════════════╝`;
-  
+
   return summary;
 }
 

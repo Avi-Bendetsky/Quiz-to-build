@@ -78,7 +78,7 @@ test.describe('Payment Flow', () => {
 
       // Verify feature comparison
       await expect(page.locator('[data-testid="feature-comparison-table"]')).toBeVisible();
-      
+
       // Check key features are listed
       await expect(page.locator('[data-testid="feature-questionnaires"]')).toBeVisible();
       await expect(page.locator('[data-testid="feature-document-generation"]')).toBeVisible();
@@ -102,13 +102,17 @@ test.describe('Payment Flow', () => {
       await page.goto('/pricing');
 
       // Get monthly price
-      const monthlyPrice = await page.locator('[data-testid="professional-price-monthly"]').textContent();
+      const monthlyPrice = await page
+        .locator('[data-testid="professional-price-monthly"]')
+        .textContent();
 
       // Toggle to yearly
       await page.click('[data-testid="billing-toggle-yearly"]');
 
       // Verify yearly price is different (should be discounted)
-      const yearlyPrice = await page.locator('[data-testid="professional-price-yearly"]').textContent();
+      const yearlyPrice = await page
+        .locator('[data-testid="professional-price-yearly"]')
+        .textContent();
       expect(monthlyPrice).not.toBe(yearlyPrice);
     });
   });
@@ -118,7 +122,9 @@ test.describe('Payment Flow', () => {
       await page.goto('/checkout?plan=professional');
 
       // Verify Stripe elements are loaded
-      await expect(page.locator('[data-testid="stripe-card-element"]')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="stripe-card-element"]')).toBeVisible({
+        timeout: 10000,
+      });
       await expect(page.locator('[data-testid="billing-address-form"]')).toBeVisible();
     });
 
@@ -130,7 +136,7 @@ test.describe('Payment Flow', () => {
 
       // Fill Stripe card element (using iframe)
       const stripeFrame = page.frameLocator('iframe[name^="__privateStripeFrame"]').first();
-      
+
       // Fill card number
       await stripeFrame.locator('[name="cardnumber"]').fill(STRIPE_TEST_CARDS.visa);
       await stripeFrame.locator('[name="exp-date"]').fill('12/30');
@@ -250,7 +256,9 @@ test.describe('Payment Flow', () => {
         await page.click('[data-testid="save-payment-method-button"]');
 
         // Verify success
-        await expect(page.locator('[data-testid="payment-method-updated"]')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('[data-testid="payment-method-updated"]')).toBeVisible({
+          timeout: 10000,
+        });
       }
     });
 
@@ -279,7 +287,9 @@ test.describe('Payment Flow', () => {
 
         // Verify confirmation dialog
         await expect(page.locator('[data-testid="cancel-confirmation-dialog"]')).toBeVisible();
-        await expect(page.locator('[data-testid="cancel-confirmation-dialog"]')).toContainText('Are you sure');
+        await expect(page.locator('[data-testid="cancel-confirmation-dialog"]')).toContainText(
+          'Are you sure',
+        );
 
         // Select cancellation reason
         await page.selectOption('[data-testid="cancellation-reason"]', 'too_expensive');
@@ -301,7 +311,7 @@ test.describe('Payment Flow', () => {
 
         // Verify plan options
         await expect(page.locator('[data-testid="plan-selection"]')).toBeVisible();
-        
+
         // Check downgrade warning
         await page.click('[data-testid="select-free-plan"]');
         await expect(page.locator('[data-testid="downgrade-warning"]')).toBeVisible();
@@ -371,7 +381,9 @@ test.describe('Payment Flow', () => {
 
       // Verify upgrade prompt
       await expect(page.locator('[data-testid="upgrade-required-modal"]')).toBeVisible();
-      await expect(page.locator('[data-testid="upgrade-required-modal"]')).toContainText('Professional');
+      await expect(page.locator('[data-testid="upgrade-required-modal"]')).toContainText(
+        'Professional',
+      );
     });
 
     test('should allow access to features based on subscription tier', async ({ page }) => {
@@ -385,7 +397,9 @@ test.describe('Payment Flow', () => {
         await expect(page.locator('[data-testid="questionnaire-limit"]')).toContainText('3');
       } else if (planName === 'Professional') {
         // Verify professional tier access
-        await expect(page.locator('[data-testid="questionnaire-limit"]')).toContainText('Unlimited');
+        await expect(page.locator('[data-testid="questionnaire-limit"]')).toContainText(
+          'Unlimited',
+        );
       }
     });
 

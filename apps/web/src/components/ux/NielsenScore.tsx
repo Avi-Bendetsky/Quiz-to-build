@@ -1,7 +1,7 @@
 /**
  * Nielsen Heuristic Score Verification Component
  * Sprint 33: UX Polish & Enhancements
- * 
+ *
  * Implements automated and manual Nielsen's 10 Usability Heuristics evaluation
  * Target: 91/100 minimum score for production readiness
  */
@@ -51,7 +51,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 1,
     name: 'Visibility of System Status',
-    description: 'Keep users informed about what is going on through appropriate feedback within reasonable time.',
+    description:
+      'Keep users informed about what is going on through appropriate feedback within reasonable time.',
     weight: 10,
     checks: [
       {
@@ -62,7 +63,10 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
         weight: 2,
         status: 'pass',
         score: 10,
-        evidence: ['UploadProgress.tsx - Progress bars with speed/ETA', 'NetworkStatus.tsx - Connection status indicator'],
+        evidence: [
+          'UploadProgress.tsx - Progress bars with speed/ETA',
+          'NetworkStatus.tsx - Connection status indicator',
+        ],
         recommendations: [],
       },
       {
@@ -73,7 +77,10 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
         weight: 2,
         status: 'pass',
         score: 10,
-        evidence: ['QuestionnaireProgress.tsx - Section/question counters', 'UploadProgress.tsx - Upload percentage'],
+        evidence: [
+          'QuestionnaireProgress.tsx - Section/question counters',
+          'UploadProgress.tsx - Upload percentage',
+        ],
         recommendations: [],
       },
       {
@@ -114,7 +121,7 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 2,
     name: 'Match Between System and Real World',
-    description: 'Speak the users\' language with words, phrases, and concepts familiar to them.',
+    description: "Speak the users' language with words, phrases, and concepts familiar to them.",
     weight: 10,
     checks: [
       {
@@ -125,7 +132,11 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
         weight: 2.5,
         status: 'pass',
         score: 9,
-        evidence: ['BestPractice explanations', 'PracticalExplainer components', 'Tooltips for complex terms'],
+        evidence: [
+          'BestPractice explanations',
+          'PracticalExplainer components',
+          'Tooltips for complex terms',
+        ],
         recommendations: ['Review dimension names for clarity'],
       },
       {
@@ -251,7 +262,11 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
         weight: 2.5,
         status: 'pass',
         score: 9,
-        evidence: ['Consistent button placement', 'Uniform modal behavior', 'Standard form layouts'],
+        evidence: [
+          'Consistent button placement',
+          'Uniform modal behavior',
+          'Standard form layouts',
+        ],
         recommendations: ['Document component usage guidelines'],
       },
       {
@@ -281,7 +296,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 5,
     name: 'Error Prevention',
-    description: 'Prevent problems from occurring. Careful design eliminates error-prone conditions.',
+    description:
+      'Prevent problems from occurring. Careful design eliminates error-prone conditions.',
     weight: 10,
     checks: [
       {
@@ -292,7 +308,10 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
         weight: 2,
         status: 'pass',
         score: 10,
-        evidence: ['BlurValidation.tsx - onBlur validation', 'FileTypePreview.tsx - Pre-upload validation'],
+        evidence: [
+          'BlurValidation.tsx - onBlur validation',
+          'FileTypePreview.tsx - Pre-upload validation',
+        ],
         recommendations: [],
       },
       {
@@ -459,7 +478,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 8,
     name: 'Aesthetic and Minimalist Design',
-    description: 'Dialogues should not contain irrelevant information. Every extra unit competes with relevant info.',
+    description:
+      'Dialogues should not contain irrelevant information. Every extra unit competes with relevant info.',
     weight: 10,
     checks: [
       {
@@ -498,7 +518,7 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
       {
         id: 'h8-progressive',
         name: 'Progressive Disclosure',
-        description: 'Show only what\'s needed, reveal details on demand',
+        description: "Show only what's needed, reveal details on demand",
         category: 'manual',
         weight: 2.5,
         status: 'pass',
@@ -511,7 +531,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 9,
     name: 'Help Users Recognize, Diagnose, and Recover from Errors',
-    description: 'Error messages should be expressed in plain language, precisely indicate the problem, and suggest a solution.',
+    description:
+      'Error messages should be expressed in plain language, precisely indicate the problem, and suggest a solution.',
     weight: 10,
     checks: [
       {
@@ -522,7 +543,10 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
         weight: 2,
         status: 'pass',
         score: 10,
-        evidence: ['ErrorMessages.tsx - Specific actionable messages', 'ErrorCodes.tsx - Error taxonomy'],
+        evidence: [
+          'ErrorMessages.tsx - Specific actionable messages',
+          'ErrorCodes.tsx - Error taxonomy',
+        ],
         recommendations: [],
       },
       {
@@ -574,7 +598,8 @@ export const NIELSEN_HEURISTICS: NielsenHeuristic[] = [
   {
     id: 10,
     name: 'Help and Documentation',
-    description: 'Provide help and documentation. Easy to search, focused on user\'s task, concrete steps.',
+    description:
+      "Provide help and documentation. Easy to search, focused on user's task, concrete steps.",
     weight: 10,
     checks: [
       {
@@ -783,11 +808,7 @@ export const HeuristicCard: React.FC<HeuristicCardProps> = ({
 
   return (
     <div style={styles.heuristicCard}>
-      <button
-        onClick={onToggle}
-        style={styles.heuristicHeader}
-        aria-expanded={expanded}
-      >
+      <button onClick={onToggle} style={styles.heuristicHeader} aria-expanded={expanded}>
         <div style={styles.heuristicTitle}>
           <span style={styles.heuristicNumber}>H{heuristic.id}</span>
           <span style={styles.heuristicName}>{heuristic.name}</span>
@@ -851,9 +872,7 @@ export interface NielsenScoreViewerProps {
   className?: string;
 }
 
-export const NielsenScoreViewer: React.FC<NielsenScoreViewerProps> = ({
-  className = '',
-}) => {
+export const NielsenScoreViewer: React.FC<NielsenScoreViewerProps> = ({ className = '' }) => {
   const [expandedHeuristics, setExpandedHeuristics] = useState<Set<number>>(new Set());
 
   const result = useMemo(() => calculateNielsenScore(NIELSEN_HEURISTICS), []);
@@ -884,9 +903,7 @@ export const NielsenScoreViewer: React.FC<NielsenScoreViewerProps> = ({
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>Nielsen Heuristic Evaluation</h1>
-          <p style={styles.subtitle}>
-            Usability compliance check for Quiz2Biz
-          </p>
+          <p style={styles.subtitle}>Usability compliance check for Quiz2Biz</p>
         </div>
         <div style={styles.scoreOverview}>
           <div style={styles.scoreCircle}>
@@ -912,12 +929,8 @@ export const NielsenScoreViewer: React.FC<NielsenScoreViewerProps> = ({
           <span style={styles.statLabel}>Target Score</span>
         </div>
         <div style={styles.statItem}>
-          <span style={styles.statValue}>
-            {result.percentage >= 91 ? '✅' : '⚠️'}
-          </span>
-          <span style={styles.statLabel}>
-            {result.percentage >= 91 ? 'Ready' : 'Needs Work'}
-          </span>
+          <span style={styles.statValue}>{result.percentage >= 91 ? '✅' : '⚠️'}</span>
+          <span style={styles.statLabel}>{result.percentage >= 91 ? 'Ready' : 'Needs Work'}</span>
         </div>
       </div>
 
@@ -945,14 +958,10 @@ export const NielsenScoreViewer: React.FC<NielsenScoreViewerProps> = ({
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <p>
-          Evaluation generated: {result.timestamp.toLocaleString()}
-        </p>
+        <p>Evaluation generated: {result.timestamp.toLocaleString()}</p>
         <p style={styles.footerNote}>
           Target: 91/100 minimum | Current: {result.percentage.toFixed(1)}/100
-          {result.percentage >= 91
-            ? ' ✅ Production Ready'
-            : ' ⚠️ Improvements Required'}
+          {result.percentage >= 91 ? ' ✅ Production Ready' : ' ⚠️ Improvements Required'}
         </p>
       </footer>
     </div>

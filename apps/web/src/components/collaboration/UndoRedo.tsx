@@ -58,7 +58,7 @@ export const createCommand = (
   description: string,
   execute: () => void,
   undo: () => void,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): Omit<Command, 'id' | 'timestamp'> => ({
   type,
   description,
@@ -119,71 +119,78 @@ export const UndoRedoProvider: React.FC<UndoRedoProviderProps> = ({
   const generateId = () => `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Execute a new command
-  const executeCommand = useCallback((cmd: Omit<Command, 'id' | 'timestamp'>) => {
-    const now = Date.now();
-    const command: Command = {
-      ...cmd,
-      id: generateId(),
-      timestamp: now,
-    };
+  const executeCommand = useCallback(
+    (cmd: Omit<Command, 'id' | 'timestamp'>) => {
+      const now = Date.now();
+      const command: Command = {
+        ...cmd,
+        id: generateId(),
+        timestamp: now,
+      };
 
-    // Check if we should merge with previous command (for text input debouncing)
-    const shouldMerge = 
-      cmd.type === lastCommandType.current &&
-      now - lastCommandTime.current < debounceMs &&
-      (cmd.type === CommandTypes.TEXT_CHANGE || cmd.type === CommandTypes.FORM_FIELD_CHANGE);
+      // Check if we should merge with previous command (for text input debouncing)
+      const shouldMerge =
+        cmd.type === lastCommandType.current &&
+        now - lastCommandTime.current < debounceMs &&
+        (cmd.type === CommandTypes.TEXT_CHANGE || cmd.type === CommandTypes.FORM_FIELD_CHANGE);
 
-    // Execute the command
-    command.execute();
+      // Execute the command
+      command.execute();
 
-    setPast(prev => {
-      let newPast: Command[];
-      
-      if (shouldMerge && prev.length > 0) {
-        // Merge with previous command
-        const previousCommand = prev[prev.length - 1];
-        const mergedCommand: Command = {
-          ...command,
-          undo: previousCommand.undo, // Use original undo to go back to initial state
-          description: `${cmd.description} (merged)`,
-        };
-        newPast = [...prev.slice(0, -1), mergedCommand];
-      } else {
-        newPast = [...prev, command];
-      }
+      setPast((prev) => {
+        let newPast: Command[];
 
-      // Trim history if needed
-      if (newPast.length > maxHistorySize) {
-        newPast = newPast.slice(-maxHistorySize);
-      }
+        if (shouldMerge && prev.length > 0) {
+          // Merge with previous command
+          const previousCommand = prev[prev.length - 1];
+          const mergedCommand: Command = {
+            ...command,
+            undo: previousCommand.undo, // Use original undo to go back to initial state
+            description: `${cmd.description} (merged)`,
+          };
+          newPast = [...prev.slice(0, -1), mergedCommand];
+        } else {
+          newPast = [...prev, command];
+        }
 
-      return newPast;
-    });
+        // Trim history if needed
+        if (newPast.length > maxHistorySize) {
+          newPast = newPast.slice(-maxHistorySize);
+        }
 
-    // Clear redo stack when new command is executed
-    setFuture([]);
+        return newPast;
+      });
 
-    lastCommandType.current = cmd.type;
-    lastCommandTime.current = now;
-  }, [maxHistorySize, debounceMs]);
+      // Clear redo stack when new command is executed
+      setFuture([]);
+
+      lastCommandType.current = cmd.type;
+      lastCommandTime.current = now;
+    },
+    [maxHistorySize, debounceMs],
+  );
 
   // Undo last command
   const undo = useCallback(() => {
-    setPast(prev => {
-      if (prev.length === 0) return prev;
+    setPast((prev) => {
+      if (prev.length === 0) {
+        return prev;
+      }
 
       const lastCommand = prev[prev.length - 1];
       lastCommand.undo();
 
-      setFuture(fut => [lastCommand, ...fut]);
+      setFuture((fut) => [lastCommand, ...fut]);
       return prev.slice(0, -1);
     });
   }, []);
 
   // Redo last undone command
   const redo = useCallback(() => {
-    setFuture(prev => {
-      if (prev.length === 0) return prev;
+    setFuture((prev) => {
+      if (prev.length === 0) {
+        return prev;
+      }
 
       const nextCommand = prev[0];
       if (nextCommand.redo) {
@@ -192,24 +199,30 @@ export const UndoRedoProvider: React.FC<UndoRedoProviderProps> = ({
         nextCommand.execute();
       }
 
-      setPast(p => [...p, nextCommand]);
+      setPast((p) => [...p, nextCommand]);
       return prev.slice(1);
     });
   }, []);
 
   // Undo multiple commands
-  const undoMultiple = useCallback((count: number) => {
-    for (let i = 0; i < count; i++) {
-      undo();
-    }
-  }, [undo]);
+  const undoMultiple = useCallback(
+    (count: number) => {
+      for (let i = 0; i < count; i++) {
+        undo();
+      }
+    },
+    [undo],
+  );
 
   // Redo multiple commands
-  const redoMultiple = useCallback((count: number) => {
-    for (let i = 0; i < count; i++) {
-      redo();
-    }
-  }, [redo]);
+  const redoMultiple = useCallback(
+    (count: number) => {
+      for (let i = 0; i < count; i++) {
+        redo();
+      }
+    },
+    [redo],
+  );
 
   // Clear all history
   const clearHistory = useCallback(() => {
@@ -219,13 +232,17 @@ export const UndoRedoProvider: React.FC<UndoRedoProviderProps> = ({
 
   // Get description of next undo action
   const getUndoDescription = useCallback((): string | null => {
-    if (past.length === 0) return null;
+    if (past.length === 0) {
+      return null;
+    }
     return past[past.length - 1].description;
   }, [past]);
 
   // Get description of next redo action
   const getRedoDescription = useCallback((): string | null => {
-    if (future.length === 0) return null;
+    if (future.length === 0) {
+      return null;
+    }
     return future[0].description;
   }, [future]);
 
@@ -245,10 +262,10 @@ export const UndoRedoProvider: React.FC<UndoRedoProviderProps> = ({
       }
 
       // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y for redo
-      if ((event.ctrlKey || event.metaKey) && (
-        (event.key === 'z' && event.shiftKey) ||
-        event.key === 'y'
-      )) {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        ((event.key === 'z' && event.shiftKey) || event.key === 'y')
+      ) {
         event.preventDefault();
         redo();
       }
@@ -273,11 +290,7 @@ export const UndoRedoProvider: React.FC<UndoRedoProviderProps> = ({
     getRedoDescription,
   };
 
-  return (
-    <UndoRedoContext.Provider value={value}>
-      {children}
-    </UndoRedoContext.Provider>
-  );
+  return <UndoRedoContext.Provider value={value}>{children}</UndoRedoContext.Provider>;
 };
 
 // ============================================================================
@@ -460,7 +473,17 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
   showHistory = true,
   compact = false,
 }) => {
-  const { canUndo, canRedo, undo, redo, getUndoDescription, getRedoDescription, undoStack, redoStack, clearHistory } = useUndoRedo();
+  const {
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    getUndoDescription,
+    getRedoDescription,
+    undoStack,
+    redoStack,
+    clearHistory,
+  } = useUndoRedo();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -479,9 +502,15 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
 
   const formatTime = (timestamp: number) => {
     const diff = Date.now() - timestamp;
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 60000) {
+      return 'Just now';
+    }
+    if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)}m ago`;
+    }
+    if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)}h ago`;
+    }
     return new Date(timestamp).toLocaleTimeString();
   };
 
@@ -490,7 +519,14 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
       case CommandTypes.TEXT_CHANGE:
       case CommandTypes.FORM_FIELD_CHANGE:
         return (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
             <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
@@ -498,20 +534,41 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
       case CommandTypes.FILE_UPLOAD:
       case CommandTypes.FILE_DELETE:
         return (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
             <polyline points="13,2 13,9 20,9" />
           </svg>
         );
       case CommandTypes.RESPONSE_SUBMIT:
         return (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="20,6 9,17 4,12" />
           </svg>
         );
       default:
         return (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <circle cx="12" cy="12" r="10" />
           </svg>
         );
@@ -536,7 +593,14 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
             aria-label={`Undo${canUndo ? `: ${getUndoDescription()}` : ''}`}
             title={canUndo ? `Undo: ${getUndoDescription()}` : 'Nothing to undo'}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M3 7v6h6" />
               <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" />
             </svg>
@@ -558,7 +622,14 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
             aria-label={`Redo${canRedo ? `: ${getRedoDescription()}` : ''}`}
             title={canRedo ? `Redo: ${getRedoDescription()}` : 'Nothing to redo'}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M21 7v6h-6" />
               <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7" />
             </svg>
@@ -580,7 +651,14 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
               aria-label="View history"
               title="View history"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12,6 12,12 16,14" />
               </svg>
@@ -608,9 +686,7 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
 
           <div style={styles.historyList}>
             {undoStack.length === 0 && redoStack.length === 0 ? (
-              <div style={styles.emptyHistory}>
-                No actions yet. Your changes will appear here.
-              </div>
+              <div style={styles.emptyHistory}>No actions yet. Your changes will appear here.</div>
             ) : (
               <>
                 {/* Redo Stack (Future) */}
@@ -694,13 +770,27 @@ export const UndoRedoShortcuts: React.FC = () => {
   return (
     <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b' }}>
       <span>
-        <kbd style={{ padding: '2px 6px', backgroundColor: '#f1f5f9', borderRadius: '4px', marginRight: '4px' }}>
+        <kbd
+          style={{
+            padding: '2px 6px',
+            backgroundColor: '#f1f5f9',
+            borderRadius: '4px',
+            marginRight: '4px',
+          }}
+        >
           {modifier}+Z
         </kbd>
         Undo
       </span>
       <span>
-        <kbd style={{ padding: '2px 6px', backgroundColor: '#f1f5f9', borderRadius: '4px', marginRight: '4px' }}>
+        <kbd
+          style={{
+            padding: '2px 6px',
+            backgroundColor: '#f1f5f9',
+            borderRadius: '4px',
+            marginRight: '4px',
+          }}
+        >
           {modifier}+{isMac ? 'Shift+Z' : 'Y'}
         </kbd>
         Redo
@@ -724,27 +814,30 @@ export const useUndoableField = (options: UseUndoableFieldOptions) => {
   const { executeCommand } = useUndoRedo();
   const previousValue = useRef<string>(options.getValue());
 
-  const handleChange = useCallback((newValue: string) => {
-    const oldValue = previousValue.current;
+  const handleChange = useCallback(
+    (newValue: string) => {
+      const oldValue = previousValue.current;
 
-    executeCommand({
-      type: CommandTypes.FORM_FIELD_CHANGE,
-      description: options.description,
-      execute: () => {
-        options.setValue(newValue);
-      },
-      undo: () => {
-        options.setValue(oldValue);
-      },
-      data: {
-        fieldId: options.fieldId,
-        oldValue,
-        newValue,
-      },
-    });
+      executeCommand({
+        type: CommandTypes.FORM_FIELD_CHANGE,
+        description: options.description,
+        execute: () => {
+          options.setValue(newValue);
+        },
+        undo: () => {
+          options.setValue(oldValue);
+        },
+        data: {
+          fieldId: options.fieldId,
+          oldValue,
+          newValue,
+        },
+      });
 
-    previousValue.current = newValue;
-  }, [executeCommand, options]);
+      previousValue.current = newValue;
+    },
+    [executeCommand, options],
+  );
 
   return { handleChange };
 };
