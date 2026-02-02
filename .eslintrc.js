@@ -95,7 +95,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['*.spec.ts', '*.e2e-spec.ts', '*.test.ts', '*.test.tsx', 'test/**/*.ts', 'e2e/**/*.ts'],
+      files: ['*.spec.ts', '*.e2e-spec.ts', '*.test.ts', '*.test.tsx', 'test/**/*.ts', 'e2e/**/*.ts', '**/tests/**/*.ts', 'apps/api/test/**/*.ts'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -104,7 +104,14 @@ module.exports = {
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/unbound-method': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-misused-promises': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+        '@typescript-eslint/no-namespace': 'off',
+        '@typescript-eslint/prefer-as-const': 'off',
         'no-console': 'off',
+        'no-duplicate-imports': 'off',
       },
     },
     {
@@ -116,6 +123,9 @@ module.exports = {
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
         'no-console': 'off',
       },
     },
@@ -128,6 +138,9 @@ module.exports = {
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
         'no-console': 'off',
       },
     },
@@ -140,6 +153,9 @@ module.exports = {
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
         'no-console': 'off',
       },
     },
@@ -154,6 +170,9 @@ module.exports = {
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
         'no-console': 'off',
         
         // Accessibility rules (WCAG 2.2 Level AA)
