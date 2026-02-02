@@ -497,7 +497,7 @@ export function useAutoSuggestions(context: QuestionContext | null, enabled = tr
     return () => {
       clearSuggestions();
     };
-  }, [context?.questionId, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [context?.questionId, enabled]);
 }
 
 // ============================================================================
