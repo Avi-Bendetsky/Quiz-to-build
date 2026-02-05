@@ -91,7 +91,7 @@ export class UsersService {
     const updateData: Prisma.UserUpdateInput = {};
 
     if (dto.name !== undefined || dto.phone !== undefined || dto.timezone !== undefined) {
-      const currentProfile = existingUser.profile as Record<string, unknown> || {};
+      const currentProfile = (existingUser.profile as Record<string, unknown>) || {};
       updateData.profile = {
         ...currentProfile,
         ...(dto.name !== undefined && { name: dto.name }),
@@ -101,7 +101,7 @@ export class UsersService {
     }
 
     if (dto.preferences !== undefined) {
-      const currentPrefs = existingUser.preferences as Record<string, unknown> || {};
+      const currentPrefs = (existingUser.preferences as Record<string, unknown>) || {};
       updateData.preferences = {
         ...currentPrefs,
         ...dto.preferences,
@@ -164,7 +164,10 @@ export class UsersService {
   }
 
   private mapToUserProfile(
-    user: User & { organization?: { id: string; name: string } | null; _count?: { sessions: number } },
+    user: User & {
+      organization?: { id: string; name: string } | null;
+      _count?: { sessions: number };
+    },
     documentsCount: number,
   ): UserProfile {
     const profile = (user.profile as Record<string, unknown>) || {};

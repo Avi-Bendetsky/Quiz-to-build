@@ -44,10 +44,7 @@ export class AdaptiveLogicService {
         },
         section: true,
       },
-      orderBy: [
-        { section: { orderIndex: 'asc' } },
-        { orderIndex: 'asc' },
-      ],
+      orderBy: [{ section: { orderIndex: 'asc' } }, { orderIndex: 'asc' }],
     });
 
     // Evaluate visibility for each question
@@ -71,7 +68,7 @@ export class AdaptiveLogicService {
     responses: Map<string, unknown>,
   ): QuestionState {
     // Default state
-    let state: QuestionState = {
+    const state: QuestionState = {
       visible: true,
       required: question.isRequired,
       disabled: false,
@@ -165,7 +162,7 @@ export class AdaptiveLogicService {
 
     // Find current position and return next
     const currentIndex = visibleQuestions.findIndex((q) => q.id === currentQuestionId);
-    
+
     if (currentIndex === -1 || currentIndex >= visibleQuestions.length - 1) {
       return null;
     }
@@ -227,10 +224,7 @@ export class AdaptiveLogicService {
   async getRulesForQuestion(questionId: string): Promise<VisibilityRule[]> {
     return this.prisma.visibilityRule.findMany({
       where: {
-        OR: [
-          { questionId },
-          { targetQuestionIds: { has: questionId } },
-        ],
+        OR: [{ questionId }, { targetQuestionIds: { has: questionId } }],
         isActive: true,
       },
       orderBy: { priority: 'desc' },
@@ -240,9 +234,7 @@ export class AdaptiveLogicService {
   /**
    * Build a dependency graph for questions
    */
-  async buildDependencyGraph(
-    questionnaireId: string,
-  ): Promise<Map<string, Set<string>>> {
+  async buildDependencyGraph(questionnaireId: string): Promise<Map<string, Set<string>>> {
     const rules = await this.prisma.visibilityRule.findMany({
       where: {
         question: {

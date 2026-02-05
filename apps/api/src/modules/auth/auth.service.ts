@@ -200,11 +200,7 @@ export class AuthService {
     const refreshToken = uuidv4();
 
     // Store refresh token in Redis
-    await this.redisService.set(
-      `refresh:${refreshToken}`,
-      user.id,
-      this.refreshTokenTtlSeconds,
-    );
+    await this.redisService.set(`refresh:${refreshToken}`, user.id, this.refreshTokenTtlSeconds);
 
     // Also store in database for audit
     await this.prisma.refreshToken.create({

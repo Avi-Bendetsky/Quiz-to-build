@@ -73,10 +73,7 @@ export class StandardsService {
     // Try to find by ID first, then by slug
     const documentType = await this.prisma.documentType.findFirst({
       where: {
-        OR: [
-          { id: documentTypeIdOrSlug },
-          { slug: documentTypeIdOrSlug },
-        ],
+        OR: [{ id: documentTypeIdOrSlug }, { slug: documentTypeIdOrSlug }],
       },
       include: {
         standardMappings: {
@@ -97,18 +94,13 @@ export class StandardsService {
       throw new NotFoundException(`Document type ${documentTypeIdOrSlug} not found`);
     }
 
-    return documentType.standardMappings.map((mapping) =>
-      this.mapToResponse(mapping.standard),
-    );
+    return documentType.standardMappings.map((mapping) => this.mapToResponse(mapping.standard));
   }
 
   async generateStandardsSection(documentTypeIdOrSlug: string): Promise<GeneratedStandardsSection> {
     const documentType = await this.prisma.documentType.findFirst({
       where: {
-        OR: [
-          { id: documentTypeIdOrSlug },
-          { slug: documentTypeIdOrSlug },
-        ],
+        OR: [{ id: documentTypeIdOrSlug }, { slug: documentTypeIdOrSlug }],
       },
       include: {
         standardMappings: {

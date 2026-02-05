@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Put, Body, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { UsersService, UserProfile } from './users.service';
@@ -52,7 +43,10 @@ export class UsersController {
   async findAll(
     @Query() pagination: PaginationDto,
     @Query('role') role?: UserRole,
-  ): Promise<{ items: UserProfile[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
+  ): Promise<{
+    items: UserProfile[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
     const { items, total } = await this.usersService.findAll(pagination, role);
     return {
       items,

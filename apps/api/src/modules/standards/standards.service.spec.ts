@@ -58,10 +58,7 @@ describe('StandardsService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        StandardsService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [StandardsService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<StandardsService>(StandardsService);
@@ -109,9 +106,9 @@ describe('StandardsService', () => {
     it('should throw NotFoundException for invalid category', async () => {
       prismaService.engineeringStandard.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.findByCategory('INVALID_CATEGORY' as StandardCategory),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findByCategory('INVALID_CATEGORY' as StandardCategory)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -132,9 +129,7 @@ describe('StandardsService', () => {
           },
         ],
       };
-      prismaService.engineeringStandard.findUnique.mockResolvedValue(
-        standardWithMappings as any,
-      );
+      prismaService.engineeringStandard.findUnique.mockResolvedValue(standardWithMappings as any);
 
       const result = await service.findWithMappings('MODERN_ARCHITECTURE' as StandardCategory);
 
@@ -159,9 +154,7 @@ describe('StandardsService', () => {
           },
         ],
       };
-      prismaService.engineeringStandard.findUnique.mockResolvedValue(
-        standardWithMappings as any,
-      );
+      prismaService.engineeringStandard.findUnique.mockResolvedValue(standardWithMappings as any);
 
       const result = await service.findWithMappings('MODERN_ARCHITECTURE' as StandardCategory);
 
@@ -188,10 +181,7 @@ describe('StandardsService', () => {
       expect(prismaService.documentType.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            OR: [
-              { id: 'product-architecture' },
-              { slug: 'product-architecture' },
-            ],
+            OR: [{ id: 'product-architecture' }, { slug: 'product-architecture' }],
           },
         }),
       );
@@ -200,9 +190,9 @@ describe('StandardsService', () => {
     it('should throw NotFoundException for invalid document type', async () => {
       prismaService.documentType.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getStandardsForDocument('non-existent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getStandardsForDocument('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return empty array when document has no standards', async () => {
@@ -264,9 +254,9 @@ describe('StandardsService', () => {
     it('should throw NotFoundException for invalid document type', async () => {
       prismaService.documentType.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.generateStandardsSection('non-existent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.generateStandardsSection('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should include version in markdown output', async () => {

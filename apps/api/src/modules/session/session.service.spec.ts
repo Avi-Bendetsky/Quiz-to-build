@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { PrismaService } from '@libs/database';
 import { QuestionnaireService } from '../questionnaire/questionnaire.service';
@@ -174,17 +170,15 @@ describe('SessionService', () => {
     it('should throw NotFoundException for non-existent session', async () => {
       prismaService.session.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.findById('non-existent', mockUserId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findById('non-existent', mockUserId)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException for unauthorized access', async () => {
       prismaService.session.findUnique.mockResolvedValue(mockSession as any);
 
-      await expect(
-        service.findById(mockSessionId, 'different-user'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.findById(mockSessionId, 'different-user')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -251,9 +245,9 @@ describe('SessionService', () => {
         status: SessionStatus.COMPLETED,
       } as any);
 
-      await expect(
-        service.getNextQuestion(mockSessionId, mockUserId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.getNextQuestion(mockSessionId, mockUserId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should skip already answered questions', async () => {
@@ -276,11 +270,7 @@ describe('SessionService', () => {
         { ...mockQuestion, id: 'q4' },
       ] as any);
 
-      const result = await service.getNextQuestion(
-        mockSessionId,
-        mockUserId,
-        3,
-      );
+      const result = await service.getNextQuestion(mockSessionId, mockUserId, 3);
 
       expect(result.questions.length).toBeLessThanOrEqual(3);
     });
@@ -317,11 +307,7 @@ describe('SessionService', () => {
     });
 
     it('should submit response successfully', async () => {
-      const result = await service.submitResponse(
-        mockSessionId,
-        mockUserId,
-        submitDto,
-      );
+      const result = await service.submitResponse(mockSessionId, mockUserId, submitDto);
 
       expect(result.responseId).toBe('response-1');
       expect(result.questionId).toBe('q1');
@@ -334,17 +320,17 @@ describe('SessionService', () => {
         status: SessionStatus.COMPLETED,
       } as any);
 
-      await expect(
-        service.submitResponse(mockSessionId, mockUserId, submitDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.submitResponse(mockSessionId, mockUserId, submitDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException for invalid question', async () => {
       questionnaireService.getQuestionById.mockResolvedValue(null);
 
-      await expect(
-        service.submitResponse(mockSessionId, mockUserId, submitDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.submitResponse(mockSessionId, mockUserId, submitDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should update session progress after response', async () => {
@@ -401,17 +387,17 @@ describe('SessionService', () => {
         status: SessionStatus.COMPLETED,
       } as any);
 
-      await expect(
-        service.completeSession(mockSessionId, mockUserId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.completeSession(mockSessionId, mockUserId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw ForbiddenException for unauthorized user', async () => {
       prismaService.session.findUnique.mockResolvedValue(mockSession as any);
 
-      await expect(
-        service.completeSession(mockSessionId, 'different-user'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.completeSession(mockSessionId, 'different-user')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -421,9 +407,7 @@ describe('SessionService', () => {
         ...mockQuestion,
         validationRules: { minLength: 10 },
       };
-      questionnaireService.getQuestionById.mockResolvedValue(
-        questionWithMinLength as any,
-      );
+      questionnaireService.getQuestionById.mockResolvedValue(questionWithMinLength as any);
       prismaService.session.findUnique.mockResolvedValue(mockSession as any);
       prismaService.response.upsert.mockResolvedValue({
         id: 'response-1',
@@ -439,9 +423,7 @@ describe('SessionService', () => {
         value: 'short',
       });
 
-      expect(result.validationResult.errors).toContain(
-        'Minimum length is 10 characters',
-      );
+      expect(result.validationResult.errors).toContain('Minimum length is 10 characters');
     });
 
     it('should validate maxLength constraint', async () => {
@@ -449,9 +431,7 @@ describe('SessionService', () => {
         ...mockQuestion,
         validationRules: { maxLength: 5 },
       };
-      questionnaireService.getQuestionById.mockResolvedValue(
-        questionWithMaxLength as any,
-      );
+      questionnaireService.getQuestionById.mockResolvedValue(questionWithMaxLength as any);
       prismaService.session.findUnique.mockResolvedValue(mockSession as any);
       prismaService.response.upsert.mockResolvedValue({
         id: 'response-1',
@@ -467,9 +447,7 @@ describe('SessionService', () => {
         value: 'this is too long',
       });
 
-      expect(result.validationResult.errors).toContain(
-        'Maximum length is 5 characters',
-      );
+      expect(result.validationResult.errors).toContain('Maximum length is 5 characters');
     });
 
     it('should validate numeric min constraint', async () => {
@@ -478,9 +456,7 @@ describe('SessionService', () => {
         type: QuestionType.NUMBER,
         validationRules: { min: 10 },
       };
-      questionnaireService.getQuestionById.mockResolvedValue(
-        questionWithMin as any,
-      );
+      questionnaireService.getQuestionById.mockResolvedValue(questionWithMin as any);
       prismaService.session.findUnique.mockResolvedValue(mockSession as any);
       prismaService.response.upsert.mockResolvedValue({
         id: 'response-1',
@@ -654,15 +630,15 @@ describe('SessionService', () => {
     it('should throw NotFoundException for non-existent session', async () => {
       prismaService.session.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.continueSession('non-existent', mockUserId, 1),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.continueSession('non-existent', mockUserId, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException for unauthorized access', async () => {
-      await expect(
-        service.continueSession(mockSessionId, 'different-user', 1),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.continueSession(mockSessionId, 'different-user', 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should include adaptive state information', async () => {
@@ -709,7 +685,7 @@ describe('SessionService', () => {
       const result = await service.continueSession(mockSessionId, mockUserId, 2);
 
       // q1 is answered, so only q2 should be returned
-      const questionIds = result.nextQuestions.map(q => q.id);
+      const questionIds = result.nextQuestions.map((q) => q.id);
       expect(questionIds).not.toContain('q1');
     });
   });
