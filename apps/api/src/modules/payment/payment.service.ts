@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 
 /**
  * Subscription tiers with pricing
+ * Note: Price IDs should be configured via environment variables
  */
 export const SUBSCRIPTION_TIERS = {
   FREE: {
@@ -22,7 +23,7 @@ export const SUBSCRIPTION_TIERS = {
     id: 'professional',
     name: 'Professional',
     price: 49,
-    priceId: process.env.STRIPE_PRICE_PROFESSIONAL || 'price_professional',
+    priceId: 'price_professional', // Default value, override via ConfigService
     features: {
       questionnaires: 10,
       responses: 5000,
@@ -35,7 +36,7 @@ export const SUBSCRIPTION_TIERS = {
     id: 'enterprise',
     name: 'Enterprise',
     price: 199,
-    priceId: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise',
+    priceId: 'price_enterprise', // Default value, override via ConfigService
     features: {
       questionnaires: -1, // unlimited
       responses: -1,
@@ -95,7 +96,14 @@ export class PaymentService {
       throw new BadRequestException('Invalid tier for checkout');
     }
 
-    const priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
+    // Get price ID from ConfigService, fallback to tier config default
+    let priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
+    if (params.tier === 'PROFESSIONAL') {
+      priceId = this.configService.get<string>('STRIPE_PRICE_PROFESSIONAL', priceId);
+    } else if (params.tier === 'ENTERPRISE') {
+      priceId = this.configService.get<string>('STRIPE_PRICE_ENTERPRISE', priceId);
+    }
+    
     if (!priceId) {
       throw new BadRequestException('Price ID not configured for tier');
     }
@@ -219,7 +227,14 @@ export class PaymentService {
       throw new BadRequestException('Invalid tier for upgrade');
     }
 
-    const priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
+    // Get price ID from ConfigService, fallback to tier config default
+    let priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
+    if (newTier === 'PROFESSIONAL') {
+      priceId = this.configService.get<string>('STRIPE_PRICE_PROFESSIONAL', priceId);
+    } else if (newTier === 'ENTERPRISE') {
+      priceId = this.configService.get<string>('STRIPE_PRICE_ENTERPRISE', priceId);
+    }
+    
     if (!priceId) {
       throw new BadRequestException('Price ID not configured for tier');
     }
