@@ -4,7 +4,8 @@ import Stripe from 'stripe';
 
 /**
  * Subscription tiers with pricing
- * Note: Price IDs should be configured via environment variables
+ * Note: Price IDs are fallback values. Actual price IDs are retrieved from
+ * environment variables at runtime via ConfigService in the methods below.
  */
 export const SUBSCRIPTION_TIERS = {
   FREE: {
@@ -23,7 +24,7 @@ export const SUBSCRIPTION_TIERS = {
     id: 'professional',
     name: 'Professional',
     price: 49,
-    priceId: 'price_professional', // Default value, override via ConfigService
+    priceId: 'price_professional', // Fallback if STRIPE_PRICE_PROFESSIONAL env var not set
     features: {
       questionnaires: 10,
       responses: 5000,
@@ -36,7 +37,7 @@ export const SUBSCRIPTION_TIERS = {
     id: 'enterprise',
     name: 'Enterprise',
     price: 199,
-    priceId: 'price_enterprise', // Default value, override via ConfigService
+    priceId: 'price_enterprise', // Fallback if STRIPE_PRICE_ENTERPRISE env var not set
     features: {
       questionnaires: -1, // unlimited
       responses: -1,
@@ -78,6 +79,27 @@ export class PaymentService {
   }
 
   /**
+   * Get the Stripe price ID for a subscription tier
+   * Retrieves from environment variable via ConfigService, falls back to tier config default
+   */
+  private getPriceIdForTier(tier: SubscriptionTier): string {
+    const tierConfig = SUBSCRIPTION_TIERS[tier];
+    let priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
+    
+    if (tier === 'PROFESSIONAL') {
+      priceId = this.configService.get<string>('STRIPE_PRICE_PROFESSIONAL', priceId);
+    } else if (tier === 'ENTERPRISE') {
+      priceId = this.configService.get<string>('STRIPE_PRICE_ENTERPRISE', priceId);
+    }
+    
+    if (!priceId) {
+      throw new BadRequestException(`Price ID not configured for tier: ${tier}`);
+    }
+    
+    return priceId;
+  }
+
+  /**
    * Create a Stripe checkout session for subscription
    */
   async createCheckoutSession(params: {
@@ -96,17 +118,7 @@ export class PaymentService {
       throw new BadRequestException('Invalid tier for checkout');
     }
 
-    // Get price ID from ConfigService, fallback to tier config default
-    let priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
-    if (params.tier === 'PROFESSIONAL') {
-      priceId = this.configService.get<string>('STRIPE_PRICE_PROFESSIONAL', priceId);
-    } else if (params.tier === 'ENTERPRISE') {
-      priceId = this.configService.get<string>('STRIPE_PRICE_ENTERPRISE', priceId);
-    }
-    
-    if (!priceId) {
-      throw new BadRequestException('Price ID not configured for tier');
-    }
+    const priceId = this.getPriceIdForTier(params.tier);
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'subscription',
@@ -227,17 +239,7 @@ export class PaymentService {
       throw new BadRequestException('Invalid tier for upgrade');
     }
 
-    // Get price ID from ConfigService, fallback to tier config default
-    let priceId = 'priceId' in tierConfig ? tierConfig.priceId : undefined;
-    if (newTier === 'PROFESSIONAL') {
-      priceId = this.configService.get<string>('STRIPE_PRICE_PROFESSIONAL', priceId);
-    } else if (newTier === 'ENTERPRISE') {
-      priceId = this.configService.get<string>('STRIPE_PRICE_ENTERPRISE', priceId);
-    }
-    
-    if (!priceId) {
-      throw new BadRequestException('Price ID not configured for tier');
-    }
+    const priceId = this.getPriceIdForTier(newTier);
 
     const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
     const itemId = subscription.items.data[0].id;
