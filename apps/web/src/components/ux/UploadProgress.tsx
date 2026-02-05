@@ -135,7 +135,7 @@ export function useUploadProgress(
   uploadFn: (file: File, onProgress: (progress: number) => void) => Promise<void>,
   options: UploadProgressOptions = {},
 ): UseUploadProgressReturn {
-  const { maxConcurrent = 3, retryAttempts = 3, onProgress, onComplete, onError } = options;
+  const { maxConcurrent = 3, onProgress, onComplete, onError } = options;
 
   const [files, setFiles] = useState<UploadFile[]>([]);
   const activeUploadsRef = useRef(0);

@@ -94,7 +94,7 @@ apiClient.interceptors.request.use(
       if (!csrfToken) {
         try {
           await fetchCsrfToken();
-        } catch (e) {
+        } catch {
           console.warn('Could not fetch CSRF token, request may fail');
         }
       }

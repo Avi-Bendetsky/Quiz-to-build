@@ -279,7 +279,7 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
   {
     id: 'url-format',
     name: 'URL Format',
-    test: (value, config) => {
+    test: (value, _config) => {
       if (!value.includes('http')) {
         return true;
       } // Not a URL
