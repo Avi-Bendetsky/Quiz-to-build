@@ -23,8 +23,8 @@ import React, {
   useEffect,
   useCallback,
   useRef,
-  ReactNode,
 } from 'react';
+import type { ReactNode } from 'react';
 
 // =============================================================================
 // TYPES & INTERFACES
@@ -341,7 +341,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
   defaultCommands = [],
 }) => {
   const [state, dispatch] = useReducer(accessibilityReducer, initialState);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const announcerRef = useRef<HTMLDivElement | null>(null);
 

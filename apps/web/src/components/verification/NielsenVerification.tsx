@@ -13,8 +13,8 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-  ReactNode,
 } from 'react';
+import type { ReactNode } from 'react';
 
 // =============================================================================
 // NIELSEN 10 HEURISTICS DEFINITIONS

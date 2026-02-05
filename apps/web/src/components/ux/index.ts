@@ -172,9 +172,9 @@ export {
   useTrackedFetch,
   NetworkBanner,
   NetworkIndicator,
-  PendingRequestsIndicator,
   type NetworkStatus,
-  type NetworkConfig,
+  type NetworkInfo,
+  type PendingRequest,
 } from './NetworkStatus';
 
 // Navigation Guards
@@ -187,7 +187,7 @@ export {
   GuardedLink,
   GuardedForm,
   type NavigationGuardConfig,
-  type UnsavedChangesDialogProps,
+  type DirtyFormState,
 } from './NavigationGuards';
 
 // File Type Preview & Validation
@@ -197,12 +197,11 @@ export {
   validateFiles,
   useFilePreview,
   FilePreviewItem,
-  FilePreviewGrid,
-  FileValidationStatus,
   ValidatedDropzone,
   type FileTypeConfig,
-  type FileValidationResult,
-  type ValidatedFile,
+  type ValidationResult,
+  type ValidationError,
+  type FilePreview,
 } from './FileTypePreview';
 
 // Bulk File Operations
