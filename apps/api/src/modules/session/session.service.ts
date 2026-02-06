@@ -7,12 +7,19 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@libs/database';
-import { Session, SessionStatus, Question, Prisma } from '@prisma/client';
+import { Session, SessionStatus, Question, Prisma, Persona } from '@prisma/client';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitResponseDto } from './dto/submit-response.dto';
 import { QuestionnaireService, QuestionResponse } from '../questionnaire/questionnaire.service';
 import { AdaptiveLogicService } from '../adaptive-logic/adaptive-logic.service';
+import { ScoringEngineService } from '../scoring-engine/scoring-engine.service';
 import { PaginationDto } from '@libs/shared';
+
+/** Quiz2Biz readiness score threshold for session completion */
+const READINESS_SCORE_THRESHOLD = 95.0;
+
+/** Default severity for questions without severity (§16 risk control) */
+const DEFAULT_SEVERITY = 0.7;
 
 export interface ProgressInfo {
   percentage: number;
@@ -31,7 +38,9 @@ export interface SessionResponse {
   questionnaireId: string;
   userId: string;
   status: SessionStatus;
+  persona?: Persona;
   industry?: string;
+  readinessScore?: number;
   progress: ProgressInfo;
   currentSection?: {
     id: string;
@@ -64,6 +73,13 @@ export interface SubmitResponseResult {
     questionsRemoved: string[];
     newEstimatedTotal: number;
   };
+  readinessScore?: number;
+  nextQuestionByNQS?: {
+    questionId: string;
+    text: string;
+    dimensionKey: string;
+    expectedScoreLift: number;
+  };
   progress: ProgressInfo;
   createdAt: Date;
 }
@@ -80,6 +96,7 @@ export interface ContinueSessionResponse {
     answeredInSection: number;
   };
   overallProgress: ProgressInfo;
+  readinessScore?: number;
   adaptiveState: {
     visibleQuestionCount: number;
     skippedQuestionCount: number;
@@ -96,27 +113,30 @@ export class SessionService {
     private readonly questionnaireService: QuestionnaireService,
     @Inject(forwardRef(() => AdaptiveLogicService))
     private readonly adaptiveLogicService: AdaptiveLogicService,
+    private readonly scoringEngineService: ScoringEngineService,
   ) {}
 
   async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
     // Get questionnaire
     const questionnaire = await this.questionnaireService.findById(dto.questionnaireId);
 
-    // Get total question count
+    // Get total question count filtered by persona if specified
     const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
       dto.questionnaireId,
+      dto.persona,
     );
 
     // Get first section and question
     const firstSection = questionnaire.sections[0];
     const firstQuestion = firstSection?.questions?.[0];
 
-    // Create session
+    // Create session with persona
     const session = await this.prisma.session.create({
       data: {
         userId,
         questionnaireId: dto.questionnaireId,
         questionnaireVersion: questionnaire.version,
+        persona: dto.persona,
         industry: dto.industry,
         status: SessionStatus.IN_PROGRESS,
         progress: {
@@ -329,14 +349,34 @@ export class SessionService {
       responseMap,
     );
 
-    // Find next question
-    const nextQuestion = this.findNextUnansweredQuestion(
+    // --- Quiz2Biz Adaptive Loop: Recalculate score after every response ---
+    await this.scoringEngineService.invalidateScoreCache(sessionId);
+    const scoreResult = await this.scoringEngineService.calculateScore({ sessionId });
+
+    // --- NQS: Use scoring engine to pick the next highest-impact question ---
+    let nqsNext: { questionId: string; text: string; dimensionKey: string; expectedScoreLift: number } | undefined;
+    const nqsResult = await this.scoringEngineService.getNextQuestions({ sessionId, limit: 1 });
+    if (nqsResult.questions.length > 0) {
+      const topQ = nqsResult.questions[0];
+      nqsNext = {
+        questionId: topQ.questionId,
+        text: topQ.text,
+        dimensionKey: topQ.dimensionKey,
+        expectedScoreLift: topQ.expectedScoreLift,
+      };
+    }
+
+    // Determine next question: prefer NQS pick, fallback to sequential
+    const nqsQuestion = nqsNext
+      ? visibleQuestions.find((q) => q.id === nqsNext!.questionId)
+      : null;
+    const nextQuestion = nqsQuestion ?? this.findNextUnansweredQuestion(
       visibleQuestions,
       dto.questionId,
       responseMap,
     );
 
-    // Update session
+    // Update session with score + next question
     const progress = this.calculateProgress(allResponses.length, visibleQuestions.length);
 
     await this.prisma.session.update({
@@ -358,6 +398,8 @@ export class SessionService {
       questionId: dto.questionId,
       value: dto.value,
       validationResult: validation,
+      readinessScore: scoreResult.score,
+      nextQuestionByNQS: nqsNext,
       progress,
       createdAt: response.answeredAt,
     };
@@ -368,6 +410,16 @@ export class SessionService {
 
     if (session.status === SessionStatus.COMPLETED) {
       throw new BadRequestException('Session is already completed');
+    }
+
+    // Quiz2Biz: Enforce readiness score >= 95% before allowing completion
+    const scoreResult = await this.scoringEngineService.calculateScore({ sessionId });
+    if (scoreResult.score < READINESS_SCORE_THRESHOLD) {
+      throw new BadRequestException(
+        `Readiness score is ${scoreResult.score.toFixed(1)}%. ` +
+        `A minimum score of ${READINESS_SCORE_THRESHOLD}% is required to complete the session. ` +
+        `Please continue answering questions to improve coverage.`,
+      );
     }
 
     // Update session status
@@ -385,6 +437,7 @@ export class SessionService {
 
     const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
       session.questionnaireId,
+      session.persona ?? undefined,
     );
 
     return this.mapToSessionResponse(updatedSession, totalQuestions);
@@ -527,11 +580,27 @@ export class SessionService {
       };
     }
 
-    // Determine if session can be completed (all required questions answered)
+    // Quiz2Biz: Calculate readiness score to determine canComplete
+    let readinessScore: number | undefined;
+    if (answeredCount > 0) {
+      try {
+        const scoreResult = await this.scoringEngineService.calculateScore({ sessionId });
+        readinessScore = scoreResult.score;
+      } catch {
+        // Score calculation may fail if no dimensions mapped; fallback gracefully
+      }
+    }
+
+    // Determine if session can be completed:
+    // 1. All required questions answered AND
+    // 2. Readiness score >= 95% (Quiz2Biz threshold)
     const unansweredRequired = visibleQuestions.filter(
       (q) => q.isRequired && !responseMap.has(q.id),
     );
-    const canComplete = unansweredRequired.length === 0 && answeredCount > 0;
+    const canComplete =
+      unansweredRequired.length === 0 &&
+      answeredCount > 0 &&
+      (readinessScore ?? 0) >= READINESS_SCORE_THRESHOLD;
 
     // Build session response
     const sessionResponse: SessionResponse = {
@@ -561,6 +630,7 @@ export class SessionService {
       nextQuestions,
       currentSection: currentSectionInfo,
       overallProgress: progress,
+      readinessScore,
       adaptiveState: {
         visibleQuestionCount: visibleQuestions.length,
         skippedQuestionCount: skippedCount,
@@ -601,7 +671,9 @@ export class SessionService {
       questionnaireId: session.questionnaireId,
       userId: session.userId,
       status: session.status,
+      persona: session.persona ?? undefined,
       industry: session.industry ?? undefined,
+      readinessScore: session.readinessScore ? Number(session.readinessScore) : undefined,
       progress: {
         percentage: progress.percentage,
         answeredQuestions: progress.answered,

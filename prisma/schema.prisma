@@ -360,6 +360,7 @@ model Session {
   questionnaireId      String        @map("questionnaire_id")
   questionnaireVersion Int           @map("questionnaire_version")
   status               SessionStatus @default(IN_PROGRESS)
+  persona              Persona?                              // Quiz2Biz persona filter for question selection
   industry             String?
   progress             Json          @default("{\"percentage\": 0, \"answered\": 0, \"total\": 0}")
   currentSectionId     String?       @map("current_section_id")

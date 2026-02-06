@@ -3,9 +3,10 @@ import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
 import { AdaptiveLogicModule } from '../adaptive-logic/adaptive-logic.module';
+import { ScoringEngineModule } from '../scoring-engine/scoring-engine.module';
 
 @Module({
-  imports: [QuestionnaireModule, forwardRef(() => AdaptiveLogicModule)],
+  imports: [QuestionnaireModule, forwardRef(() => AdaptiveLogicModule), ScoringEngineModule],
   controllers: [SessionController],
   providers: [SessionService],
   exports: [SessionService],
