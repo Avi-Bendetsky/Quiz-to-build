@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Adaptive Client Questionnaire System - Backend API",
   "private": true,
+  "packageManager": "npm@10.9.4",
   "workspaces": [
     "apps/*",
     "libs/*"

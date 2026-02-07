@@ -10,7 +10,6 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
   useMemo,
 } from 'react';
@@ -846,7 +845,7 @@ export const useNielsenVerification = (): NielsenVerificationContextType => {
 export const NielsenDashboard: React.FC = () => {
   const {
     currentEvaluation,
-    evaluationHistory,
+    evaluationHistory: _evaluationHistory,
     uatSessions,
     calculateOverallScore,
     getProductionReadiness,

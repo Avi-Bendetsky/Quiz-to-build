@@ -210,7 +210,7 @@ const STORAGE_KEYS = {
   CURRENT_SESSION: 'quiz2biz_current_session',
 };
 
-const DEFAULT_HEATMAP_CONFIG: HeatmapConfig = {
+export const DEFAULT_HEATMAP_CONFIG: HeatmapConfig = {
   page: '',
   type: 'click',
   radius: 20,

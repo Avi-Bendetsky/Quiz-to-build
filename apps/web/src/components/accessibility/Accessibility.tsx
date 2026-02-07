@@ -341,7 +341,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
   defaultCommands = [],
 }) => {
   const [state, dispatch] = useReducer(accessibilityReducer, initialState);
-  const recognitionRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null);
+  const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const announcerRef = useRef<HTMLDivElement | null>(null);
 
@@ -360,7 +360,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: any) => {
         const last = event.results[event.results.length - 1];
         const transcript = last[0].transcript.toLowerCase().trim();
         const confidence = last[0].confidence;
@@ -372,7 +372,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
         }
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: any) => {
         dispatch({ type: 'SET_VOICE_ERROR', error: event.error });
       };
 

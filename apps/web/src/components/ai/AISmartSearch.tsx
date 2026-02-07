@@ -97,7 +97,7 @@ class EmbeddingService {
 
     results.sort((a, b) => b.score - a.score);
 
-    return results.slice(0, topK).map((r, index) => ({
+    return results.slice(0, topK).map((r, _index) => ({
       id: r.id,
       title: r.metadata.title,
       content: `Content for ${r.metadata.title}`,
@@ -198,7 +198,7 @@ interface SmartSearchProviderProps {
 
 export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
   children,
-  apiEndpoint = '/api/search',
+  apiEndpoint: _apiEndpoint = '/api/search',
 }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -214,7 +214,7 @@ export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
     }
   });
 
-  const searchTimeout = useRef<NodeJS.Timeout>();
+  const searchTimeout = useRef<NodeJS.Timeout>(undefined);
 
   // Generate AI summary for search results
   const generateAISummary = useCallback(
