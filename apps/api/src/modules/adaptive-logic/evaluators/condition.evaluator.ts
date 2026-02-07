@@ -119,7 +119,7 @@ export class ConditionEvaluator {
     // Handle object comparison for response values
     if (typeof actual === 'object' && actual !== null) {
       const actualObj = actual as Record<string, unknown>;
-      
+
       // Check common response value patterns
       if ('selectedOptionId' in actualObj) {
         return actualObj.selectedOptionId === expected;
@@ -145,12 +145,12 @@ export class ConditionEvaluator {
     // Handle response objects
     if (typeof actual === 'object' && actual !== null) {
       const actualObj = actual as Record<string, unknown>;
-      
+
       // Multi-choice responses
       if ('selectedOptionIds' in actualObj && Array.isArray(actualObj.selectedOptionIds)) {
         return actualObj.selectedOptionIds.includes(expected);
       }
-      
+
       // Text contains
       if ('text' in actualObj && typeof actualObj.text === 'string') {
         return actualObj.text.includes(String(expected));
@@ -181,7 +181,7 @@ export class ConditionEvaluator {
     // Handle response objects
     if (typeof actual === 'object' && actual !== null) {
       const actualObj = actual as Record<string, unknown>;
-      
+
       if ('selectedOptionId' in actualObj) {
         return expected.includes(actualObj.selectedOptionId);
       }
@@ -202,11 +202,11 @@ export class ConditionEvaluator {
   private greaterThan(actual: unknown, expected: unknown): boolean {
     const actualNum = this.extractNumber(actual);
     const expectedNum = this.extractNumber(expected);
-    
+
     if (actualNum === null || expectedNum === null) {
       return false;
     }
-    
+
     return actualNum > expectedNum;
   }
 
@@ -216,11 +216,11 @@ export class ConditionEvaluator {
   private lessThan(actual: unknown, expected: unknown): boolean {
     const actualNum = this.extractNumber(actual);
     const expectedNum = this.extractNumber(expected);
-    
+
     if (actualNum === null || expectedNum === null) {
       return false;
     }
-    
+
     return actualNum < expectedNum;
   }
 
@@ -230,11 +230,11 @@ export class ConditionEvaluator {
   private greaterThanOrEqual(actual: unknown, expected: unknown): boolean {
     const actualNum = this.extractNumber(actual);
     const expectedNum = this.extractNumber(expected);
-    
+
     if (actualNum === null || expectedNum === null) {
       return false;
     }
-    
+
     return actualNum >= expectedNum;
   }
 
@@ -244,11 +244,11 @@ export class ConditionEvaluator {
   private lessThanOrEqual(actual: unknown, expected: unknown): boolean {
     const actualNum = this.extractNumber(actual);
     const expectedNum = this.extractNumber(expected);
-    
+
     if (actualNum === null || expectedNum === null) {
       return false;
     }
-    
+
     return actualNum <= expectedNum;
   }
 
@@ -259,14 +259,14 @@ export class ConditionEvaluator {
     if (!Array.isArray(expected) || expected.length !== 2) {
       return false;
     }
-    
+
     const actualNum = this.extractNumber(actual);
     const [min, max] = expected.map((v) => this.extractNumber(v));
-    
+
     if (actualNum === null || min === null || max === null) {
       return false;
     }
-    
+
     return actualNum >= min && actualNum <= max;
   }
 
@@ -277,18 +277,18 @@ export class ConditionEvaluator {
     if (actual === null || actual === undefined) {
       return true;
     }
-    
+
     if (typeof actual === 'string' && actual.trim() === '') {
       return true;
     }
-    
+
     if (Array.isArray(actual) && actual.length === 0) {
       return true;
     }
-    
+
     if (typeof actual === 'object') {
       const obj = actual as Record<string, unknown>;
-      
+
       // Check response objects
       if ('text' in obj && (obj.text === '' || obj.text === null)) {
         return true;
@@ -296,11 +296,15 @@ export class ConditionEvaluator {
       if ('selectedOptionId' in obj && obj.selectedOptionId === null) {
         return true;
       }
-      if ('selectedOptionIds' in obj && Array.isArray(obj.selectedOptionIds) && obj.selectedOptionIds.length === 0) {
+      if (
+        'selectedOptionIds' in obj &&
+        Array.isArray(obj.selectedOptionIds) &&
+        obj.selectedOptionIds.length === 0
+      ) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -310,11 +314,11 @@ export class ConditionEvaluator {
   private startsWith(actual: unknown, expected: unknown): boolean {
     const actualStr = this.extractString(actual);
     const expectedStr = this.extractString(expected);
-    
+
     if (actualStr === null || expectedStr === null) {
       return false;
     }
-    
+
     return actualStr.startsWith(expectedStr);
   }
 
@@ -324,11 +328,11 @@ export class ConditionEvaluator {
   private endsWith(actual: unknown, expected: unknown): boolean {
     const actualStr = this.extractString(actual);
     const expectedStr = this.extractString(expected);
-    
+
     if (actualStr === null || expectedStr === null) {
       return false;
     }
-    
+
     return actualStr.endsWith(expectedStr);
   }
 
@@ -337,11 +341,11 @@ export class ConditionEvaluator {
    */
   private matches(actual: unknown, expected: unknown): boolean {
     const actualStr = this.extractString(actual);
-    
+
     if (actualStr === null || typeof expected !== 'string') {
       return false;
     }
-    
+
     try {
       const regex = new RegExp(expected);
       return regex.test(actualStr);
@@ -357,15 +361,15 @@ export class ConditionEvaluator {
     if (typeof value === 'number') {
       return value;
     }
-    
+
     if (typeof value === 'string') {
       const parsed = parseFloat(value);
       return isNaN(parsed) ? null : parsed;
     }
-    
+
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, unknown>;
-      
+
       if ('number' in obj && typeof obj.number === 'number') {
         return obj.number;
       }
@@ -373,7 +377,7 @@ export class ConditionEvaluator {
         return obj.rating;
       }
     }
-    
+
     return null;
   }
 
@@ -384,10 +388,10 @@ export class ConditionEvaluator {
     if (typeof value === 'string') {
       return value;
     }
-    
+
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, unknown>;
-      
+
       if ('text' in obj && typeof obj.text === 'string') {
         return obj.text;
       }
@@ -395,7 +399,7 @@ export class ConditionEvaluator {
         return obj.selectedOptionId;
       }
     }
-    
+
     return null;
   }
 }

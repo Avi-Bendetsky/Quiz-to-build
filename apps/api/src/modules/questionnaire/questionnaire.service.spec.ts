@@ -85,10 +85,7 @@ describe('QuestionnaireService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        QuestionnaireService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [QuestionnaireService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<QuestionnaireService>(QuestionnaireService);
@@ -147,9 +144,7 @@ describe('QuestionnaireService', () => {
           { id: 'section-2', name: 'Section 2', _count: { questions: 5 } },
         ],
       };
-      prismaService.questionnaire.findMany.mockResolvedValue([
-        multiSectionQuestionnaire,
-      ] as any);
+      prismaService.questionnaire.findMany.mockResolvedValue([multiSectionQuestionnaire] as any);
       prismaService.questionnaire.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10, skip: 0 });
@@ -172,9 +167,7 @@ describe('QuestionnaireService', () => {
     it('should throw NotFoundException for non-existent questionnaire', async () => {
       prismaService.questionnaire.findUnique.mockResolvedValue(null);
 
-      await expect(service.findById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findById('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should map question options correctly', async () => {
@@ -194,9 +187,7 @@ describe('QuestionnaireService', () => {
 
       const result = await service.findById('questionnaire-1');
 
-      const textQuestion = result.sections[0].questions?.find(
-        (q) => q.type === QuestionType.TEXT,
-      );
+      const textQuestion = result.sections[0].questions?.find((q) => q.type === QuestionType.TEXT);
       expect(textQuestion?.validation).toEqual({ maxLength: 500 });
     });
   });
@@ -204,9 +195,7 @@ describe('QuestionnaireService', () => {
   describe('getDefaultQuestionnaire', () => {
     it('should return default questionnaire when exists', async () => {
       const defaultQuestionnaire = { ...mockQuestionnaire, isDefault: true };
-      prismaService.questionnaire.findFirst.mockResolvedValue(
-        defaultQuestionnaire as any,
-      );
+      prismaService.questionnaire.findFirst.mockResolvedValue(defaultQuestionnaire as any);
 
       const result = await service.getDefaultQuestionnaire();
 
@@ -328,9 +317,7 @@ describe('QuestionnaireService', () => {
         industry: null,
         estimatedTime: null,
       };
-      prismaService.questionnaire.findMany.mockResolvedValue([
-        questionnaireWithNulls,
-      ] as any);
+      prismaService.questionnaire.findMany.mockResolvedValue([questionnaireWithNulls] as any);
       prismaService.questionnaire.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10, skip: 0 });

@@ -230,7 +230,7 @@ export class SessionService {
 
     // Get the next N visible questions starting from current position
     const nextQuestions: QuestionResponse[] = [];
-    let currentIndex = visibleQuestions.findIndex((q) => q.id === session.currentQuestionId);
+    const currentIndex = visibleQuestions.findIndex((q) => q.id === session.currentQuestionId);
 
     for (let i = currentIndex; i < visibleQuestions.length && nextQuestions.length < count; i++) {
       const question = visibleQuestions[i];
@@ -444,14 +444,16 @@ export class SessionService {
 
     // Find next unanswered questions
     const nextQuestions: QuestionResponse[] = [];
-    
+
     if (!isComplete && session.currentQuestionId) {
-      const currentIndex = visibleQuestions.findIndex(
-        (q) => q.id === session.currentQuestionId,
-      );
+      const currentIndex = visibleQuestions.findIndex((q) => q.id === session.currentQuestionId);
 
       // Start from current question and find unanswered ones
-      for (let i = Math.max(0, currentIndex); i < visibleQuestions.length && nextQuestions.length < questionCount; i++) {
+      for (
+        let i = Math.max(0, currentIndex);
+        i < visibleQuestions.length && nextQuestions.length < questionCount;
+        i++
+      ) {
         const question = visibleQuestions[i];
         if (!responseMap.has(question.id)) {
           nextQuestions.push(this.mapQuestionToResponse(question));
@@ -493,9 +495,10 @@ export class SessionService {
         id: session.currentSection.id,
         name: session.currentSection.name,
         description: (session.currentSection as any).description ?? undefined,
-        progress: sectionQuestions.length > 0
-          ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
-          : 0,
+        progress:
+          sectionQuestions.length > 0
+            ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
+            : 0,
         questionsInSection: sectionQuestions.length,
         answeredInSection: sectionAnswered,
       };
@@ -545,10 +548,7 @@ export class SessionService {
     };
   }
 
-  private async getSessionWithValidation(
-    sessionId: string,
-    userId: string,
-  ): Promise<Session> {
+  private async getSessionWithValidation(sessionId: string, userId: string): Promise<Session> {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
     });
@@ -590,7 +590,9 @@ export class SessionService {
   }
 
   private mapQuestionToResponse(question: Question): QuestionResponse {
-    const options = question.options as { id: string; label: string; description?: string }[] | null;
+    const options = question.options as
+      | { id: string; label: string; description?: string }[]
+      | null;
     const validation = question.validationRules as Record<string, unknown> | null;
 
     return {
@@ -635,10 +637,18 @@ export class SessionService {
     if (value !== null && value !== undefined) {
       if (validation) {
         // Min/max length for text
-        if (validation.minLength && typeof value === 'string' && value.length < (validation.minLength as number)) {
+        if (
+          validation.minLength &&
+          typeof value === 'string' &&
+          value.length < (validation.minLength as number)
+        ) {
           errors.push(`Minimum length is ${validation.minLength} characters`);
         }
-        if (validation.maxLength && typeof value === 'string' && value.length > (validation.maxLength as number)) {
+        if (
+          validation.maxLength &&
+          typeof value === 'string' &&
+          value.length > (validation.maxLength as number)
+        ) {
           errors.push(`Maximum length is ${validation.maxLength} characters`);
         }
 

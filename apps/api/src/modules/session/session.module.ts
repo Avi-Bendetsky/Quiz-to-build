@@ -5,10 +5,7 @@ import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
 import { AdaptiveLogicModule } from '../adaptive-logic/adaptive-logic.module';
 
 @Module({
-  imports: [
-    QuestionnaireModule,
-    forwardRef(() => AdaptiveLogicModule),
-  ],
+  imports: [QuestionnaireModule, forwardRef(() => AdaptiveLogicModule)],
   controllers: [SessionController],
   providers: [SessionService],
   exports: [SessionService],
