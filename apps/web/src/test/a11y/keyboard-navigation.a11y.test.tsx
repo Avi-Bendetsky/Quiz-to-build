@@ -521,7 +521,6 @@ describe('Keyboard Navigation Accessibility', () => {
     });
 
     it('modal should close on Escape key', async () => {
-      userEvent.setup();
       const onClose = vi.fn();
       render(<MockModal isOpen={true} onClose={onClose} />);
 

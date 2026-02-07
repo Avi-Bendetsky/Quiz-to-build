@@ -251,6 +251,20 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
     [],
   );
 
+  // Define helper function and clearDraft before addComment since addComment uses them
+  const getDraftKey = (questionId: string, parentId?: string): string => {
+    return parentId ? `${questionId}_${parentId}` : questionId;
+  };
+
+  const clearDraft = useCallback((questionId: string, parentId?: string) => {
+    const key = getDraftKey(questionId, parentId);
+    setDrafts((prev) => {
+      const newDrafts = new Map(prev);
+      newDrafts.delete(key);
+      return newDrafts;
+    });
+  }, []);
+
   const addComment = useCallback(
     (questionId: string, content: string, mentions: Mention[], parentId?: string): Comment => {
       if (!currentUser) {
@@ -548,10 +562,6 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   }, []);
 
-  const getDraftKey = (questionId: string, parentId?: string): string => {
-    return parentId ? `${questionId}_${parentId}` : questionId;
-  };
-
   const saveDraft = useCallback(
     (questionId: string, content: string, mentions: Mention[], parentId?: string) => {
       const key = getDraftKey(questionId, parentId);
@@ -577,15 +587,6 @@ export const CommentsProvider: React.FC<CommentsProviderProps> = ({
     },
     [drafts],
   );
-
-  const clearDraft = useCallback((questionId: string, parentId?: string) => {
-    const key = getDraftKey(questionId, parentId);
-    setDrafts((prev) => {
-      const newDrafts = new Map(prev);
-      newDrafts.delete(key);
-      return newDrafts;
-    });
-  }, []);
 
   const getThreadsForQuestion = useCallback(
     (questionId: string): CommentThread[] => {

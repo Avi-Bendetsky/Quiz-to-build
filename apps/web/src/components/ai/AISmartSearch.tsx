@@ -88,7 +88,7 @@ class EmbeddingService {
 
   static async searchSimilar(query: string, topK: number = 5): Promise<SearchResult[]> {
     const queryEmbedding = await this.generateEmbedding(query);
-    const results: { id: string; score: number; metadata: any }[] = [];
+    const results: { id: string; score: number; metadata: Record<string, unknown> }[] = [];
 
     this.embeddings.forEach((embedding, id) => {
       const score = this.cosineSimilarity(queryEmbedding, embedding.vector);
@@ -99,9 +99,9 @@ class EmbeddingService {
 
     return results.slice(0, topK).map((r, _index) => ({
       id: r.id,
-      title: r.metadata.title,
+      title: r.metadata.title as string,
       content: `Content for ${r.metadata.title}`,
-      url: r.metadata.url,
+      url: r.metadata.url as string,
       relevanceScore: r.score,
       category: r.metadata.category as SearchResult['category'],
       highlights: [],
@@ -863,7 +863,7 @@ export const SearchResults: React.FC = () => {
   const handleResultClick = (result: SearchResult) => {
     addToRecentSearches(query);
     // Navigate to result URL
-    window.location.href = result.url;
+    window.location.assign(result.url);
   };
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
