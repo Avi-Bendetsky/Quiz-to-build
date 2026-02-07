@@ -255,7 +255,18 @@ export function QuestionnairePage() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>
-              Question {progress.answeredQuestions + 1} of {progress.totalQuestions}
+              {currentQuestion ? (
+                <>
+                  Question{' '}
+                  {Math.min(
+                    progress.answeredQuestions + 1,
+                    progress.totalQuestions || 1
+                  )}{' '}
+                  of {progress.totalQuestions}
+                </>
+              ) : (
+                <>All {progress.totalQuestions} questions completed</>
+              )}
             </span>
             <span>{progress.percentage}% complete</span>
           </div>
