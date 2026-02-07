@@ -54,38 +54,6 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - Future enhancements
 - Infrastructure status
 
-### 7. [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) - **DEPLOY HERE!** 🚀
-**Best for**: First-time deployment to Azure
-- Step-by-step deployment guide (30 minutes)
-- Prerequisites checklist
-- Azure infrastructure setup
-- GitHub secrets configuration
-- Deployment verification
-
-### 8. [DEPLOYMENT.md](DEPLOYMENT.md)
-**Best for**: Complete deployment reference
-- GitHub Actions workflows documentation
-- Required secrets and configuration
-- Infrastructure setup options
-- Monitoring and alerts setup
-- Troubleshooting guide
-
-### 9. [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md)
-**Best for**: Quick deployment reference
-- Pre-deployment checklist
-- Infrastructure setup steps
-- Secrets configuration checklist
-- Post-deployment verification
-- Quick command reference
-
-### 10. [GITHUB-SECRETS.md](GITHUB-SECRETS.md)
-**Best for**: Configuring GitHub Actions secrets
-- Detailed secrets configuration
-- Step-by-step Azure credentials setup
-- Container App secrets setup
-- Security best practices
-- Troubleshooting secrets issues
-
 ---
 
 ## 🎯 Quick Navigation by Role
@@ -99,13 +67,6 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 1. Review [PRODUCT-OVERVIEW.md](PRODUCT-OVERVIEW.md) for architecture
 2. Check [REVIEW-SUMMARY.md](REVIEW-SUMMARY.md) for code quality
 3. Read [TODO.md](TODO.md) for roadmap
-4. See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment
-
-### For DevOps/Infrastructure
-1. Start with [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) for initial setup
-2. Follow [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md) for deployment
-3. Configure secrets using [GITHUB-SECRETS.md](GITHUB-SECRETS.md)
-4. Reference [DEPLOYMENT.md](DEPLOYMENT.md) for troubleshooting
 
 ### For Designers/UX
 1. Start with [WIREFRAMES.md](WIREFRAMES.md)
@@ -139,12 +100,6 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - **Architecture**: [PRODUCT-OVERVIEW.md](PRODUCT-OVERVIEW.md) - Technical Stack section
 - **Security**: [REVIEW-SUMMARY.md](REVIEW-SUMMARY.md)
 - **API Docs**: Available at `/api/v1/docs` when running
-
-### Deployment & DevOps
-- **First Deployment**: [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) - Step-by-step first deployment
-- **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md) - Complete CI/CD documentation
-- **Deployment Checklist**: [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md) - Quick reference
-- **GitHub Secrets**: [GITHUB-SECRETS.md](GITHUB-SECRETS.md) - Secrets configuration
 
 ---
 

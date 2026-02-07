@@ -322,7 +322,6 @@ Quiz-to-build/
 - [Development Roadmap](TODO.md) - Feature status
 
 ### Technical
-- [Deployment Guide](DEPLOYMENT.md) - CI/CD and Azure deployment
 - API Documentation: `/api/v1/docs` (Swagger, when running)
 - Database Schema: `prisma/schema.prisma`
 - Environment Config: `.env.example`
