@@ -54,7 +54,14 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - Future enhancements
 - Infrastructure status
 
-### 7. [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) - **DEPLOY HERE!** 🚀
+### 7. [DEPLOY-NOW.md](DEPLOY-NOW.md) - **DEPLOY HERE!** 🚀
+**Best for**: Quick deployment overview and immediate action
+- Quick deployment guide (5 minutes to start)
+- Deployment options overview
+- Verification commands
+- Troubleshooting quick reference
+
+### 8. [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md)
 **Best for**: First-time deployment to Azure
 - Step-by-step deployment guide (30 minutes)
 - Prerequisites checklist
@@ -62,7 +69,7 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - GitHub secrets configuration
 - Deployment verification
 
-### 8. [DEPLOYMENT.md](DEPLOYMENT.md)
+### 9. [DEPLOYMENT.md](DEPLOYMENT.md)
 **Best for**: Complete deployment reference
 - GitHub Actions workflows documentation
 - Required secrets and configuration
@@ -70,7 +77,7 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - Monitoring and alerts setup
 - Troubleshooting guide
 
-### 9. [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md)
+### 10. [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md)
 **Best for**: Quick deployment reference
 - Pre-deployment checklist
 - Infrastructure setup steps
@@ -78,7 +85,7 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - Post-deployment verification
 - Quick command reference
 
-### 10. [GITHUB-SECRETS.md](GITHUB-SECRETS.md)
+### 11. [GITHUB-SECRETS.md](GITHUB-SECRETS.md)
 **Best for**: Configuring GitHub Actions secrets
 - Detailed secrets configuration
 - Step-by-step Azure credentials setup
@@ -102,10 +109,11 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 4. See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment
 
 ### For DevOps/Infrastructure
-1. Start with [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) for initial setup
-2. Follow [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md) for deployment
-3. Configure secrets using [GITHUB-SECRETS.md](GITHUB-SECRETS.md)
-4. Reference [DEPLOYMENT.md](DEPLOYMENT.md) for troubleshooting
+1. **Quick deploy**: [DEPLOY-NOW.md](DEPLOY-NOW.md) for immediate deployment
+2. **First-time setup**: [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) for initial setup
+3. **Follow checklist**: [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md) for deployment
+4. **Configure secrets**: [GITHUB-SECRETS.md](GITHUB-SECRETS.md)
+5. **Reference guide**: [DEPLOYMENT.md](DEPLOYMENT.md) for troubleshooting
 
 ### For Designers/UX
 1. Start with [WIREFRAMES.md](WIREFRAMES.md)
@@ -141,6 +149,7 @@ Welcome to the Quiz-to-build (Quiz2Biz) documentation! This index will help you 
 - **API Docs**: Available at `/api/v1/docs` when running
 
 ### Deployment & DevOps
+- **Quick Deploy**: [DEPLOY-NOW.md](DEPLOY-NOW.md) - Fast deployment overview
 - **First Deployment**: [FIRST-DEPLOYMENT.md](FIRST-DEPLOYMENT.md) - Step-by-step first deployment
 - **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md) - Complete CI/CD documentation
 - **Deployment Checklist**: [DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md) - Quick reference
