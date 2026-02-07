@@ -42,6 +42,7 @@ export function QuestionnairePage() {
   } = useQuestionnaireStore();
 
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireListItem[]>([]);
+  const [questionnaireLoadError, setQuestionnaireLoadError] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<Persona>('CTO');
   const [currentValue, setCurrentValue] = useState<unknown>(null);
   const [startTime, setStartTime] = useState<number>(Date.now());
@@ -49,22 +50,23 @@ export function QuestionnairePage() {
   // Load questionnaires on mount for "new" view
   useEffect(() => {
     if (isNew) {
-      questionnaireApi.listQuestionnaires().then(setQuestionnaires).catch(console.error);
+      questionnaireApi.listQuestionnaires().then(setQuestionnaires).catch(() => setQuestionnaireLoadError(true));
     }
   }, [isNew]);
 
-  // Resume session if sessionId is in URL
+  // Resume session if sessionId is in URL (or switch sessions)
   useEffect(() => {
-    if (sessionIdParam && !session) {
+    if (sessionIdParam && session?.id !== sessionIdParam) {
       continueSession(sessionIdParam);
     }
-  }, [sessionIdParam, session, continueSession]);
+  }, [sessionIdParam, session?.id, continueSession]);
 
-  // Reset timer when question changes
+  // Reset timer when question changes (use question ID, not array reference)
+  const currentQuestionId = currentQuestions[0]?.id;
   useEffect(() => {
     setStartTime(Date.now());
     setCurrentValue(null);
-  }, [currentQuestions]);
+  }, [currentQuestionId]);
 
   const handleStartSession = useCallback(
     async (questionnaireId: string) => {
@@ -73,11 +75,17 @@ export function QuestionnairePage() {
     [createSession, selectedPersona],
   );
 
+  const isValueEmpty =
+    currentValue === null ||
+    currentValue === '' ||
+    (typeof currentValue === 'string' && currentValue.trim() === '') ||
+    (Array.isArray(currentValue) && currentValue.length === 0);
+
   const handleSubmit = useCallback(async () => {
-    if (!session || !currentQuestions[0] || currentValue === null) return;
+    if (!session || !currentQuestions[0] || isValueEmpty) return;
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
     await submitResponse(session.id, currentQuestions[0].id, currentValue, timeSpent);
-  }, [session, currentQuestions, currentValue, startTime, submitResponse]);
+  }, [session, currentQuestions, currentValue, isValueEmpty, startTime, submitResponse]);
 
   const handleComplete = useCallback(async () => {
     if (!session) return;
@@ -129,7 +137,9 @@ export function QuestionnairePage() {
         {/* Questionnaire list */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Questionnaires</h2>
-          {questionnaires.length === 0 ? (
+          {questionnaireLoadError ? (
+            <p className="text-red-500">Failed to load questionnaires. Please refresh the page.</p>
+          ) : questionnaires.length === 0 ? (
             <p className="text-gray-500">Loading questionnaires...</p>
           ) : (
             <div className="space-y-3">
@@ -367,7 +377,7 @@ export function QuestionnairePage() {
             </div>
             <button
               onClick={handleSubmit}
-              disabled={isLoading || currentValue === null || currentValue === ''}
+              disabled={isLoading || isValueEmpty}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {isLoading ? (

@@ -11,7 +11,7 @@ import { ClipboardList, FileText, Target, TrendingUp, Play, CheckCircle } from '
 export function DashboardPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const { sessions, isLoading, loadSessions } = useQuestionnaireStore();
+  const { sessions, isLoading, error, loadSessions, clearError } = useQuestionnaireStore();
 
   useEffect(() => {
     loadSessions();
@@ -41,6 +41,14 @@ export function DashboardPage() {
           Here's an overview of your readiness assessments and progress.
         </p>
       </div>
+
+      {/* Error display */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={clearError} className="ml-2 underline text-sm">Dismiss</button>
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

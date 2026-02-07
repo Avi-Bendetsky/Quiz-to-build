@@ -180,7 +180,11 @@ export const questionnaireApi = {
   async listSessions(status?: string): Promise<{ items: SessionResponse[]; total: number }> {
     const params = status ? { status } : {};
     const { data } = await apiClient.get(`${API_PREFIX}/sessions`, { params });
-    return data;
+    // Backend returns { items, pagination: { totalItems } }, normalize to { items, total }
+    return {
+      items: data.items ?? [],
+      total: data.pagination?.totalItems ?? data.total ?? data.items?.length ?? 0,
+    };
   },
 
   /** Continue a session - get next questions and state */
@@ -209,7 +213,7 @@ export const questionnaireApi = {
     return data;
   },
 
-  /** Get NQS-prioritized next questions */
+  /** Get NQS-prioritized next questions (POST /scoring/next-questions) */
   async getNextQuestions(sessionId: string, limit = 5): Promise<{
     sessionId: string;
     currentScore: number;
@@ -226,8 +230,9 @@ export const questionnaireApi = {
     }>;
     maxPotentialScore: number;
   }> {
-    const { data } = await apiClient.get(`${API_PREFIX}/scoring/${sessionId}/next-questions`, {
-      params: { limit },
+    const { data } = await apiClient.post(`${API_PREFIX}/scoring/next-questions`, {
+      sessionId,
+      limit,
     });
     return data;
   },
@@ -235,18 +240,6 @@ export const questionnaireApi = {
   /** Get heatmap data for a session */
   async getHeatmap(sessionId: string): Promise<HeatmapResult> {
     const { data } = await apiClient.get(`${API_PREFIX}/heatmap/${sessionId}`);
-    return data;
-  },
-
-  /** Get user session stats */
-  async getUserStats(): Promise<{
-    totalSessions: number;
-    completedSessions: number;
-    inProgressSessions: number;
-    averageScore: number;
-    highestScore: number;
-  }> {
-    const { data } = await apiClient.get(`${API_PREFIX}/sessions/stats`);
     return data;
   },
 };

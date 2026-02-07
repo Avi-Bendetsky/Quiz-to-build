@@ -90,6 +90,9 @@ export class ScoringEngineService {
   /** Small epsilon to avoid division by zero */
   private readonly EPSILON = 1e-10;
 
+  /** Default severity for questions without a severity value (§16 risk control) */
+  private readonly DEFAULT_SEVERITY = 0.7;
+
   /** Cache TTL for score calculations (5 minutes) */
   private readonly SCORE_CACHE_TTL = 300;
 
@@ -256,7 +259,7 @@ export class ScoringEngineService {
     questions.forEach((q) => {
       if (q.dimensionKey) {
         const current = dimensionSeveritySum.get(q.dimensionKey) || 0;
-        dimensionSeveritySum.set(q.dimensionKey, current + (q.severity ? Number(q.severity) : 0.5));
+        dimensionSeveritySum.set(q.dimensionKey, current + (q.severity ? Number(q.severity) : this.DEFAULT_SEVERITY));
       }
     });
 
@@ -272,7 +275,7 @@ export class ScoringEngineService {
         continue;
       }
 
-      const severity: number = question.severity ? Number(question.severity) : 0.5;
+      const severity: number = question.severity ? Number(question.severity) : this.DEFAULT_SEVERITY;
       const dimensionKey: string = question.dimensionKey || 'unknown';
       const dimensionWeight: number = Number(dimensionWeightMap.get(dimensionKey) ?? 0);
       const severitySum: number = Number(dimensionSeveritySum.get(dimensionKey) ?? 1);
@@ -414,7 +417,7 @@ export class ScoringEngineService {
       let answeredCount = 0;
 
       dimQuestions.forEach((q) => {
-        const severity = q.severity ? Number(q.severity) : 0.5;
+        const severity = q.severity ? Number(q.severity) : this.DEFAULT_SEVERITY;
         const coverage = coverageMap.get(q.id) || 0;
 
         numerator += severity * (1 - coverage);

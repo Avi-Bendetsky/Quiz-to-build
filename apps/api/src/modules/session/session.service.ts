@@ -18,9 +18,6 @@ import { PaginationDto } from '@libs/shared';
 /** Quiz2Biz readiness score threshold for session completion */
 const READINESS_SCORE_THRESHOLD = 95.0;
 
-/** Default severity for questions without severity (§16 risk control) */
-const DEFAULT_SEVERITY = 0.7;
-
 export interface ProgressInfo {
   percentage: number;
   answeredQuestions: number;
@@ -120,15 +117,22 @@ export class SessionService {
     // Get questionnaire
     const questionnaire = await this.questionnaireService.findById(dto.questionnaireId);
 
-    // Get total question count filtered by persona if specified
-    const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
-      dto.questionnaireId,
-      dto.persona,
-    );
+    // Get persona-filtered questions to determine count and first question
+    const personaQuestions = dto.persona
+      ? await this.questionnaireService.getQuestionsForPersona(dto.questionnaireId, dto.persona)
+      : null;
 
-    // Get first section and question
+    const totalQuestions = personaQuestions
+      ? personaQuestions.length
+      : await this.questionnaireService.getTotalQuestionCount(dto.questionnaireId);
+
+    // Use persona-filtered first question if available, otherwise first from questionnaire
+    const firstPersonaQuestion = personaQuestions?.[0];
     const firstSection = questionnaire.sections[0];
     const firstQuestion = firstSection?.questions?.[0];
+
+    const initialQuestionId = firstPersonaQuestion?.id ?? firstQuestion?.id;
+    const initialSectionId = firstPersonaQuestion?.sectionId ?? firstSection?.id;
 
     // Create session with persona
     const session = await this.prisma.session.create({
@@ -144,8 +148,8 @@ export class SessionService {
           answered: 0,
           total: totalQuestions,
         },
-        currentSectionId: firstSection?.id,
-        currentQuestionId: firstQuestion?.id,
+        currentSectionId: initialSectionId,
+        currentQuestionId: initialQuestionId,
         adaptiveState: {
           activeQuestionIds: [],
           skippedQuestionIds: [],
@@ -179,6 +183,7 @@ export class SessionService {
 
     const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
       session.questionnaireId,
+      session.persona ?? undefined,
     );
 
     return this.mapToSessionResponse(session, totalQuestions);
@@ -212,6 +217,7 @@ export class SessionService {
       sessions.map(async (session) => {
         const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
           session.questionnaireId,
+          session.persona ?? undefined,
         );
         return this.mapToSessionResponse(session, totalQuestions);
       }),
@@ -239,8 +245,11 @@ export class SessionService {
     const responseMap = new Map(responses.map((r) => [r.questionId, r.value]));
 
     // Get current question and evaluate visibility
+    if (!session.currentQuestionId) {
+      throw new NotFoundException('No current question set for this session');
+    }
     const currentQuestion = await this.questionnaireService.getQuestionById(
-      session.currentQuestionId!,
+      session.currentQuestionId,
     );
 
     if (!currentQuestion) {
@@ -279,7 +288,9 @@ export class SessionService {
       (q) => q.sectionId === currentQuestion.sectionId,
     );
     const sectionAnswered = sectionQuestions.filter((q) => responseMap.has(q.id)).length;
-    const sectionProgress = Math.round((sectionAnswered / sectionQuestions.length) * 100);
+    const sectionProgress = sectionQuestions.length > 0
+      ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
+      : 0;
 
     return {
       questions: nextQuestions,
@@ -494,9 +505,10 @@ export class SessionService {
       branchHistory?: string[];
     };
 
-    // Calculate total questions and skipped
+    // Calculate total questions and skipped (persona-aware)
     const totalQuestionsInQuestionnaire = await this.questionnaireService.getTotalQuestionCount(
       session.questionnaireId,
+      session.persona ?? undefined,
     );
     const skippedCount = totalQuestionsInQuestionnaire - visibleQuestions.length;
 
@@ -608,7 +620,9 @@ export class SessionService {
       questionnaireId: session.questionnaireId,
       userId: session.userId,
       status: session.status,
+      persona: session.persona ?? undefined,
       industry: session.industry ?? undefined,
+      readinessScore: readinessScore ?? (session.readinessScore ? Number(session.readinessScore) : undefined),
       progress,
       currentSection: session.currentSection
         ? { id: session.currentSection.id, name: session.currentSection.name }
@@ -820,6 +834,7 @@ export class SessionService {
 
     const dto: CreateSessionDto = {
       questionnaireId: sourceSession.questionnaireId,
+      persona: sourceSession.persona ?? undefined,
       industry: options?.industry ?? sourceSession.industry ?? undefined,
     };
 
@@ -841,9 +856,10 @@ export class SessionService {
         })),
       });
 
-      // Recalculate progress
+      // Recalculate progress (persona-aware)
       const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
         sourceSession.questionnaireId,
+        sourceSession.persona ?? undefined,
       );
       const progress = this.calculateProgress(responses.length, totalQuestions);
 
@@ -892,6 +908,7 @@ export class SessionService {
 
     const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
       session.questionnaireId,
+      session.persona ?? undefined,
     );
 
     return this.mapToSessionResponse(updatedSession, totalQuestions);
@@ -901,7 +918,7 @@ export class SessionService {
    * Get session analytics
    */
   async getSessionAnalytics(sessionId: string, userId: string): Promise<SessionAnalytics> {
-    await this.getSessionWithValidation(sessionId, userId);
+    const session = await this.getSessionWithValidation(sessionId, userId);
 
     const responses = await this.prisma.response.findMany({
       where: { sessionId },
@@ -970,6 +987,15 @@ export class SessionService {
     const validResponses = responses.filter((r) => r.isValid).length;
     const invalidResponses = responses.length - validResponses;
 
+    // Calculate real completion rate
+    const totalQuestions = await this.questionnaireService.getTotalQuestionCount(
+      session.questionnaireId,
+      session.persona ?? undefined,
+    );
+    const completionRate = totalQuestions > 0
+      ? Math.round((responses.length / totalQuestions) * 100)
+      : 0;
+
     return {
       sessionId,
       totalResponses: responses.length,
@@ -979,7 +1005,7 @@ export class SessionService {
       averageTimePerQuestion: Math.round(avgTimePerQuestion),
       bySection,
       byDimension,
-      completionRate: responses.length > 0 ? 100 : 0,
+      completionRate,
       analyzedAt: new Date(),
     };
   }

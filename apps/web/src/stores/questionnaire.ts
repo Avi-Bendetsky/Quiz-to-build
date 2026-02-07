@@ -70,8 +70,8 @@ export const useQuestionnaireStore = create<QuestionnaireState>()((set, get) => 
     set({ isLoading: true, error: null });
     try {
       const session = await questionnaireApi.createSession({ questionnaireId, persona, industry });
-      set({ session, isLoading: false });
-      // Auto-continue to get first question
+      set({ session });
+      // Auto-continue to get first question (keeps isLoading: true until done)
       await get().continueSession(session.id);
     } catch (err: any) {
       set({ isLoading: false, error: err?.response?.data?.message ?? err.message });
@@ -117,7 +117,7 @@ export const useQuestionnaireStore = create<QuestionnaireState>()((set, get) => 
   },
 
   submitResponse: async (sessionId, questionId, value, timeSpent) => {
-    set({ error: null });
+    set({ isLoading: true, error: null });
     try {
       const result = await questionnaireApi.submitResponse(sessionId, {
         questionId,
@@ -133,7 +133,7 @@ export const useQuestionnaireStore = create<QuestionnaireState>()((set, get) => 
       await get().continueSession(sessionId);
       return result;
     } catch (err: any) {
-      set({ error: err?.response?.data?.message ?? err.message });
+      set({ isLoading: false, error: err?.response?.data?.message ?? err.message });
       throw err;
     }
   },
