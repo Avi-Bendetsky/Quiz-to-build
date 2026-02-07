@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1f2937', marginBottom: '12px' }}>Something went wrong</h1>
             <p style={{ color: '#6b7280', marginBottom: '20px' }}>{this.state.error?.message || 'An unexpected error occurred.'}</p>
             <button
-              onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/dashboard'; }}
+              onClick={() => { window.location.href = '/dashboard'; }}
               style={{ padding: '10px 24px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
             >
               Go to Dashboard
