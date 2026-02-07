@@ -2,7 +2,7 @@
 # Script to sync all branches with main
 # This script merges main into all branches that need syncing
 
-set -e
+set +e  # Don't exit on errors, we want to continue with other branches
 
 echo "Branch Synchronization Script"
 echo "=============================="
@@ -15,6 +15,7 @@ BRANCHES_TO_SYNC=(
   "qoder/adaptive-client-questionnaire-tool-LR22kj"
   "qoder/quiz-build-deployment-eUsiDf"
   "qoder/quiz-builder-kBVnJv"
+  "claude/repository-analysis-4puQN"
 )
 
 # Store current branch
@@ -34,17 +35,33 @@ sync_branch() {
   # Checkout the branch
   git checkout "$branch" 2>/dev/null || git checkout -b "$branch" "origin/$branch"
   
+  # Check if already synced
+  if git merge-base --is-ancestor main HEAD 2>/dev/null; then
+    echo "✓ Branch already contains all commits from main"
+    echo "✓ No sync needed"
+    return 0
+  fi
+  
   # Merge main
   echo "Merging main into $branch..."
-  if git merge main --no-edit --allow-unrelated-histories; then
+  if git merge main --no-edit --allow-unrelated-histories -X ours; then
     echo "✓ Merge successful"
     
-    # Push the changes
-    echo "Pushing changes to origin..."
-    if git push origin "$branch"; then
-      echo "✓ Push successful"
+    # Verify the merge
+    if git merge-base --is-ancestor main HEAD; then
+      echo "✓ Verified: branch now contains all commits from main"
+      
+      # Push the changes
+      echo "Pushing changes to origin..."
+      if git push origin "$branch"; then
+        echo "✓ Push successful"
+      else
+        echo "✗ Push failed - you may need appropriate permissions"
+        echo "  (Changes were merged locally but not pushed to remote)"
+        return 1
+      fi
     else
-      echo "✗ Push failed - you may need appropriate permissions"
+      echo "✗ Merge verification failed"
       return 1
     fi
   else
