@@ -105,20 +105,30 @@ export function HeatmapPage() {
                     return (
                       <td
                         key={bucket}
-                        onClick={() => handleCellClick(cell.dimensionKey, cell.severityBucket)}
                         style={{
                           padding: '8px 12px',
                           borderBottom: '1px solid #f3f4f6',
                           textAlign: 'center',
-                          cursor: 'pointer',
-                          backgroundColor: colorMap[cell.colorCode] + '33',
-                          color: colorMap[cell.colorCode],
-                          fontWeight: 600,
-                          borderRadius: '4px',
                         }}
-                        title={`${cell.questionCount} questions, residual: ${cell.cellValue}`}
                       >
-                        {cell.cellValue.toFixed(2)}
+                        <button
+                          type="button"
+                          onClick={() => handleCellClick(cell.dimensionKey, cell.severityBucket)}
+                          style={{
+                            width: '100%',
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                            backgroundColor: colorMap[cell.colorCode] + '33',
+                            color: colorMap[cell.colorCode],
+                            fontWeight: 600,
+                            borderRadius: '4px',
+                            border: 'none',
+                          }}
+                          aria-label={`${dimName}, severity ${bucket}: ${cell.questionCount} questions, residual score ${cell.cellValue.toFixed(2)}`}
+                          title={`${cell.questionCount} questions, residual: ${cell.cellValue}`}
+                        >
+                          {cell.cellValue.toFixed(2)}
+                        </button>
                       </td>
                     );
                   })}
