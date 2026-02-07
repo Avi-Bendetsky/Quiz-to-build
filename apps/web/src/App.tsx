@@ -8,10 +8,15 @@ import { MainLayout, AuthLayout } from './components/layout';
 import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/auth';
 import { DashboardPage } from './pages/dashboard';
 import { QuestionnairePage } from './pages/questionnaire';
+import { HeatmapPage } from './pages/heatmap';
+import { EvidencePage } from './pages/evidence';
+import { DecisionsPage } from './pages/decisions';
+import { PolicyPackPage } from './pages/policy-pack';
 import { DocumentsPage } from './pages/documents';
 import { BillingPage, InvoicesPage, UpgradePage } from './pages/billing';
 import { PrivacyPage, TermsPage } from './pages/legal';
 import { HelpPage } from './pages/help';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuthStore } from './stores/auth';
 import type { ReactNode } from 'react';
 
@@ -66,6 +71,7 @@ function PublicRoute({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
@@ -95,6 +101,10 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="questionnaire/:action?" element={<QuestionnairePage />} />
+            <Route path="heatmap/:sessionId" element={<HeatmapPage />} />
+            <Route path="evidence/:sessionId" element={<EvidencePage />} />
+            <Route path="decisions/:sessionId" element={<DecisionsPage />} />
+            <Route path="policy-pack/:sessionId" element={<PolicyPackPage />} />
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="billing/invoices" element={<InvoicesPage />} />
@@ -112,5 +122,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
