@@ -403,7 +403,7 @@ model ScoreSnapshot {
   score                 Decimal  @db.Decimal(5, 2)  // Readiness score 0.00-100.00
   portfolioResidual     Decimal  @db.Decimal(7, 6)  // R value 0.000000-1.000000
   completionPercentage  Decimal  @db.Decimal(5, 2)  // 0.00-100.00
-  dimensionBreakdown    Json     @default("{}") @map("dimension_breakdown")  // Per-dimension residuals snapshot
+  dimensionBreakdown    Json     @default("[]") @map("dimension_breakdown")  // Per-dimension residuals snapshot
   createdAt             DateTime @default(now()) @map("created_at")
 
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
