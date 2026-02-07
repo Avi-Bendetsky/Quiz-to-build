@@ -35,7 +35,7 @@ export async function fetchCsrfToken(): Promise<string> {
       withCredentials: true,
     });
     csrfToken = response.data.csrfToken;
-    return csrfToken;
+    return csrfToken!;
   } catch (error) {
     console.error('Failed to fetch CSRF token:', error);
     // Fallback to cookie if direct fetch fails

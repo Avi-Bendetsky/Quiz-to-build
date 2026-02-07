@@ -1010,7 +1010,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   const [mentionIndex, setMentionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const draftSaveTimeoutRef = useRef<NodeJS.Timeout>();
+  const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load draft on mount
   useEffect(() => {
