@@ -939,6 +939,15 @@ export class SessionService {
     const totalTimeSpent = timesSpent.reduce((sum, t) => sum + t, 0);
     const avgTimePerQuestion = timesSpent.length > 0 ? totalTimeSpent / timesSpent.length : 0;
 
+    // Get total question counts per section
+    const sections = await this.prisma.section.findMany({
+      where: { questionnaireId: session.questionnaireId },
+      include: { _count: { select: { questions: true } } },
+    });
+    const sectionQuestionCounts = new Map(
+      sections.map((s) => [s.name, s._count.questions]),
+    );
+
     // Group by section
     const bySection: Record<string, { answered: number; total: number; avgTime: number }> = {};
     const sectionTimes: Record<string, number[]> = {};
@@ -947,7 +956,7 @@ export class SessionService {
       const sectionName = r.question.section?.name || 'Unknown';
 
       if (!bySection[sectionName]) {
-        bySection[sectionName] = { answered: 0, total: 0, avgTime: 0 };
+        bySection[sectionName] = { answered: 0, total: sectionQuestionCounts.get(sectionName) ?? 0, avgTime: 0 };
         sectionTimes[sectionName] = [];
       }
       bySection[sectionName].answered++;
@@ -956,9 +965,16 @@ export class SessionService {
       }
     });
 
+    // Ensure sections with no responses are still represented
+    for (const s of sections) {
+      if (!bySection[s.name]) {
+        bySection[s.name] = { answered: 0, total: s._count.questions, avgTime: 0 };
+      }
+    }
+
     // Calculate avg time per section
     Object.keys(bySection).forEach((section) => {
-      const times = sectionTimes[section];
+      const times = sectionTimes[section] || [];
       bySection[section].avgTime =
         times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
     });

@@ -138,18 +138,24 @@ export interface DimensionResidual {
 export interface HeatmapResult {
   sessionId: string;
   cells: {
+    dimensionId: string;
     dimensionKey: string;
-    dimensionName: string;
     severityBucket: string;
-    value: number;
-    color: 'GREEN' | 'AMBER' | 'RED';
+    cellValue: number;
+    colorCode: 'GREEN' | 'AMBER' | 'RED';
+    questionCount: number;
   }[];
+  dimensions: string[];
+  severityBuckets: string[];
   summary: {
+    totalCells: number;
     greenCells: number;
     amberCells: number;
     redCells: number;
     criticalGapCount: number;
+    overallRiskScore: number;
   };
+  generatedAt: string;
 }
 
 // --- API Functions ---
@@ -240,6 +246,113 @@ export const questionnaireApi = {
   /** Get heatmap data for a session */
   async getHeatmap(sessionId: string): Promise<HeatmapResult> {
     const { data } = await apiClient.get(`${API_PREFIX}/heatmap/${sessionId}`);
+    return data;
+  },
+
+  /** Get score history */
+  async getScoreHistory(sessionId: string, limit?: number): Promise<{
+    sessionId: string;
+    currentScore: number;
+    history: { timestamp: string; score: number; portfolioResidual: number; completionPercentage: number }[];
+    trend: { direction: 'UP' | 'DOWN' | 'STABLE'; averageChange: number; volatility: number; projectedScore: number };
+  }> {
+    const params = limit ? { limit } : {};
+    const { data } = await apiClient.get(`${API_PREFIX}/scoring/${sessionId}/history`, { params });
+    return data;
+  },
+
+  /** Get industry benchmark */
+  async getBenchmark(sessionId: string, industry?: string): Promise<{
+    sessionId: string;
+    currentScore: number;
+    industry: string;
+    benchmark: { average: number; median: number; min: number; max: number; percentile25: number; percentile75: number; sampleSize: number };
+    percentileRank: number;
+    performanceCategory: string;
+    gapToMedian: number;
+    gapToLeading: number;
+  }> {
+    const params = industry ? { industry } : {};
+    const { data } = await apiClient.get(`${API_PREFIX}/scoring/${sessionId}/benchmark`, { params });
+    return data;
+  },
+
+  /** Get heatmap summary */
+  async getHeatmapSummary(sessionId: string): Promise<HeatmapResult['summary']> {
+    const { data } = await apiClient.get(`${API_PREFIX}/heatmap/${sessionId}/summary`);
+    return data;
+  },
+
+  /** Get heatmap drilldown for a specific cell */
+  async getHeatmapDrilldown(sessionId: string, dimensionKey: string, severityBucket: string): Promise<{
+    dimensionKey: string;
+    dimensionName: string;
+    severityBucket: string;
+    cellValue: number;
+    colorCode: string;
+    questionCount: number;
+    questions: { questionId: string; questionText: string; severity: number; coverage: number; residualRisk: number }[];
+    potentialImprovement: number;
+  }> {
+    const { data } = await apiClient.get(`${API_PREFIX}/heatmap/${sessionId}/drilldown/${dimensionKey}/${severityBucket}`);
+    return data;
+  },
+
+  /** Export heatmap as CSV */
+  async exportHeatmapCsv(sessionId: string): Promise<string> {
+    const { data } = await apiClient.get(`${API_PREFIX}/heatmap/${sessionId}/export/csv`, { responseType: 'text' as any });
+    return data;
+  },
+
+  /** List evidence for a session */
+  async listEvidence(sessionId: string): Promise<{
+    id: string; sessionId: string; questionId: string; artifactUrl: string;
+    artifactType: string; fileName: string | null; verified: boolean; createdAt: string;
+  }[]> {
+    const { data } = await apiClient.get(`${API_PREFIX}/evidence`, { params: { sessionId } });
+    return data;
+  },
+
+  /** Get evidence stats for a session */
+  async getEvidenceStats(sessionId: string): Promise<{
+    total: number; verified: number; pending: number; byType: Record<string, number>;
+  }> {
+    const { data } = await apiClient.get(`${API_PREFIX}/evidence/stats/${sessionId}`);
+    return data;
+  },
+
+  /** List decisions for a session */
+  async listDecisions(sessionId: string): Promise<{
+    id: string; sessionId: string; statement: string; assumptions: string | null;
+    status: string; ownerId: string; createdAt: string;
+  }[]> {
+    const { data } = await apiClient.get(`${API_PREFIX}/decisions`, { params: { sessionId } });
+    return data;
+  },
+
+  /** Create a decision */
+  async createDecision(sessionId: string, statement: string, assumptions?: string): Promise<{
+    id: string; sessionId: string; statement: string; status: string; createdAt: string;
+  }> {
+    const { data } = await apiClient.post(`${API_PREFIX}/decisions`, { sessionId, statement, assumptions });
+    return data;
+  },
+
+  /** Generate QPG prompts for a session */
+  async generatePrompts(sessionId: string): Promise<{
+    id: string; sessionId: string; prompts: any[]; totalEffortHours: number;
+    dimensionsCovered: string[]; generatedAt: string;
+  }> {
+    const { data } = await apiClient.get(`${API_PREFIX}/qpg/session/${sessionId}`);
+    return data;
+  },
+
+  /** Generate policy pack for a session */
+  async generatePolicyPack(sessionId: string): Promise<{
+    id: string; name: string; policies: any[]; opaPolicies: any[];
+    terraformRules: string; generatedAt: string;
+  }> {
+    const { data } = await apiClient.post(`${API_PREFIX}/policy-pack/generate/${sessionId}`);
     return data;
   },
 };
