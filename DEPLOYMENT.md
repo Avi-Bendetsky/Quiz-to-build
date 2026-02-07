@@ -53,6 +53,8 @@ The repository includes two main workflows:
 
 ## Required Secrets
 
+> 📖 **Detailed Guide:** See [GITHUB-SECRETS.md](GITHUB-SECRETS.md) for step-by-step instructions on configuring all secrets.
+
 Configure the following secrets in GitHub repository settings (`Settings > Secrets and variables > Actions`):
 
 ### Azure Credentials
