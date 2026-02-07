@@ -99,9 +99,9 @@ class EmbeddingService {
 
     return results.slice(0, topK).map((r, _index) => ({
       id: r.id,
-      title: r.metadata.title,
+      title: r.metadata.title as string,
       content: `Content for ${r.metadata.title}`,
-      url: r.metadata.url,
+      url: r.metadata.url as string,
       relevanceScore: r.score,
       category: r.metadata.category as SearchResult['category'],
       highlights: [],
@@ -214,7 +214,7 @@ export const SmartSearchProvider: React.FC<SmartSearchProviderProps> = ({
     }
   });
 
-  const searchTimeout = useRef<NodeJS.Timeout>();
+  const searchTimeout = useRef<NodeJS.Timeout>(undefined);
 
   // Generate AI summary for search results
   const generateAISummary = useCallback(

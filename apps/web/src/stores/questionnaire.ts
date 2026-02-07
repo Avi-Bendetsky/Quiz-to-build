@@ -11,7 +11,6 @@ import {
   type QuestionItem,
   type ContinueSessionResponse,
   type SubmitResponseResult,
-  type ReadinessScoreResult,
   type DimensionResidual,
 } from '../api/questionnaire';
 

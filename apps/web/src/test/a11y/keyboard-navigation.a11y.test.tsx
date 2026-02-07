@@ -472,7 +472,7 @@ describe('Keyboard Navigation Accessibility', () => {
 
     it('buttons should be keyboard activatable with Enter', async () => {
       const user = userEvent.setup();
-      const mockSubmit = vi.fn((e: Event) => e.preventDefault());
+      const mockSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
 
       render(
         <form onSubmit={mockSubmit}>

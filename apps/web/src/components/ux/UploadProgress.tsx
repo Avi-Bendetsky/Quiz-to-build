@@ -119,7 +119,7 @@ export function getFileTypeIcon(type: string): string {
 // Hook: useUploadProgress
 // ============================================================================
 
-interface UseUploadProgressReturn {
+export interface UseUploadProgressReturn {
   files: UploadFile[];
   upload: (files: File[]) => void;
   cancel: (fileId: string) => void;

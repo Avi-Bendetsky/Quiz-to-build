@@ -311,8 +311,6 @@ const DEFAULT_VALIDATION_RULES: ValidationRule[] = [
 // ============================================================================
 
 class AIPatternAnalyzer {
-  private static patterns: Map<string, InputPattern[]> = new Map();
-
   static async analyzeWithAI(value: string, fieldConfig: FieldConfig): Promise<PredictedError[]> {
     // Simulate AI processing delay
     await new Promise((resolve) => setTimeout(resolve, 100));
